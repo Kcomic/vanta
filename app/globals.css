@@ -33,6 +33,12 @@
   line-height: 1.35;
 }
 
+/* Bind next/font variables to the @theme family names. */
+:root {
+  --font-body: var(--font-geist-sans), var(--font-body-th), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
 /* Base: the void renders dark by default; reduced-motion safe (no opacity:0 anywhere). */
 html {
   background-color: var(--color-ink);
