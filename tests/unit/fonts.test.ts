@@ -8,7 +8,8 @@ describe('fontClassNames', () => {
   });
 
   it('binds all five font CSS variables', () => {
-    expect(fontClassNames).toContain('--font-display-en');
+    // next/font local alias for Clash Display; the --font-display-en @theme token resolves to 'Clash Display' via @font-face in globals.css
+    expect(fontClassNames).toContain('--font-clash-next');
     expect(fontClassNames).toContain('--font-display-th');
     expect(fontClassNames).toContain('--font-geist-sans'); // -> aliased to --font-body in globals.css
     expect(fontClassNames).toContain('--font-body-th');
