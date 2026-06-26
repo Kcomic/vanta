@@ -20,9 +20,60 @@ import type {
   Role,
   User,
 } from '@/lib/domain';
+import { AVAILABILITY_PRECEDENCE } from '@/lib/services/availability';
+import { seedDrops } from '@/lib/data/mock/seed';
+import { seedProducts } from '@/lib/data/mock/seed';
 
-describe('lib/domain barrel', () => {
-  it('exposes every domain type with the locked shape', () => {
+describe('lib/domain — runtime invariants', () => {
+  it('every Availability value is present in AVAILABILITY_PRECEDENCE', () => {
+    // The full set of Availability literals (spec-locked); adding one here must also
+    // be added to AVAILABILITY_PRECEDENCE or this test catches the omission.
+    const ALL_AVAILABILITY: Availability[] = [
+      'sold_out',
+      'coming_soon',
+      'early_access',
+      'low_stock',
+      'live',
+    ];
+    for (const state of ALL_AVAILABILITY) {
+      expect(AVAILABILITY_PRECEDENCE).toContain(state);
+    }
+    // No extras in AVAILABILITY_PRECEDENCE either.
+    expect(AVAILABILITY_PRECEDENCE).toHaveLength(ALL_AVAILABILITY.length);
+  });
+
+  it('LocalizedText always has both en and th keys', () => {
+    const text: LocalizedText = { en: 'Hello', th: 'สวัสดี' };
+    expect(typeof text.en).toBe('string');
+    expect(typeof text.th).toBe('string');
+    // Ensure keys exist (not undefined).
+    expect('en' in text).toBe(true);
+    expect('th' in text).toBe(true);
+  });
+
+  it('every seed product Money.amount is a non-negative integer (no floating-point pence)', () => {
+    const amounts: number[] = [];
+    for (const product of seedProducts) {
+      for (const variant of product.variants) {
+        amounts.push(variant.price.amount);
+      }
+    }
+    expect(amounts.length).toBeGreaterThan(0);
+    for (const amount of amounts) {
+      expect(Number.isInteger(amount)).toBe(true);
+      expect(amount).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('every seed drop has valid ISO-8601 timestamps in earlyAccessAt, releaseAt, endAt', () => {
+    for (const drop of seedDrops) {
+      expect(Number.isNaN(Date.parse(drop.earlyAccessAt))).toBe(false);
+      expect(Number.isNaN(Date.parse(drop.releaseAt))).toBe(false);
+      expect(Number.isNaN(Date.parse(drop.endAt))).toBe(false);
+    }
+  });
+
+  it('domain shape compiles correctly (type-level smoke check via value assignment)', () => {
     const currency: Currency = 'THB';
     const money: Money = { amount: 199000, currency };
     const locale: Locale = 'th';
@@ -114,19 +165,17 @@ describe('lib/domain barrel', () => {
       addresses: [address],
     };
 
-    expect([
-      money.currency,
-      locale,
-      availability,
-      image.id,
-      product.slug,
-      collection.slug,
-      drop.id,
-      cart.itemCount,
-      order.id,
-      user.id,
-      status,
-      totals.total.amount,
-    ]).toHaveLength(12);
+    // Runtime assertions on constructed values (not compile-time tautologies).
+    expect(money.amount).toBeGreaterThan(0);
+    expect(Number.isInteger(money.amount)).toBe(true);
+    expect(locale).toBe('th');
+    expect(product.variants).toHaveLength(1);
+    expect(cart.itemCount).toBe(cart.items.reduce((s, i) => s + i.quantity, 0));
+    expect(Date.parse(drop.earlyAccessAt)).toBeLessThan(Date.parse(drop.releaseAt));
+    expect(Date.parse(drop.releaseAt)).toBeLessThan(Date.parse(drop.endAt));
+    expect(order.lineItems.every((li) => li.quantity > 0)).toBe(true);
+    expect(user.addresses).toHaveLength(1);
+    // Suppress unused-variable TS errors while keeping the type-check surface.
+    void [currency, availability, image, collection, cartItem, totals, status, lineItem];
   });
 });
