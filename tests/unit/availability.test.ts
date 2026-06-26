@@ -30,8 +30,11 @@ const admin: User = { ...member, id: 'usr_admin', role: 'admin' };
 const guest: User = { ...member, id: 'usr_guest', role: 'guest' };
 
 const BEFORE_EARLY = new Date('2026-07-01T09:00:00.000Z'); // < earlyAccessAt
+const AT_EARLY = new Date('2026-07-01T10:00:00.000Z'); // === earlyAccessAt (exact boundary)
 const IN_EARLY = new Date('2026-07-01T11:00:00.000Z'); // earlyAccessAt <= now < releaseAt
+const AT_RELEASE = new Date('2026-07-01T13:00:00.000Z'); // === releaseAt (exact boundary)
 const AFTER_RELEASE = new Date('2026-07-02T00:00:00.000Z'); // >= releaseAt
+const AFTER_END = new Date('2026-07-15T17:00:00.000Z'); // >= endAt (drop event closed)
 
 describe('LOW_STOCK_THRESHOLD', () => {
   it('is exactly 5', () => {
@@ -103,6 +106,41 @@ describe('deriveAvailability — no-drop products', () => {
   });
   it('no drop, stock == 1 => low_stock', () => {
     expect(deriveAvailability(variantWith(1), null, AFTER_RELEASE, null)).toBe('low_stock');
+  });
+});
+
+describe('deriveAvailability — exact millisecond boundaries (regression guards)', () => {
+  // Boundary: now === earlyAccessAt — window OPENS at this exact instant.
+  it('now === earlyAccessAt, guest => early_access (window just opened; guest is gated)', () => {
+    expect(deriveAvailability(variantWith(10), drop, AT_EARLY, guest)).toBe('early_access');
+  });
+  it('now === earlyAccessAt, member with healthy stock => live (member is unlocked at open)', () => {
+    expect(deriveAvailability(variantWith(10), drop, AT_EARLY, member)).toBe('live');
+  });
+  it('now === earlyAccessAt, member with low stock => low_stock', () => {
+    expect(deriveAvailability(variantWith(3), drop, AT_EARLY, member)).toBe('low_stock');
+  });
+
+  // Boundary: now === releaseAt — public release fires at this exact instant.
+  it('now === releaseAt, guest, healthy stock => live (never early_access once released)', () => {
+    expect(deriveAvailability(variantWith(10), drop, AT_RELEASE, guest)).toBe('live');
+  });
+  it('now === releaseAt, guest, low stock => low_stock (never early_access once released)', () => {
+    expect(deriveAvailability(variantWith(3), drop, AT_RELEASE, guest)).toBe('low_stock');
+  });
+  it('now === releaseAt, null user, healthy stock => live (never early_access once released)', () => {
+    expect(deriveAvailability(variantWith(10), drop, AT_RELEASE, null)).toBe('live');
+  });
+
+  // After endAt: availability is stock-based (endAt bounds the drop EVENT, not per-variant availability).
+  it('now >= endAt, stock > LOW_STOCK_THRESHOLD => live (stock-based after event)', () => {
+    expect(deriveAvailability(variantWith(10), drop, AFTER_END, guest)).toBe('live');
+  });
+  it('now >= endAt, 1 <= stock <= LOW_STOCK_THRESHOLD => low_stock', () => {
+    expect(deriveAvailability(variantWith(3), drop, AFTER_END, guest)).toBe('low_stock');
+  });
+  it('now >= endAt, stock 0 => sold_out', () => {
+    expect(deriveAvailability(variantWith(0), drop, AFTER_END, guest)).toBe('sold_out');
   });
 });
 
