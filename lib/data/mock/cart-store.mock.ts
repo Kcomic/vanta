@@ -1,34 +1,37 @@
+import { cookies } from 'next/headers';
 import type { Cart } from '@/lib/domain';
-import type { CartStore } from '@/lib/data/repositories';
+import type { CartStore } from '@/lib/data/repositories/cart-store';
+import { CART_COOKIE_NAME, EMPTY_CART, deserializeCart, serializeCart } from './cart-cookie';
 
-const clone = <T>(value: T): T => structuredClone(value);
+const SECRET = process.env.CART_COOKIE_SECRET ?? 'vanta-dev-cart-secret';
+const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
-function emptyCart(): Cart {
-  return {
-    items: [],
-    itemCount: 0,
-    subtotal: { amount: 0, currency: 'THB' },
-    updatedAt: new Date(0).toISOString(),
-  };
-}
-
-/**
- * In-memory CartStore for Phase 1 unit-testability. The cookie-backed signed
- * implementation is layered in during the cart phase behind this exact
- * interface — no consumer changes.
- */
 export class MockCartStore implements CartStore {
-  private cart: Cart = emptyCart();
-
   async read(): Promise<Cart> {
-    return clone(this.cart);
+    const store = await cookies();
+    const raw = store.get(CART_COOKIE_NAME)?.value;
+    return deserializeCart(raw, SECRET);
   }
 
   async write(cart: Cart): Promise<void> {
-    this.cart = clone(cart);
+    const store = await cookies();
+    store.set(CART_COOKIE_NAME, serializeCart(cart, SECRET), {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: MAX_AGE,
+    });
   }
 
   async clear(): Promise<void> {
-    this.cart = emptyCart();
+    const store = await cookies();
+    store.set(CART_COOKIE_NAME, serializeCart(EMPTY_CART, SECRET), {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 0,
+    });
   }
 }
