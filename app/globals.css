@@ -49,6 +49,15 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 /* Base: the void renders dark by default; reduced-motion safe (no opacity:0 anywhere). */
 html {
   background-color: var(--color-ink);
