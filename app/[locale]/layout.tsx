@@ -21,6 +21,7 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Common' });
   return {
+    metadataBase: new URL('https://vanta.example.com'),
     title: t('brandName'),
     description: t('tagline'),
     alternates: {
