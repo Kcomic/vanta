@@ -30,6 +30,7 @@
     "logout": "ออกจากระบบ",
     "switchToThai": "ไทย",
     "switchToEnglish": "EN",
+    "currentLanguage": "ภาษาปัจจุบัน",
     "motionToggle": "ลดการเคลื่อนไหว"
   },
   "Home": {
