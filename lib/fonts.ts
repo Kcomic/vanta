@@ -6,7 +6,7 @@ import { GeistMono } from 'geist/font/mono';
 /** Latin display — Clash Display (self-hosted variable woff2). ALL-CAPS + tight tracking applied via :lang(en) .display in globals.css. */
 const clashDisplay = localFont({
   src: '../public/fonts/ClashDisplay-Variable.woff2',
-  variable: '--font-display-en',
+  variable: '--font-clash-next',
   display: 'swap',
   weight: '200 700',
 });
@@ -33,7 +33,7 @@ const ibmPlexSansThai = IBM_Plex_Sans_Thai({
  * these are aliased to --font-body and --font-mono in globals.css.
  */
 export const fontClassNames: string = [
-  clashDisplay.variable, // --font-display-en
+  clashDisplay.variable, // --font-clash-next (internal alias; --font-display-en stays 'Clash Display' from @theme)
   kanit.variable, // --font-display-th
   GeistSans.variable, // --font-geist-sans -> aliased to --font-body in globals.css
   ibmPlexSansThai.variable, // --font-body-th

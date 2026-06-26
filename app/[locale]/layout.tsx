@@ -29,7 +29,6 @@ export default async function LocaleLayout({
     <NextIntlClientProvider locale={locale} messages={messages}>
       {/* Sync the document language so :lang(en)/:lang(th) headline tokens apply. */}
       <script
-        // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{
           __html: `document.documentElement.lang=${JSON.stringify(locale)};document.documentElement.dir="ltr";`,
         }}

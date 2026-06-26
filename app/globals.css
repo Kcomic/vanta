@@ -1,5 +1,15 @@
 @import 'tailwindcss';
 
+/* Canonical @font-face for Clash Display so the 'Clash Display' family name resolves
+   in computed styles (Next.js localFont generates an internal alias; this ensures the
+   spec-checked name works at both type-level and Playwright assertion level). */
+@font-face {
+  font-family: 'Clash Display';
+  src: url('/fonts/ClashDisplay-Variable.woff2') format('woff2-variations');
+  font-weight: 200 700;
+  font-display: swap;
+}
+
 @theme {
   --color-ink: #0a0a0a;
   --color-paper: #f5f4ef;
