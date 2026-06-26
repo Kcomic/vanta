@@ -23,24 +23,37 @@ async function loadVariants(
   return map;
 }
 
+/** Returns true when reconciled cart differs from what was read (items or quantities changed). */
+function cartChanged(before: Cart, after: Cart): boolean {
+  if (before.items.length !== after.items.length) return true;
+  const afterMap = new Map(after.items.map((i) => [i.variantId, i.quantity]));
+  return before.items.some((i) => afterMap.get(i.variantId) !== i.quantity);
+}
+
 async function reconcileAndPersist(
   items: CartItem[],
   store: typeof cartStore,
   productRepo: typeof products,
+  original?: Cart,
 ): Promise<Cart> {
   const variantsById = await loadVariants(items, productRepo);
   const next = reconcileCart(items, variantsById, new Date().toISOString());
-  await store.write(next);
+  // Only write back if the cart actually changed — avoids churning updatedAt on
+  // every RSC read when nothing was reconciled away.
+  if (!original || cartChanged(original, next)) {
+    await store.write(next);
+  }
   return next;
 }
 
 export const cartService: CartService = {
   async getCart() {
     const current = await cartStore.read();
-    return reconcileAndPersist(current.items, cartStore, products);
+    return reconcileAndPersist(current.items, cartStore, products, current);
   },
 
   async addItem(variantId, quantity) {
+    // NOTE: real backend serializes this in a DB transaction; mock cookie store is single-request.
     if (quantity <= 0) return this.getCart();
     const variant = await products.getVariantById(variantId);
     if (!variant || variant.stock <= 0) return this.getCart();

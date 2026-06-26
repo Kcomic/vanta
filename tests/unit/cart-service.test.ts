@@ -169,4 +169,22 @@ describe('cartService — edge cases', () => {
       expect(cart.itemCount).toBe(0);
     });
   });
+
+  describe('G2 — updateQuantity clamps to live stock at reconcile', () => {
+    it('updateQuantity(id, 99) on a variant with stock 3 clamps to 3', async () => {
+      // variantA has stock 10 by default; reset to 3 for this test
+      variantA.stock = 3;
+      storedCartRef.current = {
+        items: [{ variantId: variantA.id, quantity: 1 }],
+        itemCount: 1,
+        subtotal: { amount: 199000, currency: 'THB' },
+        updatedAt: '2026-06-27T00:00:00.000Z',
+      };
+      const cart = await cartService.updateQuantity(variantA.id, 99);
+      expect(cart.items).toEqual([{ variantId: variantA.id, quantity: 3 }]);
+      expect(cart.itemCount).toBe(3);
+      // subtotal must reflect clamped quantity: 3 × 199_000 = 597_000 satang
+      expect(cart.subtotal.amount).toBe(199000 * 3);
+    });
+  });
 });
