@@ -1,21 +1,22 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('bilingual shell renders at /en and /th', () => {
-  test('/en renders the shell with lang="en", EN headline copy, and Clash Display font', async ({
+  test('/en renders the shell with lang="en", EN hero section, and Clash Display font', async ({
     page,
   }) => {
     await page.goto('/en');
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 
-    // Brand + tagline in the intro paragraph.
-    const brandTagline = page.getByTestId('brand-tagline');
-    await expect(brandTagline).toContainText('VANTA®');
-    await expect(brandTagline).toContainText('Bangkok-born. Globally worn.');
+    // Brand lockup in the sticky Header.
+    await expect(page.getByTestId('brand')).toContainText('VANTA');
 
-    // Hero headline renders the EN copy.
+    // Hero section is present.
+    await expect(page.getByTestId('hero')).toBeVisible();
+
+    // Hero headline renders with the correct aria-label (from home.heroHeadline).
     const heroHeadline = page.getByTestId('hero-headline');
-    await expect(heroHeadline).toHaveAttribute('aria-label', 'MATERIALIZE FROM THE VOID');
+    await expect(heroHeadline).toHaveAttribute('aria-label', 'VANTA');
 
     // :lang(en) .display applies Clash Display.
     const family = await heroHeadline.evaluate((el) => getComputedStyle(el).fontFamily);
@@ -25,25 +26,26 @@ test.describe('bilingual shell renders at /en and /th', () => {
     const transform = await heroHeadline.evaluate((el) => getComputedStyle(el).textTransform);
     expect(transform).toBe('uppercase');
 
-    // Featured product list renders product titles.
+    // Featured product list renders product cards.
     await expect(page.getByTestId('featured-list')).toBeVisible();
   });
 
-  test('/th renders the shell with lang="th", Thai headline copy, and Kanit font (no all-caps)', async ({
+  test('/th renders the shell with lang="th", Thai hero section, and Kanit font (no all-caps)', async ({
     page,
   }) => {
     await page.goto('/th');
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'th');
 
-    // Brand + tagline in the intro paragraph (Thai tagline).
-    const brandTagline = page.getByTestId('brand-tagline');
-    await expect(brandTagline).toContainText('VANTA®');
-    await expect(brandTagline).toContainText('เกิดที่กรุงเทพฯ ใส่ได้ทั่วโลก');
+    // Brand lockup in the sticky Header (same brand name in both locales).
+    await expect(page.getByTestId('brand')).toContainText('VANTA');
 
-    // Hero headline renders the Thai copy.
+    // Hero section is present.
+    await expect(page.getByTestId('hero')).toBeVisible();
+
+    // Hero headline renders with the correct aria-label (home.heroHeadline in th locale).
     const heroHeadline = page.getByTestId('hero-headline');
-    await expect(heroHeadline).toHaveAttribute('aria-label', 'ปรากฏกายจากความว่างเปล่า');
+    await expect(heroHeadline).toHaveAttribute('aria-label', 'VANTA');
 
     // :lang(th) .display applies Kanit.
     const family = await heroHeadline.evaluate((el) => getComputedStyle(el).fontFamily);
@@ -53,7 +55,7 @@ test.describe('bilingual shell renders at /en and /th', () => {
     const transform = await heroHeadline.evaluate((el) => getComputedStyle(el).textTransform);
     expect(transform).toBe('none');
 
-    // Featured product list renders product titles in Thai.
+    // Featured product list renders product cards in Thai locale.
     await expect(page.getByTestId('featured-list')).toBeVisible();
   });
 
