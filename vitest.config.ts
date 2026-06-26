@@ -33,6 +33,15 @@ export default defineConfig({
       'geist/font/mono': fileURLToPath(
         new URL('./tests/__mocks__/geist-font-mono.ts', import.meta.url),
       ),
+      // next/navigation is imported by next-intl's ESM bundle (createNavigation).
+      // next-intl/navigation is stub-resolved to avoid importing next/navigation
+      // in the Vitest node environment (no Next.js runtime available).
+      'next/navigation': fileURLToPath(
+        new URL('./tests/__mocks__/next-navigation.ts', import.meta.url),
+      ),
+      'next-intl/navigation': fileURLToPath(
+        new URL('./tests/__mocks__/next-intl-navigation.ts', import.meta.url),
+      ),
     },
   },
 });
