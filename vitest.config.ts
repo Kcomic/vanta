@@ -1,7 +1,14 @@
 import { defineConfig } from 'vitest/config';
+// @vitejs/plugin-react ships its own vite peer; vitest bundles a separate vite copy.
+// The Plugin<any> type is structurally identical at runtime — the tsc error is a
+// phantom type-only mismatch from the duplicate vite installs.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  plugins: [react() as any],
   test: {
     environment: 'node',
     include: ['tests/unit/**/*.test.ts', 'tests/unit/**/*.test.tsx'],
