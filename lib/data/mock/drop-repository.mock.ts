@@ -21,9 +21,12 @@ export class MockDropRepository implements DropRepository {
   }
 
   async getActive(now: Date): Promise<Drop | null> {
-    const active = this.drops.find(
-      (d) => new Date(d.earlyAccessAt) <= now && now < new Date(d.endAt),
-    );
-    return active ? clone(active) : null;
+    const nowMs = now.getTime();
+    // Return the drop whose window contains now, else the soonest upcoming drop
+    // (not-yet-ended), else null — so demos always have a drop to count down to.
+    const [first = null] = this.drops
+      .filter((d) => nowMs < Date.parse(d.endAt))
+      .sort((a, b) => Date.parse(a.earlyAccessAt) - Date.parse(b.earlyAccessAt));
+    return first ? clone(first) : null;
   }
 }

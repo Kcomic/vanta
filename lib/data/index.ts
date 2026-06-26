@@ -5,4 +5,4 @@ import { mockRepositories } from './mock';
 export const repositories: Repositories = mockRepositories;
 
 // Convenience named exports (so callers can `import { products } from '@/lib/data'`):
-export const { products, collections, orders, users, cart } = repositories;
+export const { products, collections, orders, users, cart, drops } = repositories;
