@@ -20,9 +20,11 @@ export default defineConfig({
     },
     {
       name: 'reduced-motion',
-      use: { ...devices['Desktop Chrome'], colorScheme: 'dark' },
-      // Reduced-motion is forced per-test via test.use({ ... }) in reduced-motion specs;
-      // this project exists so a reduced-motion run is selectable: `npx playwright test --project=reduced-motion`.
+      use: {
+        ...devices['Desktop Chrome'],
+        colorScheme: 'dark',
+        contextOptions: { reducedMotion: 'reduce' },
+      },
     },
   ],
   webServer: {
