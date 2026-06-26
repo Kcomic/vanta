@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Product, Locale, Availability, Money } from '@/lib/domain';
-import { formatMoney } from '@/lib/format/money';
 import { CARD_ROLLUP_ORDER } from '@/lib/services/availability';
+import { Money as MoneyComponent } from '@/components/ui/Money';
 import { Link } from '@/lib/i18n/navigation';
 import { useMotionCapability } from '@/lib/motion/capability';
 
@@ -157,11 +157,13 @@ export function ProductCard({
 
         <div className="flex flex-col gap-1 p-3">
           <h3 className="display text-sm leading-tight text-paper">{title}</h3>
-          <div className="flex items-baseline gap-2 font-[family-name:var(--font-mono)] text-paper">
-            <span className="text-sm">{formatMoney(card.fromPrice, locale)}</span>
+          <div className="flex items-baseline gap-2 text-paper">
+            <span className="text-sm">
+              <MoneyComponent value={card.fromPrice} locale={locale} />
+            </span>
             {onSale ? (
               <span className="text-xs text-smoke-500 line-through">
-                {formatMoney(card.compareAtFromPrice!, locale)}
+                <MoneyComponent value={card.compareAtFromPrice!} locale={locale} />
               </span>
             ) : null}
           </div>
