@@ -4,10 +4,12 @@ import { Link } from '@/lib/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useCartDrawer } from '@/components/cart/CartDrawerContext';
 import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
+import { useCartCount } from '@/lib/store/cart-store';
 
 export function Header(): React.JSX.Element {
   const t = useTranslations('Nav');
   const { open } = useCartDrawer();
+  const count = useCartCount();
 
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between border-b border-smoke-700 bg-ink px-6 py-4 text-paper">
@@ -42,7 +44,7 @@ export function Header(): React.JSX.Element {
           className="rounded-full border border-paper px-3 py-1 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime"
           aria-label={t('cart')}
         >
-          {t('cart')} (<span data-testid="cart-count-value">0</span>)
+          {t('cart')} (<span data-testid="cart-count-value">{count}</span>)
         </button>
       </nav>
     </header>
