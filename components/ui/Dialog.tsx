@@ -1,31 +1,88 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 const FOCUSABLE =
   'a[href],button:not([disabled]),textarea,input,select,[tabindex]:not([tabindex="-1"])';
+
+// ─── Scroll-lock counter ──────────────────────────────────────────────────────
+// Module-level so stacked dialogs share one counter and one captured overflow.
+
+let _lockCount = 0;
+let _originalOverflow = '';
+
+function acquireScrollLock() {
+  if (_lockCount === 0) {
+    _originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+  }
+  _lockCount++;
+}
+
+function releaseScrollLock() {
+  _lockCount = Math.max(0, _lockCount - 1);
+  if (_lockCount === 0) {
+    document.body.style.overflow = _originalOverflow;
+    _originalOverflow = '';
+  }
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export function Dialog({
   open,
   onClose,
   labelledById,
+  ariaLabel,
   children,
 }: {
   open: boolean;
   onClose: () => void;
   labelledById?: string;
+  ariaLabel?: string;
   children: React.ReactNode;
 }): React.JSX.Element | null {
+  // SSR-safety: only render the portal once mounted on the client.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
+  // Keep a stable ref to onClose so the keydown/effect closure never stales.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; });
+
+  // Resolve accessible name ─────────────────────────────────────────────────
+  // Priority: labelledById > ariaLabel > fallback "Dialog" (with dev warning).
+  const hasLabelledBy = Boolean(labelledById);
+  const resolvedAriaLabel =
+    !hasLabelledBy && !ariaLabel
+      ? 'Dialog'
+      : ariaLabel;
+
+  if (!hasLabelledBy && !ariaLabel && process.env.NODE_ENV !== 'production') {
+    console.warn(
+      '[Dialog] No accessible name provided. ' +
+        'Pass `labelledById` pointing to a heading inside the dialog, ' +
+        'or `ariaLabel` for a short description. ' +
+        'Falling back to aria-label="Dialog".',
+    );
+  }
+
+  // Focus / scroll-lock / keydown effect ───────────────────────────────────
+  // Runs when `open` OR `mounted` changes.
+  // Guard: only activate when both `open` and `mounted` are true so that
+  // panelRef.current is guaranteed to exist (portal has rendered).
   useEffect(() => {
-    if (!open) return;
+    if (!open || !mounted) return;
+
+    // Save previously focused element before moving focus.
     previouslyFocused.current = document.activeElement as HTMLElement | null;
 
-    // Scroll lock.
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    // Scroll lock — counter-based so nested dialogs stay locked correctly.
+    acquireScrollLock();
 
     // Initial focus into the panel.
     const panel = panelRef.current;
@@ -35,53 +92,68 @@ export function Dialog({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== 'Tab' || !panel) return;
+
       const nodes = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE));
+
       if (nodes.length === 0) {
+        // No focusable children — keep focus on the panel itself.
         e.preventDefault();
+        panel.focus();
         return;
       }
-      // nodes.length > 0 is guaranteed by the early-return above.
+
       const firstEl = nodes[0]!;
       const lastEl = nodes[nodes.length - 1]!;
       const active = document.activeElement;
-      if (e.shiftKey && active === firstEl) {
-        e.preventDefault();
-        lastEl.focus();
-      } else if (!e.shiftKey && active === lastEl) {
-        e.preventDefault();
-        firstEl.focus();
+
+      // If focus escaped the panel entirely, pull it back to the first element.
+      const insidePanel = panel.contains(active);
+
+      if (e.shiftKey) {
+        if (!insidePanel || active === firstEl) {
+          e.preventDefault();
+          lastEl.focus();
+        }
+      } else {
+        if (!insidePanel || active === lastEl) {
+          e.preventDefault();
+          firstEl.focus();
+        }
       }
     };
 
     document.addEventListener('keydown', onKeyDown, true);
+
     return () => {
       document.removeEventListener('keydown', onKeyDown, true);
-      document.body.style.overflow = prevOverflow;
-      // Focus return.
+      releaseScrollLock();
+      // Return focus to whatever was focused before the dialog opened.
       previouslyFocused.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open, mounted]); // onClose intentionally omitted — read via onCloseRef
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  const panel = (
     <div className="fixed inset-0 z-50 flex justify-end">
       {/* Backdrop: click closes. */}
       <button
         type="button"
         aria-label="Close"
-        onClick={onClose}
+        onClick={() => onCloseRef.current()}
         className="absolute inset-0 bg-ink/70 backdrop-blur-sm"
       />
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={labelledById}
+        {...(hasLabelledBy
+          ? { 'aria-labelledby': labelledById }
+          : { 'aria-label': resolvedAriaLabel })}
         tabIndex={-1}
         className="relative h-full w-full max-w-md bg-paper text-ink shadow-2xl focus:outline-none"
       >
@@ -89,4 +161,6 @@ export function Dialog({
       </div>
     </div>
   );
+
+  return createPortal(panel, document.body);
 }

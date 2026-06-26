@@ -24,14 +24,36 @@ const POINTER_QUERY = '(pointer: fine)';
 
 type Connection = { saveData?: boolean } | undefined;
 
+// Stable server snapshot => SSR + first client paint render the visible-by-default
+// (static) path; content is NEVER stranded at opacity:0 before hydration.
+const SERVER_SIGNALS: MotionSignals = {
+  prefersNoPreference: false,
+  pointerFine: false,
+  saveData: true,
+};
+
+// Cached client snapshot — useSyncExternalStore requires getSnapshot to return
+// the SAME reference when the underlying data has not changed.
+let _cachedSignals: MotionSignals = SERVER_SIGNALS;
+
 function readSignals(): MotionSignals {
   if (typeof window === 'undefined') return SERVER_SIGNALS;
   const connection = (navigator as Navigator & { connection?: Connection }).connection;
-  return {
-    prefersNoPreference: window.matchMedia(REDUCED_QUERY).matches,
-    pointerFine: window.matchMedia(POINTER_QUERY).matches,
-    saveData: connection?.saveData === true,
-  };
+  const prefersNoPreference = window.matchMedia(REDUCED_QUERY).matches;
+  const pointerFine = window.matchMedia(POINTER_QUERY).matches;
+  const saveData = connection?.saveData === true;
+
+  // Return cached object when values are identical — required by useSyncExternalStore.
+  if (
+    _cachedSignals.prefersNoPreference === prefersNoPreference &&
+    _cachedSignals.pointerFine === pointerFine &&
+    _cachedSignals.saveData === saveData
+  ) {
+    return _cachedSignals;
+  }
+
+  _cachedSignals = { prefersNoPreference, pointerFine, saveData };
+  return _cachedSignals;
 }
 
 function subscribe(onChange: () => void): () => void {
@@ -45,14 +67,6 @@ function subscribe(onChange: () => void): () => void {
     pointer.removeEventListener('change', onChange);
   };
 }
-
-// Stable server snapshot => SSR + first client paint render the visible-by-default
-// (static) path; content is NEVER stranded at opacity:0 before hydration.
-const SERVER_SIGNALS: MotionSignals = {
-  prefersNoPreference: false,
-  pointerFine: false,
-  saveData: true,
-};
 
 /** The single gate every heavy effect consults. Bare boolean. Re-renders on media change. */
 export function useMotionCapability(): boolean {
