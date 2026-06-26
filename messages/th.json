@@ -113,5 +113,19 @@
     "noOrders": "ยังไม่มีคำสั่งซื้อ",
     "viewOrder": "ดูคำสั่งซื้อ",
     "defaultAddress": "ที่อยู่หลัก"
+  },
+  "cart": {
+    "title": "ตะกร้า",
+    "empty": "ตะกร้าของคุณว่างเปล่า",
+    "subtotal": "ยอดรวม",
+    "checkout": "ชำระเงิน",
+    "viewCart": "ดูตะกร้า",
+    "remove": "นำออก",
+    "decrease": "ลดจำนวน",
+    "increase": "เพิ่มจำนวน",
+    "quantityLabel": "จำนวน",
+    "close": "ปิดตะกร้า",
+    "addedAnnouncement": "เพิ่ม {title} ลงตะกร้าแล้ว ตอนนี้ตะกร้ามี {count} รายการ",
+    "openCart": "เปิดตะกร้า {count} รายการ"
   }
 }

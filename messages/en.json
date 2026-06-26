@@ -113,5 +113,19 @@
     "noOrders": "No orders yet.",
     "viewOrder": "View order",
     "defaultAddress": "Default address"
+  },
+  "cart": {
+    "title": "Cart",
+    "empty": "Your cart is empty.",
+    "subtotal": "Subtotal",
+    "checkout": "Checkout",
+    "viewCart": "View cart",
+    "remove": "Remove",
+    "decrease": "Decrease quantity",
+    "increase": "Increase quantity",
+    "quantityLabel": "Quantity",
+    "close": "Close cart",
+    "addedAnnouncement": "{title} added to cart. Cart now has {count} items.",
+    "openCart": "Open cart, {count} items"
   }
 }
