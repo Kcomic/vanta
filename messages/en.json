@@ -127,5 +127,30 @@
     "close": "Close cart",
     "addedAnnouncement": "{title} added to cart. Cart now has {count} items.",
     "openCart": "Open cart, {count} items"
+  },
+  "home": {
+    "heroKicker": "BANGKOK / OUT OF THE VOID",
+    "heroHeadline": "VANTA",
+    "heroSub": "Streetwear that materializes out of black.",
+    "ctaShopDrop": "SHOP THE DROP",
+    "ctaExplore": "EXPLORE",
+    "featuredTitle": "FEATURED",
+    "lookbookTeaserTitle": "THE LOOKBOOK",
+    "lookbookTeaserCta": "VIEW EDITORIAL"
+  },
+  "drop": {
+    "label": "LIVE DROP",
+    "comingSoon": "DROPS IN",
+    "earlyAccessLocked": "MEMBER EARLY ACCESS",
+    "earlyAccessUnlocked": "EARLY ACCESS UNLOCKED",
+    "live": "LIVE NOW",
+    "lowStock": "ONLY {count} LEFT",
+    "soldOut": "SOLD OUT",
+    "notifyMe": "NOTIFY ME",
+    "unlockHint": "Log in as a member to unlock early access.",
+    "releaseAtLabel": "Public release",
+    "countdownDone": "LIVE",
+    "srCountdown": "{days}d {hours}h {minutes}m {seconds}s until live",
+    "units": { "days": "D", "hours": "H", "minutes": "M", "seconds": "S" }
   }
 }

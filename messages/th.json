@@ -127,5 +127,30 @@
     "close": "ปิดตะกร้า",
     "addedAnnouncement": "เพิ่ม {title} ลงตะกร้าแล้ว ตอนนี้ตะกร้ามี {count} รายการ",
     "openCart": "เปิดตะกร้า {count} รายการ"
+  },
+  "home": {
+    "heroKicker": "กรุงเทพฯ / ออกมาจากความว่างเปล่า",
+    "heroHeadline": "VANTA",
+    "heroSub": "สตรีทแวร์ที่ปรากฏขึ้นจากความมืด",
+    "ctaShopDrop": "ช้อปดรอป",
+    "ctaExplore": "สำรวจ",
+    "featuredTitle": "สินค้าแนะนำ",
+    "lookbookTeaserTitle": "ลุคบุ๊ค",
+    "lookbookTeaserCta": "ดูเอดิทอเรียล"
+  },
+  "drop": {
+    "label": "LIVE DROP",
+    "comingSoon": "เปิดตัวใน",
+    "earlyAccessLocked": "เข้าก่อนสำหรับสมาชิก",
+    "earlyAccessUnlocked": "ปลดล็อกการเข้าก่อนแล้ว",
+    "live": "กำลังไลฟ์",
+    "lowStock": "เหลือเพียง {count} ชิ้น",
+    "soldOut": "สินค้าหมด",
+    "notifyMe": "แจ้งเตือนฉัน",
+    "unlockHint": "เข้าสู่ระบบในฐานะสมาชิกเพื่อปลดล็อกการเข้าก่อน",
+    "releaseAtLabel": "เปิดจำหน่ายทั่วไป",
+    "countdownDone": "LIVE",
+    "srCountdown": "อีก {days} วัน {hours} ชม. {minutes} นาที {seconds} วินาที จึงจะไลฟ์",
+    "units": { "days": "วัน", "hours": "ชม.", "minutes": "นาที", "seconds": "วิ" }
   }
 }
