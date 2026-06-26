@@ -32,13 +32,24 @@ export function CartPageClient({
     setLineViews(lineViews);
   }, [hydrate, initialCart, lineViews, setLineViews]);
 
+  // Build price lookup BEFORE useOptimistic so the reducer can close over it.
+  const viewById = new Map(lineViews.map((v) => [v.variantId, v]));
+
+  // Optimistic mirror of the authoritative cart for in-flight qty/remove.
+  // Recomputes subtotal from line unit prices so the aside stays accurate
+  // during the server round-trip (B2).
   const [optimisticCart, applyOptimistic] = useOptimistic(
     cart,
     (state: Cart, action: { variantId: string; quantity: number }): Cart => {
       const items = state.items
         .map((i) => (i.variantId === action.variantId ? { ...i, quantity: action.quantity } : i))
         .filter((i) => i.quantity > 0);
-      return { ...state, items, itemCount: items.reduce((n, i) => n + i.quantity, 0) };
+      const itemCount = items.reduce((n, i) => n + i.quantity, 0);
+      const subtotalAmount = items.reduce(
+        (sum, i) => sum + (viewById.get(i.variantId)?.unitPrice.amount ?? 0) * i.quantity,
+        0,
+      );
+      return { ...state, items, itemCount, subtotal: { amount: subtotalAmount, currency: 'THB' } };
     },
   );
 
@@ -55,8 +66,6 @@ export function CartPageClient({
       replaceFromServer(await removeFromCart(variantId));
     });
   }
-
-  const viewById = new Map(lineViews.map((v) => [v.variantId, v]));
   const rows: CartLineItemView[] = optimisticCart.items
     .map((item) => {
       const snapshot = viewById.get(item.variantId);
