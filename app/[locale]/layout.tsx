@@ -1,12 +1,33 @@
 import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
-import { getMessages, setRequestLocale } from 'next-intl/server';
+import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { routing } from '@/lib/i18n/routing';
 import { fontClassNames } from '@/lib/fonts';
+import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Common' });
+  return {
+    title: t('brandName'),
+    description: t('tagline'),
+    alternates: {
+      languages: {
+        en: '/en',
+        th: '/th',
+      },
+    },
+  };
 }
 
 type Props = {
@@ -33,6 +54,7 @@ export default async function LocaleLayout({ children, params }: Props) {
     <html lang={locale} dir="ltr" className={fontClassNames} suppressHydrationWarning>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
+          <LocaleSwitcher />
           {children}
         </NextIntlClientProvider>
       </body>
