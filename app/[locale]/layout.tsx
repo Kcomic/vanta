@@ -5,7 +5,9 @@ import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { routing } from '@/lib/i18n/routing';
 import { fontClassNames } from '@/lib/fonts';
-import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
+import { CartDrawerProvider } from '@/components/cart/CartDrawerContext';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -54,8 +56,11 @@ export default async function LocaleLayout({ children, params }: Props) {
     <html lang={locale} dir="ltr" className={fontClassNames} suppressHydrationWarning>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <LocaleSwitcher />
-          {children}
+          <CartDrawerProvider>
+            <Header />
+            <main id="main-content">{children}</main>
+            <Footer />
+          </CartDrawerProvider>
         </NextIntlClientProvider>
       </body>
     </html>
