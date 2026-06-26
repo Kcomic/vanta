@@ -4,7 +4,7 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
-import { describe, it, expect, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { createRoot } from 'react-dom/client';
 import { act } from 'react';
 import React from 'react';
@@ -13,6 +13,11 @@ import { Dialog } from '@/components/ui/Dialog';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 type Root = ReturnType<typeof createRoot>;
+
+// Track all roots so we can unmount them in afterEach, which triggers React
+// cleanup effects (scroll-lock release, focus return, event listener removal).
+const roots: Root[] = [];
+const containers: HTMLElement[] = [];
 
 function renderDialog(
   ui: React.ReactElement,
@@ -23,13 +28,44 @@ function renderDialog(
   act(() => {
     root.render(ui);
   });
+  roots.push(root);
+  containers.push(container);
   return { container, root };
 }
 
+// Because Dialog uses createPortal(…, document.body), the role="dialog" element
+// lives in document.body, not in `container`. Helper to find it anywhere in body.
+function queryDialog(): Element | null {
+  return document.body.querySelector('[role="dialog"]');
+}
+
+function queryBackdrop(): HTMLButtonElement | null {
+  return document.body.querySelector('button[aria-label="Close"]');
+}
+
+beforeEach(() => {
+  document.body.style.overflow = '';
+});
+
 afterEach(() => {
-  // Unmount all roots and clean body
-  document.body.innerHTML = '';
-  // Reset scroll lock
+  // Unmount all tracked roots — this triggers React cleanup effects (scroll-lock
+  // release, keydown listener removal, focus return). Must happen BEFORE clearing
+  // the DOM so that effect cleanups can still query the DOM.
+  act(() => {
+    for (const root of roots) {
+      root.unmount();
+    }
+  });
+  roots.length = 0;
+  containers.length = 0;
+
+  // Clear remaining DOM nodes appended directly to body (portals, temp elements).
+  // We use removeChild rather than innerHTML to avoid the XSS risk of innerHTML
+  // and to preserve nodes that React already cleaned up above.
+  while (document.body.firstChild) {
+    document.body.removeChild(document.body.firstChild);
+  }
+
   document.body.style.overflow = '';
 });
 
@@ -37,60 +73,73 @@ afterEach(() => {
 
 describe('Dialog — rendering', () => {
   it('renders nothing when open=false', () => {
-    const { container } = renderDialog(
+    renderDialog(
       <Dialog open={false} onClose={() => {}}>
         <p>Hidden</p>
       </Dialog>,
     );
-    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(queryDialog()).toBeNull();
   });
 
   it('renders the panel when open=true', () => {
-    const { container } = renderDialog(
+    renderDialog(
       <Dialog open={true} onClose={() => {}}>
         <p>Content</p>
       </Dialog>,
     );
-    expect(container.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(queryDialog()).not.toBeNull();
   });
 
   it('panel has aria-modal="true"', () => {
-    const { container } = renderDialog(
+    renderDialog(
       <Dialog open={true} onClose={() => {}}>
         <p>Content</p>
       </Dialog>,
     );
-    const panel = container.querySelector('[role="dialog"]');
+    const panel = queryDialog();
     expect(panel?.getAttribute('aria-modal')).toBe('true');
   });
 
   it('panel has aria-labelledby when labelledById is provided', () => {
-    const { container } = renderDialog(
+    renderDialog(
       <Dialog open={true} onClose={() => {}} labelledById="dialog-title">
         <h2 id="dialog-title">Cart</h2>
       </Dialog>,
     );
-    const panel = container.querySelector('[role="dialog"]');
+    const panel = queryDialog();
     expect(panel?.getAttribute('aria-labelledby')).toBe('dialog-title');
   });
 
-  it('panel has no aria-labelledby when labelledById is omitted', () => {
-    const { container } = renderDialog(
+  it('panel has fallback aria-label="Dialog" when no name prop is provided', () => {
+    renderDialog(
       <Dialog open={true} onClose={() => {}}>
         <p>Content</p>
       </Dialog>,
     );
-    const panel = container.querySelector('[role="dialog"]');
+    const panel = queryDialog();
+    // Must never be nameless — fallback label applied
+    expect(panel?.getAttribute('aria-label')).toBe('Dialog');
+    expect(panel?.getAttribute('aria-labelledby')).toBeNull();
+  });
+
+  it('panel uses ariaLabel prop when labelledById is omitted', () => {
+    renderDialog(
+      <Dialog open={true} onClose={() => {}} ariaLabel="Size guide">
+        <p>Content</p>
+      </Dialog>,
+    );
+    const panel = queryDialog();
+    expect(panel?.getAttribute('aria-label')).toBe('Size guide');
     expect(panel?.getAttribute('aria-labelledby')).toBeNull();
   });
 
   it('renders children inside the panel', () => {
-    const { container } = renderDialog(
+    renderDialog(
       <Dialog open={true} onClose={() => {}}>
         <span data-testid="inner">Hello</span>
       </Dialog>,
     );
-    expect(container.querySelector('[data-testid="inner"]')).not.toBeNull();
+    expect(document.body.querySelector('[data-testid="inner"]')).not.toBeNull();
   });
 });
 
@@ -110,9 +159,9 @@ describe('Dialog — body scroll lock', () => {
     const originalOverflow = 'auto';
     document.body.style.overflow = originalOverflow;
 
-    let onClose = () => {};
+    const onClose = () => {};
     const { root } = renderDialog(
-      <Dialog open={true} onClose={() => {}}>
+      <Dialog open={true} onClose={onClose}>
         <button>X</button>
       </Dialog>,
     );
@@ -140,6 +189,49 @@ describe('Dialog — body scroll lock', () => {
     );
     expect(document.body.style.overflow).not.toBe('hidden');
   });
+
+  it('two dialogs open then close in any order restores the original overflow exactly once', () => {
+    const originalOverflow = 'scroll';
+    document.body.style.overflow = originalOverflow;
+
+    const container1 = document.createElement('div');
+    document.body.appendChild(container1);
+    const root1 = createRoot(container1);
+    roots.push(root1);
+    containers.push(container1);
+
+    const container2 = document.createElement('div');
+    document.body.appendChild(container2);
+    const root2 = createRoot(container2);
+    roots.push(root2);
+    containers.push(container2);
+
+    // Open both dialogs
+    act(() => {
+      root1.render(<Dialog open={true} onClose={() => {}}><button>A</button></Dialog>);
+    });
+    act(() => {
+      root2.render(<Dialog open={true} onClose={() => {}}><button>B</button></Dialog>);
+    });
+
+    expect(document.body.style.overflow).toBe('hidden');
+
+    // Close first dialog
+    act(() => {
+      root1.render(<Dialog open={false} onClose={() => {}}><button>A</button></Dialog>);
+    });
+
+    // Second is still open — overflow must stay hidden
+    expect(document.body.style.overflow).toBe('hidden');
+
+    // Close second dialog
+    act(() => {
+      root2.render(<Dialog open={false} onClose={() => {}}><button>B</button></Dialog>);
+    });
+
+    // Now both closed — overflow restored to original exactly
+    expect(document.body.style.overflow).toBe(originalOverflow);
+  });
 });
 
 // ─── Focus management ─────────────────────────────────────────────────────────
@@ -154,9 +246,12 @@ describe('Dialog — focus management', () => {
 
     const container = document.createElement('div');
     document.body.appendChild(container);
+    const root = createRoot(container);
+    roots.push(root);
+    containers.push(container);
 
     act(() => {
-      createRoot(container).render(
+      root.render(
         <Dialog open={true} onClose={() => {}}>
           <button id="first-focusable">Close</button>
         </Dialog>,
@@ -177,6 +272,8 @@ describe('Dialog — focus management', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const root = createRoot(container);
+    roots.push(root);
+    containers.push(container);
 
     // Open
     act(() => {
@@ -202,18 +299,61 @@ describe('Dialog — focus management', () => {
   it('falls back to focusing the panel itself when no focusable child exists', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
+    const root = createRoot(container);
+    roots.push(root);
+    containers.push(container);
 
     act(() => {
-      createRoot(container).render(
+      root.render(
         <Dialog open={true} onClose={() => {}}>
           <p>No focusable elements here</p>
         </Dialog>,
       );
     });
 
-    const panel = container.querySelector('[role="dialog"]');
+    const panel = queryDialog();
     // The panel itself (tabIndex=-1) should be focused
     expect(document.activeElement).toBe(panel);
+  });
+
+  it('re-rendering with a new onClose reference does NOT move focus or unlock scroll', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    roots.push(root);
+    containers.push(container);
+
+    // Open with first onClose
+    act(() => {
+      root.render(
+        <Dialog open={true} onClose={() => {}}>
+          <button id="inner-btn">Close</button>
+        </Dialog>,
+      );
+    });
+
+    const innerBtn = document.getElementById('inner-btn') as HTMLElement;
+    // Focus moves into dialog on open
+    expect(document.activeElement).toBe(innerBtn);
+    expect(document.body.style.overflow).toBe('hidden');
+
+    // Move focus somewhere inside the dialog explicitly
+    act(() => { innerBtn.focus(); });
+    expect(document.activeElement).toBe(innerBtn);
+
+    // Re-render with a NEW onClose reference (simulates parent re-render with inline fn)
+    act(() => {
+      root.render(
+        <Dialog open={true} onClose={() => { /* new reference */ }}>
+          <button id="inner-btn">Close</button>
+        </Dialog>,
+      );
+    });
+
+    // Focus must NOT have moved (no premature cleanup/restart)
+    expect(document.activeElement).toBe(innerBtn);
+    // Scroll lock must still be active
+    expect(document.body.style.overflow).toBe('hidden');
   });
 });
 
@@ -261,9 +401,12 @@ describe('Dialog — keyboard: Tab focus trap', () => {
   it('wraps Tab forward from last focusable back to first', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
+    const root = createRoot(container);
+    roots.push(root);
+    containers.push(container);
 
     act(() => {
-      createRoot(container).render(
+      root.render(
         <Dialog open={true} onClose={() => {}}>
           <button id="btn-a">A</button>
           <button id="btn-b">B</button>
@@ -297,9 +440,12 @@ describe('Dialog — keyboard: Tab focus trap', () => {
   it('wraps Shift+Tab backward from first focusable back to last', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
+    const root = createRoot(container);
+    roots.push(root);
+    containers.push(container);
 
     act(() => {
-      createRoot(container).render(
+      root.render(
         <Dialog open={true} onClose={() => {}}>
           <button id="btn-x">X</button>
           <button id="btn-y">Y</button>
@@ -329,6 +475,80 @@ describe('Dialog — keyboard: Tab focus trap', () => {
 
     expect(document.activeElement).toBe(last);
   });
+
+  it('Tab while the panel itself is focused (with children present) moves to first child', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    roots.push(root);
+    containers.push(container);
+
+    act(() => {
+      root.render(
+        <Dialog open={true} onClose={() => {}}>
+          <button id="btn-first">First</button>
+          <button id="btn-second">Second</button>
+        </Dialog>,
+      );
+    });
+
+    const first = document.getElementById('btn-first') as HTMLElement;
+
+    // Move focus outside the panel entirely and Tab → trap must redirect to first.
+    const outsideBtn = document.createElement('button');
+    outsideBtn.textContent = 'Outside';
+    document.body.appendChild(outsideBtn);
+    act(() => { outsideBtn.focus(); });
+    expect(document.activeElement).toBe(outsideBtn);
+
+    act(() => {
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Tab',
+          shiftKey: false,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+
+    // Focus escaped → trap pulls to first focusable inside dialog
+    expect(document.activeElement).toBe(first);
+  });
+
+  it('focus cannot escape: Tab from last wraps to first, Shift+Tab from first wraps to last', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    roots.push(root);
+    containers.push(container);
+
+    act(() => {
+      root.render(
+        <Dialog open={true} onClose={() => {}}>
+          <button id="alpha">Alpha</button>
+          <button id="beta">Beta</button>
+        </Dialog>,
+      );
+    });
+
+    const alpha = document.getElementById('alpha') as HTMLElement;
+    const beta = document.getElementById('beta') as HTMLElement;
+
+    // Tab from last → first
+    act(() => { beta.focus(); });
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: false, bubbles: true, cancelable: true }));
+    });
+    expect(document.activeElement).toBe(alpha);
+
+    // Shift+Tab from first → last
+    act(() => { alpha.focus(); });
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true }));
+    });
+    expect(document.activeElement).toBe(beta);
+  });
 });
 
 // ─── Click-outside / backdrop ─────────────────────────────────────────────────
@@ -336,19 +556,17 @@ describe('Dialog — keyboard: Tab focus trap', () => {
 describe('Dialog — backdrop (click-outside)', () => {
   it('calls onClose when the backdrop button is clicked', () => {
     const onClose = vi.fn();
-    const { container } = renderDialog(
+    renderDialog(
       <Dialog open={true} onClose={onClose}>
         <button>Close</button>
       </Dialog>,
     );
 
-    const backdrop = container.querySelector(
-      'button[aria-label="Close"]',
-    ) as HTMLButtonElement;
+    const backdrop = queryBackdrop();
     expect(backdrop).not.toBeNull();
 
     act(() => {
-      backdrop.click();
+      backdrop!.click();
     });
 
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -364,7 +582,9 @@ describe('Dialog — return type', () => {
         <p>Hidden</p>
       </Dialog>,
     );
-    // Nothing meaningful rendered
+    // Nothing meaningful rendered in container (portal not activated)
     expect(container.children.length).toBe(0);
+    // Nothing in body either (beyond the container itself)
+    expect(queryDialog()).toBeNull();
   });
 });
