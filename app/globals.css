@@ -1,0 +1,47 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-ink: #0a0a0a;
+  --color-paper: #f5f4ef;
+  --color-blaze: #ff3b1f;
+  --color-blaze-on-light: #d62e16; /* AA-safe on paper */
+  --color-lime: #d4ff2e; /* lime-on-dark ONLY */
+  --color-smoke-900: #141414;
+  --color-smoke-700: #2a2a2a;
+  --color-smoke-500: #6b6b6b;
+  --color-smoke-300: #b8b8b8;
+
+  --font-display-en: 'Clash Display', system-ui, sans-serif;
+  --font-display-th: 'Kanit', system-ui, sans-serif;
+  --font-body: 'Geist', 'IBM Plex Sans Thai', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+
+  --spacing: 0.5rem; /* 8pt grid base */
+  --max-w-shell: 1440px;
+}
+
+/* Per-locale headline tokens */
+:lang(en) .display {
+  font-family: var(--font-display-en);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+:lang(th) .display {
+  font-family: var(--font-display-th);
+  text-transform: none;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
+
+/* Base: the void renders dark by default; reduced-motion safe (no opacity:0 anywhere). */
+html {
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+}
