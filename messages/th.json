@@ -1,0 +1,13 @@
+{
+  "Shell": {
+    "brand": "VANTA®",
+    "tagline": "เกิดที่กรุงเทพฯ ใส่ได้ทั่วโลก",
+    "skipToContent": "ข้ามไปยังเนื้อหา",
+    "localeName": "ไทย"
+  },
+  "Locale": {
+    "switchTo": "เปลี่ยนภาษา",
+    "en": "EN",
+    "th": "TH"
+  }
+}

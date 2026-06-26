@@ -1,0 +1,13 @@
+{
+  "Shell": {
+    "brand": "VANTA®",
+    "tagline": "Bangkok-born. Globally worn.",
+    "skipToContent": "Skip to content",
+    "localeName": "English"
+  },
+  "Locale": {
+    "switchTo": "Switch language",
+    "en": "EN",
+    "th": "TH"
+  }
+}
