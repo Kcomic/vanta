@@ -49,6 +49,14 @@ export const CARD_ROLLUP_ORDER: readonly Availability[] = [
  *  - drop && now < releaseAt &&  member/admin    => fall through to buyable states
  *  - 0 < stock <= LOW_STOCK_THRESHOLD            => 'low_stock'
  *  - otherwise                                   => 'live'
+ *
+ * DESIGN NOTE — `endAt` is intentionally NOT consulted here.
+ * The `Availability` union has no "ended" state by design (spec-locked to 5 states:
+ * sold_out | coming_soon | early_access | low_stock | live).
+ * After `releaseAt`, a variant's availability is purely stock-based regardless of
+ * whether the drop event has closed. `drop.endAt` bounds the drop EVENT window and
+ * is consumed by `DropRepository.getActive` (which filters out past-`endAt` drops)
+ * and the UI countdown timer — not by per-variant availability.
  */
 export function deriveAvailability(
   variant: Variant,
