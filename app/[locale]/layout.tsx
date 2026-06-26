@@ -6,6 +6,7 @@ import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server
 import { routing } from '@/lib/i18n/routing';
 import { fontClassNames } from '@/lib/fonts';
 import { CartDrawerProvider } from '@/components/cart/CartDrawerContext';
+import { CartDrawer } from '@/components/cart/CartDrawer';
 import { CartHydrator } from '@/components/cart/CartHydrator';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -68,6 +69,7 @@ export default async function LocaleLayout({ children, params }: Props) {
             <Header />
             <main id="main-content">{children}</main>
             <Footer />
+            <CartDrawer />
           </CartDrawerProvider>
         </NextIntlClientProvider>
       </body>

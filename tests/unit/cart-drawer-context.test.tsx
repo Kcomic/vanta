@@ -65,6 +65,25 @@ afterEach(() => {
 });
 
 // ---------------------------------------------------------------------------
+// Helper — build a minimal CartLineItemView
+// ---------------------------------------------------------------------------
+
+import type { CartLineItemView } from '@/components/cart/CartLineItem';
+
+function makeView(variantId: string, size = 'M'): CartLineItemView {
+  return {
+    variantId,
+    title: { en: `Product ${variantId}`, th: `สินค้า ${variantId}` },
+    size,
+    color: 'Black',
+    unitPrice: { amount: 199000, currency: 'THB' },
+    quantity: 1,
+    imageUrl: '/placeholder.svg',
+    maxStock: 10,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Module shape (these run in any environment — no rendering needed)
 // ---------------------------------------------------------------------------
 
@@ -169,6 +188,61 @@ describe('CartDrawerProvider state', () => {
       expect(runner.snap?.open).toBe(open1);
       expect(runner.snap?.close).toBe(close1);
       expect(runner.snap?.setAnnouncement).toBe(set1);
+    } finally {
+      runner.cleanup();
+    }
+  });
+
+  it('initialises lineViews = []', () => {
+    const runner = makeRunner(true);
+    try {
+      expect(runner.snap?.lineViews).toEqual([]);
+    } finally {
+      runner.cleanup();
+    }
+  });
+
+  it('setLineViews adds new views by variantId', () => {
+    const runner = makeRunner(true);
+    try {
+      runner.dispatch(() => runner.snap!.setLineViews([makeView('var_a')]));
+      expect(runner.snap?.lineViews).toHaveLength(1);
+      expect(runner.snap?.lineViews[0]?.variantId).toBe('var_a');
+    } finally {
+      runner.cleanup();
+    }
+  });
+
+  it('setLineViews merges without duplicating (same variantId updates in place)', () => {
+    const runner = makeRunner(true);
+    try {
+      runner.dispatch(() => runner.snap!.setLineViews([makeView('var_a', 'M')]));
+      runner.dispatch(() => runner.snap!.setLineViews([makeView('var_a', 'L')]));
+      // Still only one entry; size has been updated
+      expect(runner.snap?.lineViews).toHaveLength(1);
+      expect(runner.snap?.lineViews[0]?.size).toBe('L');
+    } finally {
+      runner.cleanup();
+    }
+  });
+
+  it('setLineViews accumulates distinct variantIds', () => {
+    const runner = makeRunner(true);
+    try {
+      runner.dispatch(() => runner.snap!.setLineViews([makeView('var_a')]));
+      runner.dispatch(() => runner.snap!.setLineViews([makeView('var_b')]));
+      expect(runner.snap?.lineViews).toHaveLength(2);
+    } finally {
+      runner.cleanup();
+    }
+  });
+
+  it('setLineViews ref is stable across re-renders (useCallback)', () => {
+    const runner = makeRunner(true);
+    try {
+      const setLineViews1 = runner.snap!.setLineViews;
+      runner.dispatch(() => runner.snap!.setLineViews([makeView('var_a')]));
+      expect(runner.snap?.setLineViews).toBe(setLineViews1);
     } finally {
       runner.cleanup();
     }
