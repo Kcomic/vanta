@@ -6,8 +6,10 @@ import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server
 import { routing } from '@/lib/i18n/routing';
 import { fontClassNames } from '@/lib/fonts';
 import { CartDrawerProvider } from '@/components/cart/CartDrawerContext';
+import { CartHydrator } from '@/components/cart/CartHydrator';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { cartService } from '@/lib/services/cart-service';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -50,6 +52,10 @@ export default async function LocaleLayout({ children, params }: Props) {
   setRequestLocale(locale);
   const messages = await getMessages();
 
+  // Read the server cart via cartService (never cartStore.read directly) so
+  // itemCount + subtotal are always reconciled before the Zustand mirror is seeded.
+  const serverCart = await cartService.getCart();
+
   return (
     // lang + dir set server-side so SSR output carries the correct attributes
     // from the first byte — required for screen readers, SEO, and :lang() CSS selectors.
@@ -58,6 +64,7 @@ export default async function LocaleLayout({ children, params }: Props) {
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <CartDrawerProvider>
+            <CartHydrator serverCart={serverCart} />
             <Header />
             <main id="main-content">{children}</main>
             <Footer />
