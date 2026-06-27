@@ -154,6 +154,13 @@
     "units": { "days": "D", "hours": "H", "minutes": "M", "seconds": "S" }
   },
   "pdp": {
+    "addToCart": "Add to cart",
+    "adding": "Adding…",
+    "selectSize": "Select a size",
+    "colorLabel": "Color",
+    "notifyMe": "Notify me",
+    "onlyNLeft": "Only {count} left",
+    "addedToCart": "Added to cart",
     "sizeFit": {
       "title": "Size & Fit",
       "unitLabel": "Measurement unit",

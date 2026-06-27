@@ -154,6 +154,13 @@
     "units": { "days": "วัน", "hours": "ชม.", "minutes": "นาที", "seconds": "วิ" }
   },
   "pdp": {
+    "addToCart": "เพิ่มลงตะกร้า",
+    "adding": "กำลังเพิ่ม…",
+    "selectSize": "เลือกไซซ์",
+    "colorLabel": "สี",
+    "notifyMe": "แจ้งเตือนฉัน",
+    "onlyNLeft": "เหลือเพียง {count} ชิ้น",
+    "addedToCart": "เพิ่มลงตะกร้าแล้ว",
     "sizeFit": {
       "title": "ขนาดและการสวมใส่",
       "unitLabel": "หน่วยวัด",
