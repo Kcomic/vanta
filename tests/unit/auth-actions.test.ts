@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mapAuthError } from '@/lib/actions/auth-actions';
+import { mapAuthError } from '@/lib/actions/auth-errors';
 import { AuthError } from '@/lib/services/auth-service';
 
 describe('mapAuthError', () => {

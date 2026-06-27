@@ -1,23 +1,12 @@
 'use server';
 
-import type { User } from '@/lib/domain';
 import { getLocale } from 'next-intl/server';
-import { authService, AuthError } from '@/lib/services/auth-service';
+import { authService } from '@/lib/services/auth-service';
 import { cartService } from '@/lib/services/cart-service';
 import { redirect } from '@/lib/i18n/navigation';
+import { mapAuthError, type AuthActionState } from './auth-errors';
 
-export type AuthActionState =
-  | { ok: true; user: User }
-  | { ok: false; error: 'invalid_credentials' | 'email_taken' };
-
-/** PURE: normalize any thrown value into a safe failed state. */
-export function mapAuthError(err: unknown): Extract<AuthActionState, { ok: false }> {
-  if (err instanceof AuthError && err.code === 'email_taken') {
-    return { ok: false, error: 'email_taken' };
-  }
-  // invalid_credentials, unauthorized, forbidden, and anything unexpected
-  return { ok: false, error: 'invalid_credentials' };
-}
+export type { AuthActionState } from './auth-errors';
 
 export async function login(
   _prevState: AuthActionState,
