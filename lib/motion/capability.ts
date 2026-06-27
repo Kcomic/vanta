@@ -1,6 +1,7 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
+import { useMotionPreference, type MotionPreference } from './preference';
 
 export type MotionSignals = {
   /** (prefers-reduced-motion: no-preference) matches. */
@@ -14,8 +15,15 @@ export type MotionSignals = {
 /**
  * PURE. Heavy wow gated on no-preference AND pointer:fine AND not Save-Data.
  * NO deviceMemory / hardwareConcurrency arithmetic (coarse, Safari-absent).
+ * An explicit user override (full/reduced) always beats the system signals.
  */
-export function resolveMotionEnabled(signals: MotionSignals): boolean {
+export function resolveMotionEnabled(
+  preference: MotionPreference,
+  signals: MotionSignals,
+): boolean {
+  if (preference === 'full') return true;
+  if (preference === 'reduced') return false;
+  // 'system': defer to OS/device signals
   return signals.prefersNoPreference && signals.pointerFine && !signals.saveData;
 }
 
@@ -68,8 +76,9 @@ function subscribe(onChange: () => void): () => void {
   };
 }
 
-/** The single gate every heavy effect consults. Bare boolean. Re-renders on media change. */
+/** The single gate every heavy effect consults. Bare boolean. Re-renders on media/preference change. */
 export function useMotionCapability(): boolean {
+  const preference = useMotionPreference((s) => s.preference);
   const signals = useSyncExternalStore(subscribe, readSignals, () => SERVER_SIGNALS);
-  return resolveMotionEnabled(signals);
+  return resolveMotionEnabled(preference, signals);
 }

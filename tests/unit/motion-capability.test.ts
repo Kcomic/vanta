@@ -11,23 +11,42 @@ import { createElement } from 'react';
 import { resolveMotionEnabled, useMotionCapability, type MotionSignals } from '@/lib/motion/capability';
 
 const ideal: MotionSignals = { prefersNoPreference: true, pointerFine: true, saveData: false };
+const hostile: MotionSignals = { prefersNoPreference: false, pointerFine: false, saveData: true };
+
+// ─── resolveMotionEnabled — pure function ─────────────────────────────────────
 
 describe('resolveMotionEnabled', () => {
-  it('enables motion when all three signals are ideal', () => {
-    expect(resolveMotionEnabled(ideal)).toBe(true);
+  it('enables motion when system signals are ideal and preference defers', () => {
+    expect(resolveMotionEnabled('system', ideal)).toBe(true);
   });
-  it('OS prefers reduced motion disables', () => {
-    expect(resolveMotionEnabled({ ...ideal, prefersNoPreference: false })).toBe(false);
+
+  it('explicit "reduced" override always wins, even with ideal signals', () => {
+    expect(resolveMotionEnabled('reduced', ideal)).toBe(false);
   });
-  it('coarse pointer (touch) disables heavy wow', () => {
-    expect(resolveMotionEnabled({ ...ideal, pointerFine: false })).toBe(false);
+
+  it('explicit "full" override forces motion on, even with hostile signals', () => {
+    expect(resolveMotionEnabled('full', hostile)).toBe(true);
   });
-  it('Save-Data disables', () => {
-    expect(resolveMotionEnabled({ ...ideal, saveData: true })).toBe(false);
+
+  it('system: OS prefers reduced motion disables', () => {
+    expect(resolveMotionEnabled('system', { ...ideal, prefersNoPreference: false })).toBe(false);
   });
-  it('requires ALL three (AND, not OR)', () => {
+
+  it('system: coarse pointer (touch) disables heavy wow', () => {
+    expect(resolveMotionEnabled('system', { ...ideal, pointerFine: false })).toBe(false);
+  });
+
+  it('system: Save-Data disables', () => {
+    expect(resolveMotionEnabled('system', { ...ideal, saveData: true })).toBe(false);
+  });
+
+  it('system requires ALL three signals (AND, not OR)', () => {
     expect(
-      resolveMotionEnabled({ prefersNoPreference: true, pointerFine: false, saveData: false }),
+      resolveMotionEnabled('system', {
+        prefersNoPreference: true,
+        pointerFine: false,
+        saveData: false,
+      }),
     ).toBe(false);
   });
 });
@@ -110,7 +129,7 @@ afterEach(() => {
 });
 
 describe('useMotionCapability — hook (jsdom)', () => {
-  it('returns false when all matchMedia signals are false', () => {
+  it('returns false when all matchMedia signals are false (system preference)', () => {
     const { mock } = buildMatchMediaMock({
       [REDUCED_QUERY]: false,
       [POINTER_QUERY]: false,
@@ -122,7 +141,7 @@ describe('useMotionCapability — hook (jsdom)', () => {
     expect(box.value).toBe(false);
   });
 
-  it('returns true when all signals enable motion', () => {
+  it('returns true when all signals enable motion (system preference)', () => {
     const { mock } = buildMatchMediaMock({
       [REDUCED_QUERY]: true,
       [POINTER_QUERY]: true,
