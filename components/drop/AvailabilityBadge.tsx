@@ -3,13 +3,22 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import type { Availability } from '@/lib/domain';
+import type { Surface } from '@/lib/motion/token-guard';
 
 export type AvailabilityBadgeProps = {
   availability: Availability;
   stock: number;
+  /** Surface the badge renders on. Defaults to 'dark'.
+   *  AA contract: low-stock urgency text uses text-blaze on dark,
+   *  text-blaze-on-light (#D62E16, 4.5:1) on paper (raw blaze is only 3.23:1 on paper). */
+  surface?: Surface;
 };
 
-export function AvailabilityBadge({ availability, stock }: AvailabilityBadgeProps): React.JSX.Element {
+export function AvailabilityBadge({
+  availability,
+  stock,
+  surface = 'dark',
+}: AvailabilityBadgeProps): React.JSX.Element {
   const t = useTranslations('drop');
 
   const base =
@@ -41,7 +50,13 @@ export function AvailabilityBadge({ availability, stock }: AvailabilityBadgeProp
         </span>
       );
     case 'low_stock':
-      return (
+      // On paper surfaces: text-blaze-on-light (#D62E16, 4.5:1 on paper, AA-safe).
+      // On dark surfaces: filled blaze badge with ink text (high contrast on dark).
+      return surface === 'paper' ? (
+        <span data-testid="badge-low-stock" className={`${base} text-blaze-on-light`}>
+          {t('lowStock', { count: stock })}
+        </span>
+      ) : (
         <span data-testid="badge-low-stock" className={`${base} bg-blaze text-ink`}>
           {t('lowStock', { count: stock })}
         </span>

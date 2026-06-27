@@ -43,7 +43,7 @@ export async function HeroSection({ locale }: { locale: Locale }): Promise<React
         <Button asChild variant="magnetic">
           <Link href="/shop">{t('ctaShopDrop')}</Link>
         </Button>
-        <Button asChild variant="ghost">
+        <Button asChild variant="ghost-dark">
           <Link href="/collections">{t('ctaExplore')}</Link>
         </Button>
       </div>

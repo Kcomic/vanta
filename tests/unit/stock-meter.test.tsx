@@ -82,23 +82,29 @@ describe('StockMeter — fill bar width', () => {
   });
 });
 
-describe('StockMeter — low-stock color (blaze vs lime)', () => {
+describe('StockMeter — low-stock color (blaze vs smoke-300)', () => {
   function getFillClass(container: HTMLElement): string {
     const fill = container.querySelector('[data-testid="stock-meter"] > div');
     return (fill as HTMLElement | null)?.className ?? '';
   }
 
-  it('uses bg-lime when stock > LOW_STOCK_THRESHOLD', () => {
+  // Token contract: lime is lime-on-dark ONLY and must stay <5% coverage.
+  // Normal stock uses bg-smoke-300 (neutral) to reserve lime as a true accent.
+  // Low stock uses bg-blaze (urgency signal).
+
+  it('uses bg-smoke-300 (not bg-lime) when stock > LOW_STOCK_THRESHOLD', () => {
     const stock = LOW_STOCK_THRESHOLD + 1; // 6
     const container = render(<StockMeter stock={stock} max={20} />);
-    expect(getFillClass(container)).toContain('bg-lime');
+    expect(getFillClass(container)).toContain('bg-smoke-300');
     expect(getFillClass(container)).not.toContain('bg-blaze');
+    expect(getFillClass(container)).not.toContain('bg-lime');
   });
 
   it('uses bg-blaze when 0 < stock <= LOW_STOCK_THRESHOLD', () => {
     const container = render(<StockMeter stock={LOW_STOCK_THRESHOLD} max={20} />);
     expect(getFillClass(container)).toContain('bg-blaze');
     expect(getFillClass(container)).not.toContain('bg-lime');
+    expect(getFillClass(container)).not.toContain('bg-smoke-300');
   });
 
   it('uses bg-blaze at stock=1 (minimum low-stock)', () => {
@@ -106,10 +112,11 @@ describe('StockMeter — low-stock color (blaze vs lime)', () => {
     expect(getFillClass(container)).toContain('bg-blaze');
   });
 
-  it('uses bg-lime when stock=0 (sold out — no urgency color needed)', () => {
-    // stock=0 => isLow is false (0 > 0 is false), so it falls back to lime
+  it('uses bg-smoke-300 when stock=0 (sold out — neutral, no urgency color)', () => {
+    // stock=0 => isLow is false (0 > 0 is false), so it falls back to neutral smoke-300.
     const container = render(<StockMeter stock={0} max={20} />);
-    expect(getFillClass(container)).toContain('bg-lime');
+    expect(getFillClass(container)).toContain('bg-smoke-300');
+    expect(getFillClass(container)).not.toContain('bg-lime');
   });
 });
 

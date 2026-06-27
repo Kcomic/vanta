@@ -23,7 +23,7 @@ export function StockMeter({ stock, max = 20 }: StockMeterProps): React.JSX.Elem
     >
       <div
         className={`h-full rounded-full transition-[width] duration-500 ease-out ${
-          isLow ? 'bg-blaze' : 'bg-lime'
+          isLow ? 'bg-blaze' : 'bg-smoke-300'
         }`}
         style={{ width: `${pct}%` }}
       />

@@ -3,7 +3,7 @@
 import React, { cloneElement, isValidElement, useRef } from 'react';
 import { useMotionCapability } from '@/lib/motion/capability';
 
-export type ButtonVariant = 'default' | 'ghost' | 'magnetic';
+export type ButtonVariant = 'default' | 'ghost' | 'ghost-dark' | 'magnetic';
 
 export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
@@ -15,7 +15,11 @@ const BASE =
 
 const VARIANT_CLASS: Record<ButtonVariant, string> = {
   default: 'bg-blaze text-paper hover:bg-blaze-on-light',
+  /** ghost — light surfaces (paper). text-ink reads at 18:1 on paper. */
   ghost: 'bg-transparent text-ink hover:bg-smoke-300/30',
+  /** ghost-dark — dark surfaces (ink). text-paper reads at 18:1 on ink.
+   *  Use this variant whenever the ghost button renders on bg-ink / bg-smoke-900. */
+  'ghost-dark': 'bg-transparent text-paper hover:bg-smoke-700/60 border border-smoke-700',
   magnetic: 'bg-blaze text-paper hover:bg-blaze-on-light will-change-transform',
 };
 
