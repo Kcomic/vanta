@@ -50,6 +50,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           type="password"
           required
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+          defaultValue={mode === 'login' ? t('demoPassword') : undefined}
           className="rounded-none border border-smoke-700 bg-smoke-900 px-3 py-2 text-paper focus-visible:border-blaze focus-visible:outline-none"
         />
       </label>
