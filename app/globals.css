@@ -43,6 +43,18 @@
   line-height: 1.35;
 }
 
+/* View Transitions: hard cut (no cross-fade) for reduced-motion users.
+   Belt-and-suspenders: the card side already suppresses the transition name via
+   useMotionCapability(); this rule also neutralises the PDP hero's unconditional
+   view-transition-name so no fade plays even when the name is present. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
 /* Bind next/font variables to the @theme family names. */
 :root {
   --font-body: var(--font-geist-sans), var(--font-body-th), system-ui, sans-serif;

@@ -95,10 +95,13 @@ export function ProductCard({
         href={`/product/${card.slug}`}
         className="flex flex-1 flex-col focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime"
       >
-        {/* View-transition origin: keyed on product id (locale-stable per conventions) */}
+        {/* View-transition origin: keyed on product id (locale-stable per conventions).
+            Suppressed when motion is disabled — reduced-motion users get an instant swap
+            with no transition name on the card side. The CSS hard-cut rule in globals.css
+            also neutralises any lingering names server-side (PDP unconditional approach). */}
         <div
           className="relative aspect-[4/5] overflow-hidden bg-ink"
-          style={{ viewTransitionName: `product-${card.productId}` }}
+          style={{ viewTransitionName: motionEnabled ? `product-${card.productId}` : undefined }}
         >
           <ProductImage
             url={imageUrl}
