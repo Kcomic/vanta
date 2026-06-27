@@ -161,6 +161,7 @@
     "notifyMe": "Notify me",
     "onlyNLeft": "Only {count} left",
     "addedToCart": "Added to cart",
+    "notFound": "Product not found",
     "sizeFit": {
       "title": "Size & Fit",
       "unitLabel": "Measurement unit",

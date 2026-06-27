@@ -161,6 +161,7 @@
     "notifyMe": "แจ้งเตือนฉัน",
     "onlyNLeft": "เหลือเพียง {count} ชิ้น",
     "addedToCart": "เพิ่มลงตะกร้าแล้ว",
+    "notFound": "ไม่พบสินค้า",
     "sizeFit": {
       "title": "ขนาดและการสวมใส่",
       "unitLabel": "หน่วยวัด",
