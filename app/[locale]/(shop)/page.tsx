@@ -4,7 +4,8 @@ import { HeroSection } from '@/components/home/HeroSection';
 import { LiveDropSection } from '@/components/home/LiveDropSection';
 import { LookbookTeaser } from '@/components/home/LookbookTeaser';
 import { DropMarquee } from '@/components/drop/DropMarquee';
-import { ProductCard, toCatalogCard } from '@/components/product/ProductCard';
+import { ProductCard } from '@/components/product/ProductCard';
+import { toCatalogCard } from '@/components/product/catalog-card';
 import type { Locale } from '@/lib/domain';
 
 export default async function Page({
