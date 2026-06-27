@@ -80,7 +80,6 @@ export async function LiveDropSection({
                 data-product-id={p.productId}
                 data-availability={a}
                 className="flex flex-col gap-4 border border-smoke-700 p-6"
-                style={{ viewTransitionName: `product-${p.productId}` }}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-xs text-smoke-500">{p.leadVariant.sku}</span>

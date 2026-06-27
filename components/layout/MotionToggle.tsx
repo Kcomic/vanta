@@ -23,10 +23,12 @@ export function MotionToggle(): React.JSX.Element {
             onClick={() => setPreference(option)}
             className={
               'rounded-full border px-2 py-1 uppercase tracking-wide transition-colors ' +
-              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime ' +
+              'focus-visible:outline focus-visible:outline-2 ' +
+              // The selected pill is bg-lime, so a lime focus ring would be invisible on it
+              // (1:1 contrast). Use an ink ring when selected, lime ring otherwise.
               (selected
-                ? 'border-lime bg-lime text-ink'
-                : 'border-smoke-500 text-smoke-300 hover:text-paper')
+                ? 'border-lime bg-lime text-ink focus-visible:outline-ink'
+                : 'border-smoke-500 text-smoke-300 hover:text-paper focus-visible:outline-lime')
             }
           >
             {t(option)}

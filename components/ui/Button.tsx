@@ -1,6 +1,6 @@
 'use client';
 
-import React, { cloneElement, isValidElement, useRef } from 'react';
+import React, { cloneElement, isValidElement, useEffect, useRef } from 'react';
 import { useMotionCapability } from '@/lib/motion/capability';
 
 export type ButtonVariant = 'default' | 'ghost' | 'ghost-dark' | 'magnetic';
@@ -38,6 +38,15 @@ export function Button({
   const frame = useRef<number | null>(null);
 
   const magneticActive = variant === 'magnetic' && motionEnabled;
+
+  // If motion is turned off (e.g. the user toggles reduced motion) while the pointer is still
+  // over the button, an in-flight rAF may have left an inline transform behind. Clear it when
+  // the magnetic effect goes inactive so the button snaps back to rest.
+  useEffect(() => {
+    if (magneticActive) return;
+    if (frame.current !== null) cancelAnimationFrame(frame.current);
+    if (ref.current) ref.current.style.transform = '';
+  }, [magneticActive]);
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!magneticActive || !ref.current) return;
