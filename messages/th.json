@@ -183,6 +183,15 @@
       "back": "ดูคอลเลกชันทั้งหมด"
     }
   },
+  "search": {
+    "title": "ค้นหา",
+    "placeholder": "ค้นหาสินค้า…",
+    "submit": "ค้นหา",
+    "resultsFor": "ผลการค้นหา \"{query}\"",
+    "count": "{count, plural, other {# รายการ}}",
+    "empty": "ไม่พบสินค้าที่ตรงกับ \"{query}\"",
+    "prompt": "พิมพ์คำค้นหาเพื่อค้นหาสินค้า"
+  },
   "catalog": {
     "title": "ช็อป",
     "resultCount": "{count, plural, other {# รายการ}}",
