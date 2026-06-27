@@ -171,6 +171,14 @@
       "openButton": "ขนาดและการสวมใส่"
     }
   },
+  "collections": {
+    "index": {
+      "title": "คอลเลกชัน",
+      "subtitle": "เกิดที่กรุงเทพฯ ใส่ได้ทั่วโลก",
+      "view": "ดูคอลเลกชัน",
+      "count": "{count, plural, other {# ชิ้น}}"
+    }
+  },
   "catalog": {
     "title": "ช็อป",
     "resultCount": "{count, plural, other {# รายการ}}",
