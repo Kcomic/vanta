@@ -142,7 +142,8 @@ describe('deriveCatalogView', () => {
 
     const byPrice = deriveCatalogView(
       [p],
-      parseCatalogQuery(new URLSearchParams('minPrice=300000&maxPrice=300000')),
+      // minPrice/maxPrice are in BAHT; ฿3000 matches the Black variant priced at 300000 satang.
+      parseCatalogQuery(new URLSearchParams('minPrice=3000&maxPrice=3000')),
       {},
       now,
       null,
@@ -262,6 +263,7 @@ describe('buildFacets', () => {
     const facets = buildFacets([p1, p2]);
     expect(facets.sizes).toEqual(['S', 'M', 'L']);
     expect(facets.colors).toEqual(['Black', 'White']);
-    expect(facets.priceBounds).toEqual({ min: 90000, max: 300000 });
+    // priceBounds are exposed in BAHT: 90000 satang → ฿900, 300000 satang → ฿3000.
+    expect(facets.priceBounds).toEqual({ min: 900, max: 3000 });
   });
 });

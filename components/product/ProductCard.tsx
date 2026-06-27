@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Locale } from '@/lib/domain';
 import { Money as MoneyComponent } from '@/components/ui/Money';
 import { Link } from '@/lib/i18n/navigation';
@@ -20,6 +21,8 @@ export type ProductCardProps = {
   colorway: string;
   locale: Locale;
   priority?: boolean; // first row eager-loads
+  /** Extra classes merged onto the root <li> (e.g. an editorial grid span). */
+  className?: string;
 };
 
 export function ProductCard({
@@ -30,7 +33,9 @@ export function ProductCard({
   colorway,
   locale,
   priority = false,
+  className,
 }: ProductCardProps): React.JSX.Element {
+  const t = useTranslations('catalog.card');
   const motionEnabled = useMotionCapability();
   const ref = useRef<HTMLLIElement>(null);
 
@@ -76,13 +81,16 @@ export function ProductCard({
         'transition-[clip-path,opacity] duration-700 ease-out motion-reduce:transition-none',
         'data-[revealed=false]:[clip-path:inset(0_0_100%_0)] data-[revealed=false]:opacity-0',
         'data-[revealed=true]:[clip-path:inset(0_0_0_0)] data-[revealed=true]:opacity-100',
-      ].join(' ')}
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       {/* Wishlist toggle — visual-only per spec */}
       <button
         type="button"
         aria-pressed={wished}
-        aria-label={wished ? 'Remove from wishlist' : 'Add to wishlist'}
+        aria-label={wished ? t('wishlistRemove') : t('wishlist')}
         onClick={() => setWished((w) => !w)}
         className="absolute right-2 top-2 z-10 grid h-9 w-9 place-items-center rounded-full bg-ink/60 text-paper backdrop-blur focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime"
       >
@@ -115,7 +123,7 @@ export function ProductCard({
         <div className="flex flex-col gap-1 p-3">
           <h3 className="display text-sm leading-tight text-paper">{title}</h3>
           <div className="flex items-baseline gap-2 text-paper">
-            <span className="text-sm">
+            <span className="text-sm" data-testid="card-price">
               <MoneyComponent value={card.fromPrice} locale={locale} />
             </span>
             {onSale ? (
@@ -125,7 +133,9 @@ export function ProductCard({
             ) : null}
           </div>
           {card.matchedColors.length > 1 ? (
-            <span className="text-xs text-smoke-300">{card.matchedColors.length} colors</span>
+            <span className="text-xs text-smoke-300">
+              {t('colorCount', { count: card.matchedColors.length })}
+            </span>
           ) : null}
         </div>
       </Link>

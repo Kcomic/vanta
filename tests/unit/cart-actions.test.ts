@@ -26,6 +26,7 @@ import {
   removeFromCart,
   getCartAction,
 } from '@/lib/actions/cart-actions';
+import { revalidatePath } from 'next/cache';
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -34,23 +35,28 @@ describe('cart-actions', () => {
     const result = await addToCart('var_a', 2);
     expect(addItem).toHaveBeenCalledWith('var_a', 2);
     expect(result).toBe(authoritative);
+    // The RSC surfaces (stock badges, cart count/drawer) only update if the layout revalidates.
+    expect(revalidatePath).toHaveBeenCalledWith('/[locale]', 'layout');
   });
 
   it('updateCartQuantity delegates to cartService.updateQuantity', async () => {
     const result = await updateCartQuantity('var_a', 3);
     expect(updateQuantity).toHaveBeenCalledWith('var_a', 3);
     expect(result).toBe(authoritative);
+    expect(revalidatePath).toHaveBeenCalledWith('/[locale]', 'layout');
   });
 
   it('removeFromCart delegates to cartService.removeItem', async () => {
     const result = await removeFromCart('var_a');
     expect(removeItem).toHaveBeenCalledWith('var_a');
     expect(result).toBe(authoritative);
+    expect(revalidatePath).toHaveBeenCalledWith('/[locale]', 'layout');
   });
 
-  it('getCartAction delegates to cartService.getCart', async () => {
+  it('getCartAction delegates to cartService.getCart and does NOT revalidate (read-only)', async () => {
     const result = await getCartAction();
     expect(getCart).toHaveBeenCalledTimes(1);
     expect(result).toBe(authoritative);
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });

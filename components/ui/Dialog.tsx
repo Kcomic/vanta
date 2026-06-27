@@ -68,12 +68,15 @@ export function Dialog({
   onClose,
   labelledById,
   ariaLabel,
+  closeLabel = 'Close',
   children,
 }: {
   open: boolean;
   onClose: () => void;
   labelledById?: string;
   ariaLabel?: string;
+  /** Accessible name for the backdrop close button — pass a localized string. */
+  closeLabel?: string;
   children: React.ReactNode;
 }): React.JSX.Element | null {
   // SSR-safety: only render the portal once mounted on the client.
@@ -201,7 +204,7 @@ export function Dialog({
       {/* Backdrop: click closes. */}
       <button
         type="button"
-        aria-label="Close"
+        aria-label={closeLabel}
         onClick={() => onCloseRef.current()}
         className="absolute inset-0 bg-ink/70 backdrop-blur-sm"
       />

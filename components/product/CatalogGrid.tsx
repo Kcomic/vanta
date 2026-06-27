@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 import type { Locale } from '@/lib/domain';
 import type { CatalogCard } from '@/components/product/catalog-card';
 import { ProductCard } from '@/components/product/ProductCard';
-import { formatMoney } from '@/lib/format/money';
 
 export type CatalogGridItem = {
   card: CatalogCard;
@@ -32,28 +31,21 @@ export function CatalogGrid({
   }
 
   return (
+    // ProductCard renders the semantic <li data-testid="product-card"> (with the card-price
+    // testid inside) directly — no wrapper <div>, which would be invalid inside <ul> and would
+    // duplicate the product-card test id.
     <ul className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
       {items.map((item, index) => (
-        <div
+        <ProductCard
           key={item.card.productId}
-          data-testid="product-card"
-          data-price={item.card.fromPrice.amount}
-          aria-label={item.title}
-        >
-          {/* Expose price text for E2E price-order assertion */}
-          <span data-testid="card-price" className="sr-only">
-            {formatMoney(item.card.fromPrice, locale)}
-          </span>
-          <ProductCard
-            card={item.card}
-            title={item.title}
-            imageUrl={item.imageUrl}
-            imageAlt={item.imageAlt}
-            colorway={item.card.matchedColors[0] ?? 'black'}
-            locale={locale}
-            priority={index < 4}
-          />
-        </div>
+          card={item.card}
+          title={item.title}
+          imageUrl={item.imageUrl}
+          imageAlt={item.imageAlt}
+          colorway={item.card.matchedColors[0] ?? 'black'}
+          locale={locale}
+          priority={index < 4}
+        />
       ))}
     </ul>
   );

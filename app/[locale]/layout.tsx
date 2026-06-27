@@ -67,6 +67,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   // Enable static rendering for this locale.
   setRequestLocale(locale);
   const messages = await getMessages();
+  const t = await getTranslations('Nav');
 
   // Read the server cart via cartService (never cartStore.read directly) so
   // itemCount + subtotal are always reconciled before the Zustand mirror is seeded.
@@ -80,6 +81,12 @@ export default async function LocaleLayout({ children, params }: Props) {
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <CartDrawerProvider>
+            <a
+              href="#main-content"
+              className="sr-only z-[100] bg-blaze px-4 py-2 font-mono text-ink focus:not-sr-only focus:fixed focus:left-2 focus:top-2"
+            >
+              {t('skipToContent')}
+            </a>
             <CartHydrator serverCart={serverCart} />
             <Header />
             <main id="main-content">{children}</main>

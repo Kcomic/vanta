@@ -18,18 +18,20 @@ export default async function AccountLayout({ children }: { children: ReactNode 
   return (
     <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 px-6 py-12 md:grid-cols-[200px_1fr]">
       <aside className="flex flex-col gap-2 font-body text-sm">
-        <Link href="/account" className="text-paper hover:text-blaze">
-          {t('navDashboard')}
-        </Link>
-        <Link href="/account/orders" className="text-paper hover:text-blaze">
-          {t('navOrders')}
-        </Link>
-        <Link href="/account/addresses" className="text-paper hover:text-blaze">
-          {t('navAddresses')}
-        </Link>
-        <Link href="/account/settings" className="text-paper hover:text-blaze">
-          {t('navSettings')}
-        </Link>
+        <nav aria-label={t('navLabel')} className="flex flex-col gap-2">
+          <Link href="/account" className="text-paper hover:text-blaze">
+            {t('navDashboard')}
+          </Link>
+          <Link href="/account/orders" className="text-paper hover:text-blaze">
+            {t('navOrders')}
+          </Link>
+          <Link href="/account/addresses" className="text-paper hover:text-blaze">
+            {t('navAddresses')}
+          </Link>
+          <Link href="/account/settings" className="text-paper hover:text-blaze">
+            {t('navSettings')}
+          </Link>
+        </nav>
         <form action={logout} className="mt-4">
           <button
             type="submit"

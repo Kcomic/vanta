@@ -15,31 +15,31 @@ export function PaymentMockForm() {
 
   return (
     <fieldset className="space-y-3">
-      <legend className="display text-sm text-ink">{t('paymentMethod')}</legend>
+      <legend className="display text-sm text-paper">{t('paymentMethod')}</legend>
 
-      <label className="flex cursor-pointer items-center gap-3 rounded-md border border-smoke-300 p-4 has-[:checked]:border-ink">
+      <label className="flex cursor-pointer items-center gap-3 rounded-md border border-smoke-700 p-4 text-paper has-[:checked]:border-paper">
         <input
           type="radio"
           name="paymentToken"
           value="tok_ok"
           defaultChecked
-          className="accent-ink"
+          className="accent-paper"
           data-testid="pay-token-ok"
         />
         <span className="text-sm">{t('testCardSuccess')}</span>
-        <span className="ml-auto font-mono text-xs text-smoke-500">4242 4242 4242 4242</span>
+        <span className="ml-auto font-mono text-xs text-smoke-300">4242 4242 4242 4242</span>
       </label>
 
-      <label className="flex cursor-pointer items-center gap-3 rounded-md border border-smoke-300 p-4 has-[:checked]:border-blaze-on-light">
+      <label className="flex cursor-pointer items-center gap-3 rounded-md border border-smoke-700 p-4 text-paper has-[:checked]:border-blaze">
         <input
           type="radio"
           name="paymentToken"
           value="tok_decline"
-          className="accent-blaze-on-light"
+          className="accent-blaze"
           data-testid="pay-token-decline"
         />
         <span className="text-sm">{t('testCardDecline')}</span>
-        <span className="ml-auto font-mono text-xs text-smoke-500">4000 0000 0000 0002</span>
+        <span className="ml-auto font-mono text-xs text-smoke-300">4000 0000 0000 0002</span>
       </label>
     </fieldset>
   );

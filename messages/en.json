@@ -23,6 +23,8 @@
     "home": "Home",
     "shop": "Shop",
     "collections": "Collections",
+    "siteLinks": "Site links",
+    "skipToContent": "Skip to content",
     "search": "Search",
     "cart": "Cart",
     "account": "Account",
@@ -58,6 +60,7 @@
     "noOrders": "No orders yet.",
     "viewOrder": "View order",
     "defaultAddress": "Default address",
+    "navLabel": "Account navigation",
     "navDashboard": "Dashboard",
     "navOrders": "Orders",
     "navAddresses": "Addresses",
@@ -247,7 +250,9 @@
     "card": {
       "from": "From",
       "sale": "Sale",
-      "wishlist": "Add to wishlist"
+      "wishlist": "Add to wishlist",
+      "wishlistRemove": "Remove from wishlist",
+      "colorCount": "{count, plural, one {# color} other {# colors}}"
     },
     "empty": "Nothing matches these filters."
   }

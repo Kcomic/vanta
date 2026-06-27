@@ -1,16 +1,18 @@
+import { getTranslations } from 'next-intl/server';
 import { Link } from '@/lib/i18n/navigation';
 
-export function Footer(): React.JSX.Element {
+export async function Footer(): Promise<React.JSX.Element> {
+  const t = await getTranslations('Nav');
   return (
     <footer className="border-t border-smoke-700 bg-ink px-6 py-10 text-smoke-300">
       <div className="mx-auto flex max-w-[1440px] flex-col gap-2">
         <span className="display text-lg text-paper">VANTA</span>
-        <nav aria-label="Site links" className="flex gap-6 text-xs uppercase tracking-wide">
+        <nav aria-label={t('siteLinks')} className="flex gap-6 text-xs uppercase tracking-wide">
           <Link href="/shop" className="inline-block py-1.5 hover:text-paper">
-            Shop
+            {t('shop')}
           </Link>
           <Link href="/collections" className="inline-block py-1.5 hover:text-paper">
-            Collections
+            {t('collections')}
           </Link>
         </nav>
         <span className="text-xs">

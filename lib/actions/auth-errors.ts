@@ -1,8 +1,9 @@
 import { AuthError } from '@/lib/services/auth-service';
-import type { User } from '@/lib/domain';
 
+// Success redirects (server-side) — the client never reads a user payload, so the success
+// variant carries NO User. This avoids serialising email/role to the client action-state wire.
 export type AuthActionState =
-  | { ok: true; user: User }
+  | { ok: true }
   | { ok: false; error: 'invalid_credentials' | 'email_taken' };
 
 /** PURE: normalize any thrown value into a safe failed state. */

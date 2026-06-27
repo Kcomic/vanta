@@ -23,6 +23,8 @@
     "home": "หน้าแรก",
     "shop": "ช้อป",
     "collections": "คอลเลกชัน",
+    "siteLinks": "ลิงก์เว็บไซต์",
+    "skipToContent": "ข้ามไปยังเนื้อหา",
     "search": "ค้นหา",
     "cart": "ตะกร้า",
     "account": "บัญชี",
@@ -58,6 +60,7 @@
     "noOrders": "ยังไม่มีคำสั่งซื้อ",
     "viewOrder": "ดูคำสั่งซื้อ",
     "defaultAddress": "ที่อยู่หลัก",
+    "navLabel": "เมนูบัญชี",
     "navDashboard": "แดชบอร์ด",
     "navOrders": "ประวัติคำสั่งซื้อ",
     "navAddresses": "ที่อยู่",
@@ -247,7 +250,9 @@
     "card": {
       "from": "เริ่มต้น",
       "sale": "ลดราคา",
-      "wishlist": "เพิ่มในรายการที่ชอบ"
+      "wishlist": "เพิ่มในรายการที่ชอบ",
+      "wishlistRemove": "นำออกจากรายการที่ชอบ",
+      "colorCount": "{count} สี"
     },
     "empty": "ไม่มีสินค้าที่ตรงกับตัวกรองนี้"
   }

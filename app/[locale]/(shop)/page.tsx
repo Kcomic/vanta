@@ -6,6 +6,7 @@ import { LookbookTeaser } from '@/components/home/LookbookTeaser';
 import { DropMarquee } from '@/components/drop/DropMarquee';
 import { ProductCard } from '@/components/product/ProductCard';
 import { toCatalogCard } from '@/components/product/catalog-card';
+import { authService } from '@/lib/services/auth-service';
 import type { Locale } from '@/lib/domain';
 
 export default async function Page({
@@ -18,8 +19,9 @@ export default async function Page({
 
   const t = await getTranslations('home');
   const now = new Date();
-  // authService is not yet available in this phase; pass null for the guest path.
-  const user = null;
+  // Resolve the current user so the LIVE DROP reflects member early-access (deriveAvailability
+  // gates early_access/low_stock/live by user role) — same as the shop and product pages.
+  const user = await authService.getCurrentUser();
   const view = await buildHomeView(now, user);
 
   // Marquee shows SOLD OUT only when every drop lead variant is sold out.

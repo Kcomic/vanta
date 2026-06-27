@@ -2,11 +2,10 @@ import { getTranslations } from 'next-intl/server';
 import type { Locale, Money } from '@/lib/domain';
 import { products } from '@/lib/data';
 import { cartService } from '@/lib/services/cart-service';
+import { SHIPPING_FLAT } from '@/lib/services/checkout-service';
 import { Link } from '@/lib/i18n/navigation';
 import { CheckoutForm } from '@/components/checkout/CheckoutForm';
 import { OrderSummary, type OrderSummaryLine } from '@/components/checkout/OrderSummary';
-
-const SHIPPING_FLAT: Money = { amount: 5000, currency: 'THB' };
 
 export default async function CheckoutPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
@@ -17,10 +16,10 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
   if (cart.items.length === 0) {
     return (
       <main className="mx-auto max-w-shell px-6 py-24 text-center">
-        <h1 className="display text-3xl text-ink">{t('emptyCartHeading')}</h1>
+        <h1 className="display text-3xl text-paper">{t('emptyCartHeading')}</h1>
         <Link
           href="/shop"
-          className="mt-6 inline-block rounded-md bg-ink px-6 py-3 font-mono uppercase tracking-widest text-paper"
+          className="mt-6 inline-block rounded-md bg-blaze px-6 py-3 font-mono uppercase tracking-widest text-ink"
         >
           {t('emptyCartCta')}
         </Link>
@@ -50,7 +49,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
   return (
     <main className="mx-auto grid max-w-shell gap-12 px-6 py-16 lg:grid-cols-[1fr_400px]">
       <div>
-        <h1 className="display text-3xl text-ink">{t('title')}</h1>
+        <h1 className="display text-3xl text-paper">{t('title')}</h1>
         <div className="mt-10">
           <CheckoutForm />
         </div>

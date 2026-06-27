@@ -29,7 +29,7 @@ export function LocaleSwitcher() {
   } as const;
 
   return (
-    <nav aria-label="Language">
+    <nav aria-label={t('currentLanguage')}>
       {routing.locales.map((target) => {
         const isCurrent = target === locale;
         return (

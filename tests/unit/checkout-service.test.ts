@@ -8,6 +8,7 @@ const getProductByVariantId = vi.fn();
 const list = vi.fn();
 const create = vi.fn();
 const read = vi.fn();
+const write = vi.fn();
 const clear = vi.fn();
 
 vi.mock('@/lib/data', () => ({
@@ -18,7 +19,11 @@ vi.mock('@/lib/data', () => ({
     list: (...a: unknown[]) => list(...a),
   },
   orders: { create: (...a: unknown[]) => create(...a) },
-  cart: { read: (...a: unknown[]) => read(...a), clear: (...a: unknown[]) => clear(...a) },
+  cart: {
+    read: (...a: unknown[]) => read(...a),
+    write: (...a: unknown[]) => write(...a),
+    clear: (...a: unknown[]) => clear(...a),
+  },
 }));
 
 // --- Mock auth ---
@@ -128,6 +133,19 @@ describe('placeOrder', () => {
     });
     expect(result).toEqual({ ok: false, error: 'empty_cart' });
     expect(charge).not.toHaveBeenCalled();
+  });
+
+  it('returns out_of_stock (no charge, no order) when a cart variant is gone at checkout', async () => {
+    read.mockResolvedValue(CART_2X); // user still has the item in their cookie
+    getVariantById.mockResolvedValue(null); // ...but it disappeared since they added it
+    const result = await checkoutService.placeOrder({
+      email: 'a@b.co',
+      shippingAddress: ADDRESS,
+      paymentToken: 'tok_ok',
+    });
+    expect(result).toEqual({ ok: false, error: 'out_of_stock' });
+    expect(charge).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
   });
 
   it('computes totals = subtotal + flat ฿50 shipping and charges the grand total', async () => {

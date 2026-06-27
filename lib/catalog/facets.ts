@@ -38,9 +38,11 @@ export function buildFacets(products: Product[]): CatalogFacets {
   return {
     sizes: sortSizes([...sizes]),
     colors: [...colors].sort((a, b) => a.localeCompare(b)),
+    // Exposed in BAHT (whole units) — the price filter UI + URL params are in baht so users
+    // type the prices they see; variantMatches converts back to satang for comparison.
     priceBounds: {
-      min: Number.isFinite(min) ? min : 0,
-      max: Number.isFinite(max) ? max : 0,
+      min: Number.isFinite(min) ? Math.floor(min / 100) : 0,
+      max: Number.isFinite(max) ? Math.ceil(max / 100) : 0,
     },
   };
 }

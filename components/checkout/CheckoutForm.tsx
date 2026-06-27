@@ -16,7 +16,7 @@ function SubmitButton() {
       type="submit"
       disabled={pending}
       data-testid="checkout-pay"
-      className="mt-8 w-full rounded-md bg-ink py-4 text-center font-mono uppercase tracking-widest text-paper disabled:opacity-60"
+      className="mt-8 w-full rounded-md bg-blaze py-4 text-center font-mono uppercase tracking-widest text-ink disabled:opacity-60"
     >
       {pending ? t('processing') : t('payButton')}
     </button>
@@ -42,7 +42,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs uppercase tracking-wide text-smoke-500">{label}</span>
+      <span className="mb-1 block text-xs uppercase tracking-wide text-smoke-300">{label}</span>
       <input
         name={name}
         type={type}
@@ -89,7 +89,7 @@ export function CheckoutForm() {
       )}
 
       <section aria-labelledby="contact-heading" className="space-y-4">
-        <h2 id="contact-heading" className="display text-xl text-ink">
+        <h2 id="contact-heading" className="display text-xl text-paper">
           {t('contactSection')}
         </h2>
         <Field name="email" label={t('email')} type="email" autoComplete="email" value={fields.email ?? ''} onChange={setField('email')} />
@@ -105,7 +105,7 @@ export function CheckoutForm() {
       </section>
 
       <section aria-labelledby="payment-heading" className="space-y-4">
-        <h2 id="payment-heading" className="display text-xl text-ink">
+        <h2 id="payment-heading" className="display text-xl text-paper">
           {t('paymentSection')}
         </h2>
         <PaymentMockForm />

@@ -20,33 +20,23 @@ export function LookbookSequence({
   locale: Locale;
 }): React.JSX.Element {
   return (
-    <div
-      role="list"
-      className="grid grid-cols-2 gap-4 md:grid-cols-12 md:gap-6"
-    >
-      {items.map((item, index) => {
-        // Asymmetric editorial rhythm: every 3rd piece spans wider.
-        const span = index % 3 === 0 ? 'md:col-span-7' : 'md:col-span-5';
-        return (
-          <div
-            key={item.card.productId}
-            role="listitem"
-            aria-label={item.title}
-            className={span}
-          >
-            {/* TODO(Phase 9): GPU-less env — lookbook canvas covers static <img> pointer events; canvas is gated off for reduced-motion */}
-            <ProductCard
-              card={item.card}
-              title={item.title}
-              imageUrl={item.imageUrl}
-              imageAlt={item.imageAlt}
-              colorway={item.card.matchedColors[0] ?? ''}
-              locale={locale}
-              priority={index < 2}
-            />
-          </div>
-        );
-      })}
-    </div>
+    // ProductCard renders the semantic <li>; the editorial span class is merged onto it via the
+    // className prop so we keep a valid <ul><li> structure (no nested role=listitem wrapper).
+    <ul className="grid grid-cols-2 gap-4 md:grid-cols-12 md:gap-6">
+      {items.map((item, index) => (
+        <ProductCard
+          key={item.card.productId}
+          card={item.card}
+          title={item.title}
+          imageUrl={item.imageUrl}
+          imageAlt={item.imageAlt}
+          colorway={item.card.matchedColors[0] ?? ''}
+          locale={locale}
+          priority={index < 2}
+          // Asymmetric editorial rhythm: every 3rd piece spans wider.
+          className={index % 3 === 0 ? 'md:col-span-7' : 'md:col-span-5'}
+        />
+      ))}
+    </ul>
   );
 }

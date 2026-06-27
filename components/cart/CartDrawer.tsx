@@ -83,7 +83,7 @@ export function CartDrawer(): React.JSX.Element {
         {announcement}
       </div>
 
-      <Dialog open={isOpen} onClose={close} labelledById={TITLE_ID}>
+      <Dialog open={isOpen} onClose={close} labelledById={TITLE_ID} closeLabel={t('close')}>
         <div
           data-testid="cart-drawer"
           className="flex h-full flex-col bg-ink text-paper"

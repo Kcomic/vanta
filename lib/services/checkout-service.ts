@@ -9,6 +9,7 @@ import type {
   Variant,
 } from '@/lib/domain';
 import { products, orders, cart as cartStore } from '@/lib/data';
+import { cartService } from '@/lib/services/cart-service';
 import { authService } from '@/lib/services/auth-service';
 import { mockPaymentService } from '@/lib/services/payment-service';
 
@@ -29,7 +30,8 @@ export interface CheckoutService {
 }
 
 /** Flat shipping rate — owned here, the only place shipping is computed. ฿50 = 5000 satang. */
-const SHIPPING_FLAT: Money = { amount: 5000, currency: 'THB' };
+/** Flat shipping in satang (฿50). Exported so the checkout preview uses the same constant the charge does. */
+export const SHIPPING_FLAT: Money = { amount: 5000, currency: 'THB' };
 
 /**
  * First image for the variant's colorway, falling back to any first image.
@@ -99,9 +101,24 @@ export const checkoutService: CheckoutService = {
 
   async placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResult> {
     // Guard: empty cart must not proceed to payment.
-    const cart = await cartStore.read();
-    if (cart.items.length === 0) {
+    const rawCart = await cartStore.read();
+    if (rawCart.items.length === 0) {
       return { ok: false, error: 'empty_cart' };
+    }
+
+    // Reconcile against live stock through cartService (clamps quantities, drops sold-out
+    // variants) so we never charge for — or snapshot — more than is actually available.
+    const cart = await cartService.getCart();
+    const changed =
+      cart.items.length !== rawCart.items.length ||
+      cart.items.some((ci) => {
+        const before = rawCart.items.find((r) => r.variantId === ci.variantId);
+        return !before || before.quantity !== ci.quantity;
+      });
+    if (cart.items.length === 0 || changed) {
+      // A variant went out of stock (or its quantity was clamped) since the user added it —
+      // stop and let them review their cart rather than silently charging a stale total.
+      return { ok: false, error: 'out_of_stock' };
     }
 
     // Build self-contained snapshots before charging — if a variant is gone, surface early.

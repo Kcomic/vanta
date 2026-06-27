@@ -133,6 +133,7 @@ export function FilterRail({
             min={facets.priceBounds.min}
             max={facets.priceBounds.max}
             placeholder={t('minPrice')}
+            aria-label={t('minPrice')}
             defaultValue={query.minPrice ?? ''}
             data-testid="filter-min-price"
             onBlur={(e) => setPrice('minPrice', e.currentTarget.value)}
@@ -145,6 +146,7 @@ export function FilterRail({
             min={facets.priceBounds.min}
             max={facets.priceBounds.max}
             placeholder={t('maxPrice')}
+            aria-label={t('maxPrice')}
             defaultValue={query.maxPrice ?? ''}
             data-testid="filter-max-price"
             onBlur={(e) => setPrice('maxPrice', e.currentTarget.value)}

@@ -43,8 +43,9 @@ export function parseCatalogQuery(params: URLSearchParams): CatalogQuery {
 function variantMatches(variant: Variant, query: CatalogQuery): boolean {
   if (query.sizes.length > 0 && !query.sizes.includes(variant.optionValues.size)) return false;
   if (query.colors.length > 0 && !query.colors.includes(variant.optionValues.color)) return false;
-  if (query.minPrice !== null && variant.price.amount < query.minPrice) return false;
-  if (query.maxPrice !== null && variant.price.amount > query.maxPrice) return false;
+  // minPrice/maxPrice arrive in BAHT (whole units, matching the UI); variant prices are satang.
+  if (query.minPrice !== null && variant.price.amount < query.minPrice * 100) return false;
+  if (query.maxPrice !== null && variant.price.amount > query.maxPrice * 100) return false;
   return true;
 }
 
