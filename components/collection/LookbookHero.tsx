@@ -90,13 +90,17 @@ export function LookbookHero({
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 
-    const image = new Image();
-    image.crossOrigin = 'anonymous';
-    image.onload = () => {
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    };
-    image.src = imageUrl;
+    // Only sample a real asset; with no image the 1×1 black texture above is the
+    // intended "materialize out of the void" backdrop (and we avoid a 404 fetch).
+    if (imageUrl) {
+      const image = new Image();
+      image.crossOrigin = 'anonymous';
+      image.onload = () => {
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+      };
+      image.src = imageUrl;
+    }
 
     const uTex = gl.getUniformLocation(program, 'u_tex');
     const uMouse = gl.getUniformLocation(program, 'u_mouse');
@@ -164,11 +168,12 @@ export function LookbookHero({
       data-testid="lookbook-hero"
       className="relative h-[70vh] min-h-[480px] w-full overflow-hidden bg-ink"
     >
-      {/* Static layer: always rendered (visible-by-default); the only thing shown under reduced motion. */}
+      {/* Static layer: always rendered (visible-by-default); the only thing shown under reduced motion.
+          src is omitted when there is no asset so the branded bg-ink backdrop shows with no 404 fetch. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         data-testid="lookbook-hero-fallback"
-        src={imageUrl}
+        src={imageUrl || undefined}
         alt={title}
         className="absolute inset-0 h-full w-full object-cover"
       />

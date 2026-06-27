@@ -9,7 +9,7 @@ export const seedCollections: Collection[] = [
       en: 'Pieces that materialize out of pure black.',
       th: 'ชิ้นงานที่ก่อตัวขึ้นจากความมืดสนิท',
     },
-    heroImageUrl: '/images/collections/void-hero.jpg',
+    heroImageUrl: '',
     productIds: ['prd_void_tee', 'prd_void_hoodie', 'prd_void_cargo', 'prd_void_cap'],
   },
   {
@@ -20,7 +20,7 @@ export const seedCollections: Collection[] = [
       en: 'Streetwear from the city that never cools down.',
       th: 'สตรีทแวร์จากเมืองที่ไม่เคยเย็นลง',
     },
-    heroImageUrl: '/images/collections/bangkok-hero.jpg',
+    heroImageUrl: '',
     productIds: ['prd_bkk_jacket', 'prd_bkk_tee', 'prd_bkk_shorts', 'prd_bkk_socks'],
   },
   {
@@ -31,7 +31,7 @@ export const seedCollections: Collection[] = [
       en: 'Tonal essentials, engineered to layer.',
       th: 'เบสิกโทนเดียว ออกแบบมาเพื่อการเลเยอร์',
     },
-    heroImageUrl: '/images/collections/mono-hero.jpg',
+    heroImageUrl: '',
     productIds: ['prd_mono_longsleeve', 'prd_mono_pants', 'prd_mono_beanie', 'prd_mono_tote'],
   },
   {
@@ -42,7 +42,7 @@ export const seedCollections: Collection[] = [
       en: 'Pieces born after midnight — restless, dark, precise.',
       th: 'ชิ้นงานที่เกิดหลังเที่ยงคืน — คมชัด ดิบ และมืดสนิท',
     },
-    heroImageUrl: '/images/collections/nightfall-hero.jpg',
+    heroImageUrl: '',
     productIds: ['prd_void_tee', 'prd_void_hoodie', 'prd_void_cargo', 'prd_void_cap'],
   },
 ];

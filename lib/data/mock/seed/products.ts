@@ -68,7 +68,7 @@ export const seedProducts: Product[] = [
       Black: [img('void-tee-black', 'Black')],
       Paper: [img('void-tee-paper', 'Paper')],
     },
-    collectionIds: ['col_void'],
+    collectionIds: ['col_void', 'col_nightfall'],
     dropId: 'drp_void_genesis',
   },
   // 2 — VOID HOODIE
@@ -112,7 +112,7 @@ export const seedProducts: Product[] = [
       },
     ],
     imagesByColor: { Black: [img('void-hoodie-black', 'Black')] },
-    collectionIds: ['col_void'],
+    collectionIds: ['col_void', 'col_nightfall'],
   },
   // 3 — VOID CARGO
   {
@@ -152,7 +152,7 @@ export const seedProducts: Product[] = [
       },
     ],
     imagesByColor: { Smoke: [img('void-cargo-smoke', 'Smoke')] },
-    collectionIds: ['col_void'],
+    collectionIds: ['col_void', 'col_nightfall'],
   },
   // 4 — VOID CAP
   {
@@ -186,7 +186,7 @@ export const seedProducts: Product[] = [
       Black: [img('void-cap-black', 'Black')],
       Blaze: [img('void-cap-blaze', 'Blaze')],
     },
-    collectionIds: ['col_void'],
+    collectionIds: ['col_void', 'col_nightfall'],
   },
   // 5 — BKK JACKET
   {
