@@ -114,6 +114,23 @@
     "viewOrder": "View order",
     "defaultAddress": "Default address"
   },
+  "Auth": {
+    "loginTitle": "Sign in",
+    "registerTitle": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "submitLogin": "Sign in",
+    "submitRegister": "Create account",
+    "toRegister": "New here? Create an account",
+    "toLogin": "Already have an account? Sign in",
+    "errorInvalid": "Email or password is incorrect.",
+    "errorTaken": "That email is already registered.",
+    "demoHeading": "Demo account",
+    "demoBody": "Use these credentials to sign in as a member:",
+    "demoEmail": "member@vanta.shop",
+    "demoPassword": "vanta-demo"
+  },
   "cart": {
     "title": "Cart",
     "empty": "Your cart is empty.",

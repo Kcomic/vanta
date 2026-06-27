@@ -114,6 +114,23 @@
     "viewOrder": "ดูคำสั่งซื้อ",
     "defaultAddress": "ที่อยู่หลัก"
   },
+  "Auth": {
+    "loginTitle": "เข้าสู่ระบบ",
+    "registerTitle": "สร้างบัญชี",
+    "email": "อีเมล",
+    "password": "รหัสผ่าน",
+    "name": "ชื่อ",
+    "submitLogin": "เข้าสู่ระบบ",
+    "submitRegister": "สร้างบัญชี",
+    "toRegister": "ยังไม่มีบัญชี? สร้างบัญชีใหม่",
+    "toLogin": "มีบัญชีอยู่แล้ว? เข้าสู่ระบบ",
+    "errorInvalid": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+    "errorTaken": "อีเมลนี้ถูกใช้ลงทะเบียนแล้ว",
+    "demoHeading": "บัญชีทดลอง",
+    "demoBody": "ใช้ข้อมูลนี้เพื่อเข้าสู่ระบบในฐานะสมาชิก:",
+    "demoEmail": "member@vanta.shop",
+    "demoPassword": "vanta-demo"
+  },
   "cart": {
     "title": "ตะกร้า",
     "empty": "ตะกร้าของคุณว่างเปล่า",
