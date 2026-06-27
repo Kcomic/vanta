@@ -34,17 +34,16 @@ export function LookbookSequence({
             aria-label={item.title}
             className={span}
           >
-            <ul className="h-full">
-              <ProductCard
-                card={item.card}
-                title={item.title}
-                imageUrl={item.imageUrl}
-                imageAlt={item.imageAlt}
-                colorway={item.card.matchedColors[0] ?? ''}
-                locale={locale}
-                priority={index < 2}
-              />
-            </ul>
+            {/* TODO(Phase 9): GPU-less env — lookbook canvas covers static <img> pointer events; canvas is gated off for reduced-motion */}
+            <ProductCard
+              card={item.card}
+              title={item.title}
+              imageUrl={item.imageUrl}
+              imageAlt={item.imageAlt}
+              colorway={item.card.matchedColors[0] ?? ''}
+              locale={locale}
+              priority={index < 2}
+            />
           </div>
         );
       })}
