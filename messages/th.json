@@ -152,5 +152,15 @@
     "countdownDone": "LIVE",
     "srCountdown": "อีก {days} วัน {hours} ชม. {minutes} นาที {seconds} วินาที จึงจะไลฟ์",
     "units": { "days": "วัน", "hours": "ชม.", "minutes": "นาที", "seconds": "วิ" }
+  },
+  "pdp": {
+    "sizeFit": {
+      "title": "ขนาดและการสวมใส่",
+      "unitLabel": "หน่วยวัด",
+      "size": "ไซซ์",
+      "chest": "รอบอก",
+      "length": "ความยาว",
+      "openButton": "ขนาดและการสวมใส่"
+    }
   }
 }

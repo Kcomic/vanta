@@ -152,5 +152,15 @@
     "countdownDone": "LIVE",
     "srCountdown": "{days}d {hours}h {minutes}m {seconds}s until live",
     "units": { "days": "D", "hours": "H", "minutes": "M", "seconds": "S" }
+  },
+  "pdp": {
+    "sizeFit": {
+      "title": "Size & Fit",
+      "unitLabel": "Measurement unit",
+      "size": "Size",
+      "chest": "Chest",
+      "length": "Length",
+      "openButton": "Size & Fit"
+    }
   }
 }
