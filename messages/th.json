@@ -170,5 +170,33 @@
       "length": "ความยาว",
       "openButton": "ขนาดและการสวมใส่"
     }
+  },
+  "catalog": {
+    "title": "ช็อป",
+    "resultCount": "{count, plural, other {# รายการ}}",
+    "sort": {
+      "label": "เรียงตาม",
+      "featured": "แนะนำ",
+      "price_asc": "ราคา: น้อยไปมาก",
+      "price_desc": "ราคา: มากไปน้อย",
+      "newest": "ใหม่ล่าสุด"
+    },
+    "filters": {
+      "heading": "ตัวกรอง",
+      "size": "ขนาด",
+      "color": "สี",
+      "category": "หมวดหมู่",
+      "price": "ราคา",
+      "minPrice": "ต่ำสุด",
+      "maxPrice": "สูงสุด",
+      "apply": "ใช้ตัวกรอง",
+      "clear": "ล้างทั้งหมด"
+    },
+    "card": {
+      "from": "เริ่มต้น",
+      "sale": "ลดราคา",
+      "wishlist": "เพิ่มในรายการที่ชอบ"
+    },
+    "empty": "ไม่มีสินค้าที่ตรงกับตัวกรองนี้"
   }
 }

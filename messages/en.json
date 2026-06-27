@@ -170,5 +170,33 @@
       "length": "Length",
       "openButton": "Size & Fit"
     }
+  },
+  "catalog": {
+    "title": "Shop",
+    "resultCount": "{count, plural, =0 {No items} one {# item} other {# items}}",
+    "sort": {
+      "label": "Sort",
+      "featured": "Featured",
+      "price_asc": "Price: Low to High",
+      "price_desc": "Price: High to Low",
+      "newest": "Newest"
+    },
+    "filters": {
+      "heading": "Filter",
+      "size": "Size",
+      "color": "Color",
+      "category": "Category",
+      "price": "Price",
+      "minPrice": "Min",
+      "maxPrice": "Max",
+      "apply": "Apply",
+      "clear": "Clear all"
+    },
+    "card": {
+      "from": "From",
+      "sale": "Sale",
+      "wishlist": "Add to wishlist"
+    },
+    "empty": "Nothing matches these filters."
   }
 }
