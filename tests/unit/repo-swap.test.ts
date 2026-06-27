@@ -60,6 +60,6 @@ describe('repository queries through the swap point @/lib/data', () => {
 
   it('orders.getById returns the seeded confirmation order', async () => {
     const order = await orders.getById('ord_seed_demo');
-    expect(order?.totals.total.amount).toBe(378000);
+    expect(order?.totals.total.amount).toBe(383000);
   });
 });

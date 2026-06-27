@@ -29,8 +29,9 @@ export const seedOrders: Order[] = [
     ],
     totals: {
       subtotal: thb(378000),
-      shipping: thb(0),
-      total: thb(378000),
+      // SHIPPING_FLAT = 5000 satang (฿50), matching checkout-service.ts
+      shipping: thb(5000),
+      total: thb(383000),
     },
     shippingAddress: {
       id: 'adr_member_1',
