@@ -3,8 +3,7 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import type { Locale } from '@/lib/domain';
-import type { CatalogCard } from '@/lib/catalog/query';
-import type { CatalogCard as CardWithImage } from '@/components/product/catalog-card';
+import type { CatalogCard } from '@/components/product/catalog-card';
 import { ProductCard } from '@/components/product/ProductCard';
 import { formatMoney } from '@/lib/format/money';
 
@@ -34,36 +33,28 @@ export function CatalogGrid({
 
   return (
     <ul className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-      {items.map((item, index) => {
-        // ProductCard expects CatalogCard from catalog-card.ts (which has imageUrl).
-        // We augment the query CatalogCard with imageUrl from the grid item.
-        const cardWithImage: CardWithImage = {
-          ...item.card,
-          imageUrl: item.imageUrl,
-        };
-        return (
-          <div
-            key={item.card.productId}
-            data-testid="product-card"
-            data-price={item.card.fromPrice.amount}
-            aria-label={item.title}
-          >
-            {/* Expose price text for E2E price-order assertion */}
-            <span data-testid="card-price" className="sr-only">
-              {formatMoney(item.card.fromPrice, locale)}
-            </span>
-            <ProductCard
-              card={cardWithImage}
-              title={item.title}
-              imageUrl={item.imageUrl}
-              imageAlt={item.imageAlt}
-              colorway={item.card.matchedColors[0] ?? 'black'}
-              locale={locale}
-              priority={index < 4}
-            />
-          </div>
-        );
-      })}
+      {items.map((item, index) => (
+        <div
+          key={item.card.productId}
+          data-testid="product-card"
+          data-price={item.card.fromPrice.amount}
+          aria-label={item.title}
+        >
+          {/* Expose price text for E2E price-order assertion */}
+          <span data-testid="card-price" className="sr-only">
+            {formatMoney(item.card.fromPrice, locale)}
+          </span>
+          <ProductCard
+            card={item.card}
+            title={item.title}
+            imageUrl={item.imageUrl}
+            imageAlt={item.imageAlt}
+            colorway={item.card.matchedColors[0] ?? 'black'}
+            locale={locale}
+            priority={index < 4}
+          />
+        </div>
+      ))}
     </ul>
   );
 }

@@ -1,5 +1,8 @@
 import type { Product, Variant, Drop, User, Availability, Money } from '@/lib/domain';
 import { deriveAvailability, CARD_ROLLUP_ORDER } from '@/lib/services/availability';
+import type { CatalogCard } from '@/components/product/catalog-card';
+
+export type { CatalogCard };
 
 export type CatalogSort = 'featured' | 'price_asc' | 'price_desc' | 'newest';
 
@@ -10,15 +13,6 @@ export type CatalogQuery = {
   minPrice: number | null;
   maxPrice: number | null;
   sort: CatalogSort;
-};
-
-export type CatalogCard = {
-  productId: string; // stable id (View Transition key origin)
-  slug: string;
-  fromPrice: Money; // lowest variant price among matching variants
-  compareAtFromPrice: Money | null; // present => on sale
-  availability: Availability; // best (most buyable) availability across matching variants
-  matchedColors: string[]; // colors that survived the filter (drives swatch dots)
 };
 
 const SORTS: readonly CatalogSort[] = ['featured', 'price_asc', 'price_desc', 'newest'];
@@ -69,6 +63,8 @@ export function deriveCatalogView(
   // Track original index for 'featured' (preserve input order) and 'newest' (reverse).
   const withIndex = products.map((product, index) => ({ product, index }));
 
+  // CatalogCard now includes imageUrl; deriveCatalogView doesn't know the asset —
+  // set '' (branded-placeholder sentinel). The page/grid overrides it from the product catalog.
   const cards: Array<CatalogCard & { _index: number }> = [];
 
   for (const { product, index } of withIndex) {
@@ -117,6 +113,7 @@ export function deriveCatalogView(
       compareAtFromPrice,
       availability: bestAvailability,
       matchedColors: [...matchedColors],
+      imageUrl: '', // placeholder sentinel; page/grid overrides from product catalog
     });
   }
 
