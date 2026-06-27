@@ -16,6 +16,9 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      // The reduced-motion suite only makes sense under the reduced-motion project below,
+      // where prefers-reduced-motion is forced; exclude it from the default motion-on run.
+      testIgnore: /reduced-motion\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {

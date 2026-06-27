@@ -8,7 +8,11 @@ test.describe('lookbook editorial @ /collections/[slug]', () => {
     await page.goto(`/en/collections/${SLUG}`);
     await expect(page.getByTestId('lookbook-hero')).toBeVisible();
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.getByTestId('product-card').first()).toBeVisible();
+    // Product cards below the fold use a scroll-reveal (opacity ramps in via IntersectionObserver
+    // under motion-on); scroll the first one into view to trigger its reveal before asserting.
+    const firstCard = page.getByTestId('product-card').first();
+    await firstCard.scrollIntoViewIfNeeded();
+    await expect(firstCard).toBeVisible();
   });
 
   test('unknown slug 404s', async ({ page }) => {
