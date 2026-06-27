@@ -23,10 +23,25 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Common' });
+  const title = t('brandName');
+  const description = t('tagline');
   return {
-    metadataBase: new URL('https://vanta.example.com'),
-    title: t('brandName'),
-    description: t('tagline'),
+    metadataBase: new URL(
+      process.env.NEXT_PUBLIC_SITE_URL ?? 'https://vanta.example.com',
+    ),
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      locale,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
     alternates: {
       languages: {
         en: '/en',
