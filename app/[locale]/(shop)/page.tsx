@@ -31,7 +31,7 @@ export default async function Page({
     <>
       <HeroSection locale={locale} />
       <DropMarquee soldOut={allSoldOut} />
-      <LiveDropSection view={view} locale={locale} />
+      <LiveDropSection view={view} locale={locale} now={now} />
 
       <section data-testid="featured" className="bg-ink px-6 py-20 text-paper">
         <div className="mx-auto max-w-[1440px]">
@@ -49,6 +49,7 @@ export default async function Page({
                     product.imagesByColor[card.matchedColors[0] ?? '']?.[0]?.alt[locale] ??
                     product.title[locale]
                   }
+                  colorway={card.matchedColors[0] ?? ''}
                   locale={locale}
                   priority={i < 3}
                 />

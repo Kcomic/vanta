@@ -5,6 +5,7 @@ import type { Locale } from '@/lib/domain';
 import { Money as MoneyComponent } from '@/components/ui/Money';
 import { Link } from '@/lib/i18n/navigation';
 import { useMotionCapability } from '@/lib/motion/capability';
+import { ProductImage } from './ProductImage';
 // Pure data utilities live in a non-client module so Server Components can call toCatalogCard.
 import type { CatalogCard } from './catalog-card';
 export type { CatalogCard } from './catalog-card';
@@ -13,8 +14,10 @@ export { toCatalogCard } from './catalog-card';
 export type ProductCardProps = {
   card: CatalogCard;
   title: string; // already-localized title[locale]
-  imageUrl: string; // first image for the first matchedColor
-  imageAlt: string; // already-localized alt
+  imageUrl: string; // first image for the first matchedColor (empty string = branded placeholder)
+  imageAlt: string; // already-localized alt (used only when imageUrl is a real asset)
+  /** Primary colorway for the placeholder tint (card.matchedColors[0]). */
+  colorway: string;
   locale: Locale;
   priority?: boolean; // first row eager-loads
 };
@@ -23,7 +26,8 @@ export function ProductCard({
   card,
   title,
   imageUrl,
-  imageAlt,
+  imageAlt: _imageAlt,
+  colorway,
   locale,
   priority = false,
 }: ProductCardProps): React.JSX.Element {
@@ -96,13 +100,12 @@ export function ProductCard({
           className="relative aspect-[4/5] overflow-hidden bg-ink"
           style={{ viewTransitionName: `product-${card.productId}` }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imageUrl}
-            alt={imageAlt}
-            loading={priority ? 'eager' : 'lazy'}
-            decoding="async"
-            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+          <ProductImage
+            url={imageUrl}
+            colorway={colorway}
+            title={title}
+            locale={locale}
+            priority={priority}
           />
         </div>
 
