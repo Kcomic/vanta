@@ -80,7 +80,7 @@ export default async function ShopPage({
             {t('resultCount', { count: items.length })}
           </p>
         </div>
-        <SortSelect value={query.sort} />
+        <SortSelect />
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[16rem_1fr]">
