@@ -112,7 +112,31 @@
     "memberSince": "Member",
     "noOrders": "No orders yet.",
     "viewOrder": "View order",
-    "defaultAddress": "Default address"
+    "defaultAddress": "Default address",
+    "navDashboard": "Dashboard",
+    "navOrders": "Orders",
+    "navAddresses": "Addresses",
+    "navSettings": "Settings",
+    "logout": "Sign out",
+    "dashTitle": "Welcome back, {name}",
+    "dashRole": "Membership",
+    "dashRecentOrder": "Most recent order",
+    "ordersTitle": "Order history",
+    "ordersEmpty": "No orders yet.",
+    "orderPlaced": "Placed",
+    "orderStatus": "Status",
+    "orderTotal": "Total",
+    "addressesTitle": "Saved address",
+    "addressesEmpty": "No saved address.",
+    "settingsTitle": "Settings",
+    "settingsName": "Name",
+    "settingsEmail": "Email",
+    "settingsLocale": "Preferred language",
+    "settingsNote": "Profile editing is out of scope for this demo."
+  },
+  "Admin": {
+    "title": "Admin",
+    "reserved": "Reserved for admins. Product, order, and inventory tools are built later."
   },
   "Auth": {
     "loginTitle": "Sign in",

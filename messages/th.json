@@ -112,7 +112,31 @@
     "memberSince": "สมาชิก",
     "noOrders": "ยังไม่มีคำสั่งซื้อ",
     "viewOrder": "ดูคำสั่งซื้อ",
-    "defaultAddress": "ที่อยู่หลัก"
+    "defaultAddress": "ที่อยู่หลัก",
+    "navDashboard": "แดชบอร์ด",
+    "navOrders": "ประวัติคำสั่งซื้อ",
+    "navAddresses": "ที่อยู่",
+    "navSettings": "ตั้งค่า",
+    "logout": "ออกจากระบบ",
+    "dashTitle": "ยินดีต้อนรับกลับมา {name}",
+    "dashRole": "สมาชิกภาพ",
+    "dashRecentOrder": "คำสั่งซื้อล่าสุด",
+    "ordersTitle": "ประวัติคำสั่งซื้อ",
+    "ordersEmpty": "ยังไม่มีคำสั่งซื้อ",
+    "orderPlaced": "สั่งซื้อเมื่อ",
+    "orderStatus": "สถานะ",
+    "orderTotal": "ยอดรวม",
+    "addressesTitle": "ที่อยู่ที่บันทึกไว้",
+    "addressesEmpty": "ยังไม่มีที่อยู่ที่บันทึกไว้",
+    "settingsTitle": "ตั้งค่า",
+    "settingsName": "ชื่อ",
+    "settingsEmail": "อีเมล",
+    "settingsLocale": "ภาษาที่ต้องการ",
+    "settingsNote": "การแก้ไขโปรไฟล์อยู่นอกขอบเขตของเดโมนี้"
+  },
+  "Admin": {
+    "title": "ผู้ดูแลระบบ",
+    "reserved": "สงวนไว้สำหรับผู้ดูแลระบบ เครื่องมือจัดการสินค้า คำสั่งซื้อ และสต็อกจะสร้างในภายหลัง"
   },
   "Auth": {
     "loginTitle": "เข้าสู่ระบบ",
