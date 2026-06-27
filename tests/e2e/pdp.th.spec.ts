@@ -31,10 +31,9 @@ test.describe('PDP — Thai', () => {
     await page.goto('/th/product/void-hoodie');
     await page.getByTestId('size-M').click();
     const badge = page.getByTestId('low-stock-badge');
-    // The badge appears for this low-stock variant; assert Thai copy.
-    if (await badge.count()) {
-      await expect(badge).toContainText('เหลือเพียง');
-    }
+    // The badge MUST appear for this low-stock variant (no soft conditional — match the EN spec).
+    await expect(badge).toBeVisible();
+    await expect(badge).toContainText('เหลือเพียง');
   });
 
   test('sold-out size is disabled in Thai locale', async ({ page }) => {

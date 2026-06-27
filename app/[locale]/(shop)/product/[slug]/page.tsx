@@ -65,7 +65,7 @@ export default async function ProductPage({
   const nowIso = new Date().toISOString();
 
   return (
-    <main className="bg-ink">
+    <div className="bg-ink">
       <PdpClient
         product={product}
         drop={drop}
@@ -74,6 +74,6 @@ export default async function ProductPage({
         locale={locale}
         sizeFitRows={SIZE_FIT_ROWS}
       />
-    </main>
+    </div>
   );
 }
