@@ -4,7 +4,7 @@ const thb = (amount: number) => ({ amount, currency: 'THB' as const });
 
 const img = (id: string, color: string): ProductImage => ({
   id,
-  url: `/images/products/${id}.jpg`,
+  url: '',
   alt: { en: `${color} colorway`, th: `สี${color}` },
   width: 1200,
   height: 1600,
