@@ -21,7 +21,7 @@ export default async function AccountDashboardPage() {
       </h1>
 
       <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 font-body text-sm text-paper">
-        <dt className="text-smoke-500">{t('dashRole')}</dt>
+        <dt className="text-smoke-300">{t('dashRole')}</dt>
         <dd className="font-mono uppercase tracking-tight text-lime">{user.role}</dd>
       </dl>
 

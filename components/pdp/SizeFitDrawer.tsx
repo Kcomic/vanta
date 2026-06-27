@@ -70,7 +70,7 @@ export function SizeFitDrawer({
         </div>
         <table className="w-full border-collapse font-mono text-sm">
           <thead>
-            <tr className="text-left text-smoke-500">
+            <tr className="text-left text-smoke-300">
               <th className="py-2">{t('size')}</th>
               <th className="py-2">{t('chest')}</th>
               <th className="py-2">{t('length')}</th>

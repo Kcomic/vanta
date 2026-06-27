@@ -119,7 +119,7 @@ export function ProductCard({
               <MoneyComponent value={card.fromPrice} locale={locale} />
             </span>
             {onSale ? (
-              <span className="text-xs text-smoke-500 line-through">
+              <span className="text-xs text-smoke-300 line-through">
                 <MoneyComponent value={card.compareAtFromPrice!} locale={locale} />
               </span>
             ) : null}

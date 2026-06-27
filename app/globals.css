@@ -14,7 +14,7 @@
   --color-ink: #0a0a0a;
   --color-paper: #f5f4ef;
   --color-blaze: #ff3b1f;
-  --color-blaze-on-light: #d62e16; /* AA-safe on paper */
+  --color-blaze-on-light: #c42a13; /* AA-safe on paper — darkened for WCAG AA (≥4.5:1 on #F5F4EF) */
   --color-lime: #d4ff2e; /* lime-on-dark ONLY */
   --color-smoke-900: #141414;
   --color-smoke-700: #2a2a2a;

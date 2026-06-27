@@ -50,7 +50,7 @@ export function CartLineItem({
         <div className="flex items-start justify-between gap-2">
           <div>
             <p className="display text-sm">{line.title[locale]}</p>
-            <p className="font-mono text-xs text-smoke-500">
+            <p className="font-mono text-xs text-smoke-300">
               {line.size} · {line.color}
             </p>
           </div>
@@ -58,7 +58,7 @@ export function CartLineItem({
             type="button"
             onClick={() => onRemove(line.variantId)}
             disabled={disabled}
-            className="text-xs text-smoke-500 underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-blaze disabled:opacity-50"
+            className="text-xs text-smoke-300 underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-blaze disabled:opacity-50"
           >
             {t('remove')}
           </button>

@@ -10,7 +10,7 @@ export type AvailabilityBadgeProps = {
   stock: number;
   /** Surface the badge renders on. Defaults to 'dark'.
    *  AA contract: low-stock urgency text uses text-blaze on dark,
-   *  text-blaze-on-light (#D62E16, 4.5:1) on paper (raw blaze is only 3.23:1 on paper). */
+   *  text-blaze-on-light (#C42A13, 4.7:1) on paper (raw blaze is only 3.23:1 on paper). */
   surface?: Surface;
 };
 
@@ -50,7 +50,7 @@ export function AvailabilityBadge({
         </span>
       );
     case 'low_stock':
-      // On paper surfaces: text-blaze-on-light (#D62E16, 4.5:1 on paper, AA-safe).
+      // On paper surfaces: text-blaze-on-light (#C42A13, 4.7:1 on paper, AA-safe).
       // On dark surfaces: filled blaze badge with ink text (high contrast on dark).
       return surface === 'paper' ? (
         <span data-testid="badge-low-stock" className={`${base} text-blaze-on-light`}>

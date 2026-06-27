@@ -75,7 +75,7 @@ export function CartPageClient({
 
   if (rows.length === 0) {
     return (
-      <p className="text-smoke-500" data-testid="cart-empty">
+      <p className="text-smoke-300" data-testid="cart-empty">
         {t('empty')}
       </p>
     );

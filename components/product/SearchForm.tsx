@@ -27,7 +27,7 @@ export function SearchForm({ defaultQuery }: { defaultQuery: string }): React.JS
         onChange={(e) => setValue(e.currentTarget.value)}
         placeholder={t('placeholder')}
         aria-label={t('title')}
-        className="flex-1 bg-smoke-700 px-3 py-2 text-paper placeholder:text-smoke-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime"
+        className="flex-1 bg-smoke-700 px-3 py-2 text-paper placeholder:text-smoke-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime"
       />
       <button
         type="submit"

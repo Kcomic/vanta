@@ -18,11 +18,11 @@ export default async function LoginPage() {
         </h2>
         <p className="mt-1 font-body text-sm text-smoke-300">{t('demoBody')}</p>
         <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 font-mono text-sm">
-          <dt className="text-smoke-500">{t('email')}</dt>
+          <dt className="text-smoke-300">{t('email')}</dt>
           <dd className="text-paper" data-testid="demo-email">
             {t('demoEmail')}
           </dd>
-          <dt className="text-smoke-500">{t('password')}</dt>
+          <dt className="text-smoke-300">{t('password')}</dt>
           <dd className="text-paper" data-testid="demo-password">
             {t('demoPassword')}
           </dd>

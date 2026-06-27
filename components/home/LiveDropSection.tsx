@@ -82,7 +82,7 @@ export async function LiveDropSection({
                 className="flex flex-col gap-4 border border-smoke-700 p-6"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs text-smoke-500">{p.leadVariant.sku}</span>
+                  <span className="font-mono text-xs text-smoke-300">{p.leadVariant.sku}</span>
                   <AvailabilityBadge availability={a} stock={p.leadVariant.stock} />
                 </div>
                 <StockMeter stock={p.leadVariant.stock} />

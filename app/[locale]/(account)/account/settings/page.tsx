@@ -12,17 +12,17 @@ export default async function AccountSettingsPage() {
       <h1 className="display font-display text-3xl text-paper">{t('settingsTitle')}</h1>
 
       <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 font-body text-sm text-paper">
-        <dt className="text-smoke-500">{t('settingsName')}</dt>
+        <dt className="text-smoke-300">{t('settingsName')}</dt>
         <dd>{user.name}</dd>
 
-        <dt className="text-smoke-500">{t('settingsEmail')}</dt>
+        <dt className="text-smoke-300">{t('settingsEmail')}</dt>
         <dd className="font-mono">{user.email}</dd>
 
-        <dt className="text-smoke-500">{t('settingsLocale')}</dt>
+        <dt className="text-smoke-300">{t('settingsLocale')}</dt>
         <dd className="font-mono uppercase">{locale}</dd>
       </dl>
 
-      <p className="font-body text-sm text-smoke-500">{t('settingsNote')}</p>
+      <p className="font-body text-sm text-smoke-300">{t('settingsNote')}</p>
     </main>
   );
 }
