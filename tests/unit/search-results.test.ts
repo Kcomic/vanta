@@ -39,7 +39,7 @@ describe('buildSearchResults', () => {
 
   it('echoes the normalized query and counts cards', () => {
     const p = product({ id: 'p1', slug: 'tee' });
-    const res = buildSearchResults('  Tee ', [p], {}, now, null);
+    const res = buildSearchResults('  Tee ', [p], {}, now, null, 'en');
     expect(res.query).toBe('Tee');
     expect(res.count).toBe(1);
     expect(res.cards[0]).toMatchObject({ productId: 'p1', slug: 'tee', fromPrice: thb(199000) });
@@ -54,13 +54,13 @@ describe('buildSearchResults', () => {
         variant({ id: 'b', stock: 2, availability: 'low_stock' }),
       ],
     });
-    const res = buildSearchResults('tee', [p], {}, now, null);
+    const res = buildSearchResults('tee', [p], {}, now, null, 'th');
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     expect(res.cards[0]!.availability).toBe('low_stock');
   });
 
   it('returns an empty result set for a blank query without touching matches', () => {
-    const res = buildSearchResults('   ', [product({ id: 'p1', slug: 'tee' })], {}, now, null);
+    const res = buildSearchResults('   ', [product({ id: 'p1', slug: 'tee' })], {}, now, null, 'en');
     expect(res).toEqual({ query: '', count: 0, cards: [] });
   });
 });

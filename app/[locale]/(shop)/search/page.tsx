@@ -42,7 +42,7 @@ export default async function SearchPage({
     for (const d of dropList) if (d) dropsById[d.id] = d;
 
     const now = new Date();
-    const results = buildSearchResults(query, matches, dropsById, now, user);
+    const results = buildSearchResults(query, matches, dropsById, now, user, locale);
 
     const productById = new Map(matches.map((p) => [p.id, p]));
     const items: CatalogGridItem[] = results.cards.map((card) => {

@@ -1,4 +1,4 @@
-import type { Product, Drop, User } from '@/lib/domain';
+import type { Product, Drop, User, Locale } from '@/lib/domain';
 import { toCatalogCard } from '@/components/product/catalog-card';
 import type { CatalogCard } from '@/components/product/catalog-card';
 
@@ -29,9 +29,10 @@ export function buildSearchResults(
   _dropsById: Record<string, Drop>,
   _now: Date,
   _user: User | null,
+  locale: Locale = 'en',
 ): SearchResults {
   const query = normalizeSearchQuery(rawQuery);
   if (query === '') return { query: '', count: 0, cards: [] };
-  const cards = matches.map((product) => toCatalogCard(product, 'en'));
+  const cards = matches.map((product) => toCatalogCard(product, locale));
   return { query, count: cards.length, cards };
 }
