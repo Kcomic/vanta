@@ -3,16 +3,13 @@ import { test, expect } from '@playwright/test';
 // Verifies: add-to-cart opens the drawer, the drawer is a modal dialog,
 // Escape closes it and returns focus, and the subtotal shows the THB baht sign.
 //
-// NOTE: These specs depend on the PDP `add-to-cart` button (Phase 5+).
-// Marked test.fixme until the PDP add-to-cart has landed.
+// PDP add-to-cart button is live (Phase 5 complete). Uses real seed slug: void-tee.
 test.describe('cart drawer (en)', () => {
-  test.fixme(
-    true,
-    'Requires PDP add-to-cart button (data-testid="add-to-cart") — Phase 5+',
-  );
-
   test('add to cart opens the drawer with the line and THB subtotal', async ({ page }) => {
-    await page.goto('/en/product/vanta-core-tee');
+    await page.goto('/en/product/void-tee');
+
+    // Select a size first (required to enable add-to-cart).
+    await page.getByTestId('size-S').click();
 
     const addButton = page.getByTestId('add-to-cart');
     await addButton.click();
@@ -34,7 +31,8 @@ test.describe('cart drawer (en)', () => {
   });
 
   test('Escape closes the drawer and returns focus to the trigger', async ({ page }) => {
-    await page.goto('/en/product/vanta-core-tee');
+    await page.goto('/en/product/void-tee');
+    await page.getByTestId('size-S').click();
     const addButton = page.getByTestId('add-to-cart');
     await addButton.click();
     await expect(page.getByRole('dialog')).toBeVisible();
@@ -45,7 +43,8 @@ test.describe('cart drawer (en)', () => {
   });
 
   test('overlay click closes the drawer', async ({ page }) => {
-    await page.goto('/en/product/vanta-core-tee');
+    await page.goto('/en/product/void-tee');
+    await page.getByTestId('size-S').click();
     await page.getByTestId('add-to-cart').click();
     await expect(page.getByRole('dialog')).toBeVisible();
     // The Dialog backdrop is a button with aria-label="Close"

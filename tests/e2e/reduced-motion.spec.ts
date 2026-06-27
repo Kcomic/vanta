@@ -1,5 +1,40 @@
 import { test, expect } from '@playwright/test';
 
+// ---------------------------------------------------------------------------
+// PDP View Transition — locale-stable name + reduced-motion hard cut
+// ---------------------------------------------------------------------------
+test.describe('PDP View Transition — locale-stable + reduced-motion hard cut', () => {
+  test('view-transition-name is keyed on product id in both locales', async ({ page }) => {
+    await page.goto('/en/product/void-tee');
+    const enName = await page
+      .locator('[style*="view-transition-name"]')
+      .first()
+      .evaluate((el) => getComputedStyle(el).viewTransitionName);
+
+    await page.goto('/th/product/void-tee');
+    const thName = await page
+      .locator('[style*="view-transition-name"]')
+      .first()
+      .evaluate((el) => getComputedStyle(el).viewTransitionName);
+
+    expect(enName).toMatch(/^product-/);
+    expect(thName).toEqual(enName); // identical regardless of locale
+  });
+
+  test('reduced motion does not stick content at opacity 0', async ({ page }) => {
+    await page.goto('/en/product/void-tee');
+    // The gallery hero container (carries view-transition-name) must be visible.
+    const hero = page.locator('[style*="view-transition-name"]').first();
+    await expect(hero).toBeVisible();
+    const opacity = await hero.evaluate((el) => getComputedStyle(el).opacity);
+    expect(Number(opacity)).toBeGreaterThan(0.99);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Home — reduced motion
+// ---------------------------------------------------------------------------
+
 // This spec is intentionally scoped to the reduced-motion Playwright project
 // (prefers-reduced-motion: reduce). It runs in all projects but skips when the
 // browser does not report reduced-motion, keeping the assertion sound.
