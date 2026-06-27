@@ -1,66 +1,19 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import type { Locale, Drop, Availability } from '@/lib/domain';
+import type { Locale } from '@/lib/domain';
 import { collections, products } from '@/lib/data';
-import { dropService } from '@/lib/services/drop-service';
-import { authService } from '@/lib/services/auth-service';
-import { deriveAvailability, CARD_ROLLUP_ORDER } from '@/lib/services/availability';
-import type { CatalogCard } from '@/components/product/catalog-card';
+import { toCatalogCard } from '@/components/product/catalog-card';
 import { LookbookHero } from '@/components/collection/LookbookHero';
 import { LookbookSequence, type LookbookItem } from '@/components/collection/LookbookSequence';
 import { Link } from '@/lib/i18n/navigation';
 import { routing } from '@/lib/i18n/routing';
-import type { Product, Money } from '@/lib/domain';
 
 export async function generateStaticParams(): Promise<Array<{ locale: Locale; slug: string }>> {
   const all = await collections.list();
   return routing.locales.flatMap((locale) =>
     all.map((collection) => ({ locale, slug: collection.slug })),
   );
-}
-
-function toCard(
-  product: Product,
-  dropsById: Record<string, Drop>,
-  now: Date,
-  user: Parameters<typeof deriveAvailability>[3],
-): CatalogCard {
-  const drop = product.dropId ? (dropsById[product.dropId] ?? null) : null;
-  const first = product.variants[0]!;
-  let fromPrice: Money = first.price;
-  let compareAtFromPrice: Money | null = null;
-  let bestRollupIdx = Number.POSITIVE_INFINITY;
-  let bestAvailability: Availability = 'sold_out';
-  const matchedColors = new Set<string>();
-
-  for (const variant of product.variants) {
-    matchedColors.add(variant.optionValues.color);
-    if (variant.price.amount < fromPrice.amount) fromPrice = variant.price;
-    if (variant.compareAtPrice && compareAtFromPrice === null) {
-      compareAtFromPrice = variant.compareAtPrice;
-    }
-    const availability = deriveAvailability(variant, drop, now, user);
-    const rollupIdx = CARD_ROLLUP_ORDER.indexOf(availability);
-    if (rollupIdx < bestRollupIdx) {
-      bestRollupIdx = rollupIdx;
-      bestAvailability = availability;
-    }
-  }
-
-  const colorList = [...matchedColors];
-  const firstColor = colorList[0] ?? '';
-  const imageUrl = product.imagesByColor[firstColor]?.[0]?.url ?? '';
-
-  return {
-    productId: product.id,
-    slug: product.slug,
-    fromPrice,
-    compareAtFromPrice,
-    availability: bestAvailability,
-    matchedColors: colorList,
-    imageUrl,
-  };
 }
 
 export default async function CollectionDetailPage({
@@ -75,20 +28,10 @@ export default async function CollectionDetailPage({
   const collection = await collections.getBySlug(slug);
   if (!collection) notFound();
 
-  const [collectionProducts, user] = await Promise.all([
-    products.listByCollection(collection.id),
-    authService.getCurrentUser(),
-  ]);
+  const collectionProducts = await products.listByCollection(collection.id);
 
-  const dropIds = new Set<string>();
-  for (const p of collectionProducts) if (p.dropId) dropIds.add(p.dropId);
-  const drops = await Promise.all([...dropIds].map((id) => dropService.getDropById(id)));
-  const dropsById: Record<string, Drop> = {};
-  for (const d of drops) if (d) dropsById[d.id] = d;
-
-  const now = new Date();
   const items: LookbookItem[] = collectionProducts.map((product) => {
-    const card = toCard(product, dropsById, now, user);
+    const card = toCatalogCard(product, locale);
     const firstColor = card.matchedColors[0] ?? product.optionAxes.color[0] ?? '';
     const image = (product.imagesByColor[firstColor] ?? [])[0];
     return {
