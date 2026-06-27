@@ -18,15 +18,24 @@ export type CountdownIslandProps = {
   serverParts?: CountdownParts;
 };
 
-function pad(n: number): string {
+function pad(n: number, isLargeUnit?: boolean): string {
+  // >99-day support: don't truncate to 2 digits; pad only when value fits in 2 chars.
+  if (isLargeUnit && n > 99) return n.toString();
   return n.toString().padStart(2, '0');
 }
 
-function Segment({ value, unit }: { value: number; unit: string }): React.JSX.Element {
+function Segment({ value, unit, isDays }: { value: number; unit: string; isDays?: boolean }): React.JSX.Element {
   return (
-    <span className="inline-flex flex-col items-center">
-      <span className="text-4xl leading-none">{pad(value)}</span>
-      <span className="text-[0.625rem] uppercase tracking-[0.2em] text-smoke-300">{unit}</span>
+    <span className="inline-flex min-w-0 flex-col items-center">
+      {/* tabular-nums: monospaced digits prevent layout jitter on each tick.
+          min-w-[2ch] accommodates 2-digit values; auto-expands for >99 days. */}
+      <span className="min-w-[2ch] text-center text-4xl leading-none tabular-nums">
+        {pad(value, isDays)}
+      </span>
+      {/* max-w + break-words: prevents long Thai unit labels from overflowing. */}
+      <span className="max-w-8 wrap-break-word text-center text-[0.625rem] uppercase tracking-[0.2em] text-smoke-300 leading-tight">
+        {unit}
+      </span>
     </span>
   );
 }
@@ -101,7 +110,7 @@ export function CountdownIsland({ deadlineIso, onDoneLabel, serverParts }: Count
         {srText}
       </span>
       <span aria-hidden className="inline-flex items-baseline gap-3 text-paper">
-        <Segment value={view.days} unit={units('days')} />
+        <Segment value={view.days} unit={units('days')} isDays />
         <Segment value={view.hours} unit={units('hours')} />
         <Segment value={view.minutes} unit={units('minutes')} />
         <Segment value={view.seconds} unit={units('seconds')} />

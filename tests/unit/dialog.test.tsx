@@ -588,3 +588,74 @@ describe('Dialog — return type', () => {
     expect(queryDialog()).toBeNull();
   });
 });
+
+// ─── Background-inert ─────────────────────────────────────────────────────────
+
+describe('Dialog — background inert', () => {
+  it('marks background body siblings as inert when open', () => {
+    // Place a sibling in the body before the dialog
+    const sibling = document.createElement('div');
+    sibling.id = 'bg-content';
+    document.body.appendChild(sibling);
+
+    renderDialog(
+      <Dialog open={true} onClose={() => {}}>
+        <button>Close</button>
+      </Dialog>,
+    );
+
+    // The sibling should now carry the inert attribute.
+    expect(sibling.hasAttribute('inert')).toBe(true);
+
+    // Cleanup tracked in afterEach will call unmount → releaseInert removes it.
+  });
+
+  it('removes inert from background siblings when closed', () => {
+    const sibling = document.createElement('div');
+    sibling.id = 'bg-content-2';
+    document.body.appendChild(sibling);
+
+    const { root } = renderDialog(
+      <Dialog open={true} onClose={() => {}}>
+        <button>Close</button>
+      </Dialog>,
+    );
+
+    expect(sibling.hasAttribute('inert')).toBe(true);
+
+    act(() => {
+      root.render(
+        <Dialog open={false} onClose={() => {}}>
+          <button>Close</button>
+        </Dialog>,
+      );
+    });
+
+    // After close, inert should be removed (we added it, so we remove it).
+    expect(sibling.hasAttribute('inert')).toBe(false);
+  });
+
+  it('does not remove pre-existing inert attribute on background sibling', () => {
+    const sibling = document.createElement('div');
+    sibling.setAttribute('inert', ''); // already inert before dialog opens
+    document.body.appendChild(sibling);
+
+    const { root } = renderDialog(
+      <Dialog open={true} onClose={() => {}}>
+        <button>Close</button>
+      </Dialog>,
+    );
+
+    // Close dialog
+    act(() => {
+      root.render(
+        <Dialog open={false} onClose={() => {}}>
+          <button>Close</button>
+        </Dialog>,
+      );
+    });
+
+    // Pre-existing inert must be preserved — Dialog didn't add it, so it won't remove it.
+    expect(sibling.hasAttribute('inert')).toBe(true);
+  });
+});

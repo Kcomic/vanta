@@ -20,9 +20,11 @@ export default defineConfig({
     },
     {
       name: 'reduced-motion',
+      testMatch: /reduced-motion\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         colorScheme: 'dark',
+        baseURL: 'http://localhost:3000',
         contextOptions: { reducedMotion: 'reduce' },
       },
     },

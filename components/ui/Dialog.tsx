@@ -28,6 +28,39 @@ function releaseScrollLock() {
   }
 }
 
+// ─── Background-inert counter ─────────────────────────────────────────────────
+// When a dialog opens, all direct body children that are NOT the portal
+// container receive `inert` so AT / pointer events cannot reach background
+// content. Counter-based so stacked dialogs share the same inert state.
+
+let _inertCount = 0;
+let _inertedsnapshot: Array<{ el: Element; had: boolean }> = [];
+
+function acquireInert(portalEl: Element) {
+  if (_inertCount === 0) {
+    // Snapshot and mark every direct body child EXCEPT the portal container.
+    _inertedsnapshot = Array.from(document.body.children)
+      .filter((el) => el !== portalEl)
+      .map((el) => {
+        const had = el.hasAttribute('inert');
+        if (!had) el.setAttribute('inert', '');
+        return { el, had };
+      });
+  }
+  _inertCount++;
+}
+
+function releaseInert() {
+  _inertCount = Math.max(0, _inertCount - 1);
+  if (_inertCount === 0) {
+    // Restore only elements we ourselves marked; respect pre-existing inert.
+    for (const { el, had } of _inertedsnapshot) {
+      if (!had) el.removeAttribute('inert');
+    }
+    _inertedsnapshot = [];
+  }
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function Dialog({
@@ -46,6 +79,25 @@ export function Dialog({
   // SSR-safety: only render the portal once mounted on the client.
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
+
+  // Dedicated portal container — a direct child of document.body that we own,
+  // so acquireInert can exclude it from the background-inert sweep.
+  const portalRef = useRef<HTMLDivElement | null>(null);
+  if (typeof document !== 'undefined' && !portalRef.current) {
+    const div = document.createElement('div');
+    div.setAttribute('data-dialog-portal', '');
+    portalRef.current = div;
+  }
+
+  // Mount / unmount the portal container alongside the component.
+  useEffect(() => {
+    const el = portalRef.current;
+    if (!el) return;
+    document.body.appendChild(el);
+    return () => {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    };
+  }, []);
 
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
@@ -83,6 +135,11 @@ export function Dialog({
 
     // Scroll lock — counter-based so nested dialogs stay locked correctly.
     acquireScrollLock();
+
+    // Background inert — counter-based; marks all body siblings except our
+    // portal container as inert so AT and pointer events cannot reach them.
+    const portalEl = portalRef.current;
+    if (portalEl) acquireInert(portalEl);
 
     // Initial focus into the panel.
     const panel = panelRef.current;
@@ -131,12 +188,13 @@ export function Dialog({
     return () => {
       document.removeEventListener('keydown', onKeyDown, true);
       releaseScrollLock();
+      releaseInert();
       // Return focus to whatever was focused before the dialog opened.
       previouslyFocused.current?.focus();
     };
   }, [open, mounted]); // onClose intentionally omitted — read via onCloseRef
 
-  if (!open || !mounted) return null;
+  if (!open || !mounted || !portalRef.current) return null;
 
   const panel = (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -162,5 +220,5 @@ export function Dialog({
     </div>
   );
 
-  return createPortal(panel, document.body);
+  return createPortal(panel, portalRef.current);
 }

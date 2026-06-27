@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { Dialog } from '@/components/ui/Dialog';
 import { type SizeRow, type Unit, formatMeasure } from '@/lib/pdp/measurements';
@@ -16,6 +16,24 @@ export function SizeFitDrawer({
 }) {
   const t = useTranslations('pdp.sizeFit');
   const [unit, setUnit] = useState<Unit>('cm');
+  const unitGroupRef = useRef<HTMLDivElement>(null);
+
+  // Roving-tabindex: Left/Right arrows move focus between cm / in.
+  const handleUnitKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    if (!unitGroupRef.current) return;
+    const radios = Array.from(
+      unitGroupRef.current.querySelectorAll<HTMLElement>('[role="radio"]'),
+    );
+    const idx = radios.indexOf(document.activeElement as HTMLElement);
+    if (idx === -1) return;
+    const dir = e.key === 'ArrowRight' ? 1 : -1;
+    const next = radios[(idx + dir + radios.length) % radios.length];
+    next?.focus();
+  }, []);
+
+  const UNITS = ['cm', 'in'] as const;
 
   return (
     <Dialog open={open} onClose={onClose} labelledById="size-fit-title">
@@ -25,16 +43,19 @@ export function SizeFitDrawer({
             {t('title')}
           </h2>
           <div
+            ref={unitGroupRef}
             role="radiogroup"
             aria-label={t('unitLabel')}
             className="flex gap-1 font-mono text-sm"
+            onKeyDown={handleUnitKeyDown}
           >
-            {(['cm', 'in'] as const).map((u) => (
+            {UNITS.map((u) => (
               <button
                 key={u}
                 type="button"
                 role="radio"
                 aria-checked={unit === u}
+                tabIndex={unit === u ? 0 : -1}
                 onClick={() => setUnit(u)}
                 className={
                   unit === u

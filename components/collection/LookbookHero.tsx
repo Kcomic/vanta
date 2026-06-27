@@ -173,7 +173,11 @@ export function LookbookHero({
         className="absolute inset-0 h-full w-full object-cover"
       />
       {animate ? (
-        <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 h-full w-full" />
+        /* pointer-events-none: the canvas is a purely visual overlay; pointer events
+           should reach the static img / text layer beneath it at all times.
+           This also prevents the canvas blocking the static fallback when WebGL
+           fails to acquire a context (GPU-less environment). */
+        <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 h-full w-full pointer-events-none" />
       ) : null}
       <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/30 to-transparent" />
       <div className="absolute bottom-0 left-0 max-w-[var(--max-w-shell)] p-6 md:p-12">
