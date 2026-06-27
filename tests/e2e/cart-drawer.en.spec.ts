@@ -24,7 +24,8 @@ test.describe('cart drawer (en)', () => {
     await expect(drawerContent).toBeVisible();
 
     // Money is rendered through formatMoney => baht sign, no decimals.
-    await expect(dialog.getByText(/฿[\d,]+/)).toBeVisible();
+    // Assert the subtotal specifically (the drawer renders multiple ฿ amounts).
+    await expect(dialog.getByTestId('cart-drawer-subtotal')).toHaveText(/฿[\d,]+/);
 
     // At least one cart line is present.
     await expect(dialog.locator('li[data-variant-id]')).toHaveCount(1);

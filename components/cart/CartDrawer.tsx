@@ -124,7 +124,7 @@ export function CartDrawer(): React.JSX.Element {
           <div className="border-t border-smoke-700 p-6">
             <div className="mb-4 flex items-center justify-between">
               <span className="display text-sm">{t('subtotal')}</span>
-              <span className="font-mono text-lg">
+              <span className="font-mono text-lg" data-testid="cart-drawer-subtotal">
                 {formatMoney(optimisticCart.subtotal, locale)}
               </span>
             </div>

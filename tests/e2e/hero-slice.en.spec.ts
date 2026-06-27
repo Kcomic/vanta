@@ -5,8 +5,10 @@ test.describe('EN checkout → confirmation', () => {
     // Seed the cart by adding a buyable variant from a PDP.
     await page.goto('/en/shop');
     await page.getByTestId('product-card').first().click();
+    // Select the first in-stock size — add-to-cart is disabled until a size is chosen.
+    await page.locator('[data-testid^="size-"]:not([disabled])').first().click();
     await page.getByTestId('add-to-cart').click();
-    await expect(page.getByTestId('cart-count')).not.toHaveText('0');
+    await expect(page.getByTestId('cart-count-value')).not.toHaveText('0');
 
     await page.goto('/en/checkout');
     await expect(page.getByTestId('order-summary')).toBeVisible();

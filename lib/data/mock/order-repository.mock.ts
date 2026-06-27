@@ -4,11 +4,26 @@ import { seedOrders } from './seed';
 
 const clone = <T>(value: T): T => structuredClone(value);
 
+// Next.js dev runs Server Actions and RSC page renders in separate module graphs, so a
+// plain per-instance Map would not let an order created in `placeOrder` be read back by the
+// confirmation page. Back the runtime store with a process-global singleton so created
+// orders survive across that boundary (a real DB adapter supersedes this). Tests pass an
+// explicit seed to get an isolated store.
+const ORDERS_KEY = Symbol.for('vanta.mock.orders');
+
+function sharedStore(): Map<string, Order> {
+  const g = globalThis as unknown as Record<symbol, Map<string, Order> | undefined>;
+  if (!g[ORDERS_KEY]) {
+    g[ORDERS_KEY] = new Map(clone(seedOrders).map((o) => [o.id, o]));
+  }
+  return g[ORDERS_KEY]!;
+}
+
 export class MockOrderRepository implements OrderRepository {
   private orders: Map<string, Order>;
 
-  constructor(seed: Order[] = seedOrders) {
-    this.orders = new Map(clone(seed).map((o) => [o.id, o]));
+  constructor(seed?: Order[]) {
+    this.orders = seed ? new Map(clone(seed).map((o) => [o.id, o])) : sharedStore();
   }
 
   async create(order: Order): Promise<Order> {

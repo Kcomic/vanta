@@ -4,8 +4,10 @@ test.describe('TH checkout → confirmation', () => {
   test('declining card shows error, succeeding card reaches confirmation', async ({ page }) => {
     await page.goto('/th/shop');
     await page.getByTestId('product-card').first().click();
+    // Select the first in-stock size — add-to-cart is disabled until a size is chosen.
+    await page.locator('[data-testid^="size-"]:not([disabled])').first().click();
     await page.getByTestId('add-to-cart').click();
-    await expect(page.getByTestId('cart-count')).not.toHaveText('0');
+    await expect(page.getByTestId('cart-count-value')).not.toHaveText('0');
 
     await page.goto('/th/checkout');
     await expect(page.getByTestId('order-summary')).toBeVisible();

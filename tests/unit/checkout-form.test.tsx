@@ -134,10 +134,16 @@ describe('PaymentMockForm', () => {
     expect(container.querySelector('[data-testid="pay-token-decline"]')).not.toBeNull();
   });
 
-  it('defaults the hidden paymentToken to tok_ok', () => {
+  it('submits paymentToken via native radios, defaulting to tok_ok', () => {
     const container = render(React.createElement(PaymentMockForm));
-    const hidden = container.querySelector<HTMLInputElement>('input[type="hidden"][name="paymentToken"]');
-    expect(hidden?.value).toBe('tok_ok');
+    const ok = container.querySelector<HTMLInputElement>('[data-testid="pay-token-ok"]')!;
+    const decline = container.querySelector<HTMLInputElement>('[data-testid="pay-token-decline"]')!;
+    // Both radios are the real submit field (name="paymentToken"); tok_ok is checked by default.
+    expect(ok.name).toBe('paymentToken');
+    expect(ok.value).toBe('tok_ok');
+    expect(ok.defaultChecked).toBe(true);
+    expect(decline.name).toBe('paymentToken');
+    expect(decline.value).toBe('tok_decline');
   });
 
   it('shows the card numbers as hints', () => {
@@ -146,15 +152,16 @@ describe('PaymentMockForm', () => {
     expect(container.textContent).toContain('4000 0000 0000 0002');
   });
 
-  it('switches hidden token to tok_decline when the decline radio is clicked', () => {
+  it('checking the decline radio makes it the selected paymentToken (native radio group)', () => {
     const container = render(React.createElement(PaymentMockForm));
-    const declineRadio = container.querySelector<HTMLInputElement>('[data-testid="pay-token-decline"]')!;
+    const ok = container.querySelector<HTMLInputElement>('[data-testid="pay-token-ok"]')!;
+    const decline = container.querySelector<HTMLInputElement>('[data-testid="pay-token-decline"]')!;
     act(() => {
-      declineRadio.dispatchEvent(new Event('change', { bubbles: true }));
+      decline.click();
     });
-    // The component uses checked state tied to local useState — just verify the radio exists
-    // and is of correct value (the state change is tested via interaction).
-    expect(declineRadio.value).toBe('tok_decline');
+    // Native radio group: selecting decline unchecks ok; the submitted value is tok_decline.
+    expect(decline.checked).toBe(true);
+    expect(ok.checked).toBe(false);
   });
 
   it('renders the legend with paymentMethod copy', () => {

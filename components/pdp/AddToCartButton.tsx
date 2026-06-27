@@ -36,15 +36,21 @@ export function AddToCartButton({
     );
   }
 
-  const disabled = variant === null || isPending;
+  // Native `disabled` ONLY for the no-size state (real gating). During the in-flight add we
+  // keep the button focusable (aria-disabled + a click guard) so it stays the activeElement
+  // when the drawer opens — that lets the drawer return focus here on Escape/close. A natively
+  // disabled button loses focus, which broke focus-return.
+  const noSize = variant === null;
+  const busy = isPending || optimisticAdding;
 
   return (
     <button
       type="button"
       data-testid="add-to-cart"
-      disabled={disabled}
+      disabled={noSize}
+      aria-disabled={busy || undefined}
       onClick={() => {
-        if (!variant) return;
+        if (noSize || busy) return;
         startTransition(async () => {
           setOptimisticAdding(true);
           const cart = await addToCart(variant.id, 1);
@@ -55,7 +61,7 @@ export function AddToCartButton({
       }}
       className={[
         'w-full py-4 font-mono text-sm uppercase tracking-wide',
-        disabled
+        noSize || busy
           ? 'cursor-not-allowed bg-smoke-700 text-smoke-300'
           : 'bg-blaze text-paper hover:bg-blaze-on-light',
       ].join(' ')}

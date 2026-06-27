@@ -1,11 +1,9 @@
 'use client';
 
-import React, { useActionState, useEffect } from 'react';
+import React, { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useTranslations } from 'next-intl';
-import { useRouter } from '@/lib/i18n/navigation';
 import { placeOrder, type PlaceOrderActionState } from '@/lib/actions/checkout-actions';
-import { useCartStore } from '@/lib/store/cart-store';
 import { PaymentMockForm } from './PaymentMockForm';
 
 const INITIAL: PlaceOrderActionState = { ok: false, error: 'empty_cart' };
@@ -31,14 +29,16 @@ function Field({
   type = 'text',
   required = true,
   autoComplete,
-  defaultValue,
+  value,
+  onChange,
 }: {
   name: string;
   label: string;
   type?: string;
   required?: boolean;
   autoComplete?: string;
-  defaultValue?: string;
+  value: string;
+  onChange: (value: string) => void;
 }) {
   return (
     <label className="block">
@@ -48,7 +48,8 @@ function Field({
         type={type}
         required={required}
         autoComplete={autoComplete}
-        defaultValue={defaultValue}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         data-testid={`field-${name}`}
         className="w-full rounded-md border border-smoke-300 bg-paper px-3 py-2 text-ink focus-visible:border-ink focus-visible:outline-none"
       />
@@ -58,22 +59,10 @@ function Field({
 
 export function CheckoutForm() {
   const t = useTranslations('checkout');
-  const router = useRouter();
-  const replaceFromServer = useCartStore((s) => s.replaceFromServer);
   const [state, formAction] = useActionState(placeOrder, INITIAL);
 
-  useEffect(() => {
-    if (state.ok) {
-      // Cart cleared server-side; mirror the emptied cart, then go to confirmation.
-      replaceFromServer({
-        items: [],
-        itemCount: 0,
-        subtotal: { amount: 0, currency: 'THB' },
-        updatedAt: new Date().toISOString(),
-      });
-      router.push(`/checkout/${state.orderId}`);
-    }
-  }, [state, router, replaceFromServer]);
+  // On success, placeOrder redirects server-side to /checkout/[orderId] (atomic with the
+  // cart-cleared revalidation), so the form only renders the failure branches below.
 
   const errorKey =
     !state.ok && state.error === 'payment_declined'
@@ -81,6 +70,11 @@ export function CheckoutForm() {
       : !state.ok && state.error === 'out_of_stock'
         ? 'errorOutOfStock'
         : null;
+
+  // Controlled fields so values survive a failed attempt (React 19 resets uncontrolled
+  // <form action> inputs after a submit). Seed the country to TH.
+  const [fields, setFields] = useState<Record<string, string>>({ country: 'TH' });
+  const setField = (name: string) => (value: string) => setFields((f) => ({ ...f, [name]: value }));
 
   return (
     <form action={formAction} className="space-y-10">
@@ -98,16 +92,16 @@ export function CheckoutForm() {
         <h2 id="contact-heading" className="display text-xl text-ink">
           {t('contactSection')}
         </h2>
-        <Field name="email" label={t('email')} type="email" autoComplete="email" />
-        <Field name="fullName" label={t('fullName')} autoComplete="name" />
-        <Field name="line1" label={t('line1')} autoComplete="address-line1" />
-        <Field name="line2" label={t('line2')} required={false} autoComplete="address-line2" />
+        <Field name="email" label={t('email')} type="email" autoComplete="email" value={fields.email ?? ''} onChange={setField('email')} />
+        <Field name="fullName" label={t('fullName')} autoComplete="name" value={fields.fullName ?? ''} onChange={setField('fullName')} />
+        <Field name="line1" label={t('line1')} autoComplete="address-line1" value={fields.line1 ?? ''} onChange={setField('line1')} />
+        <Field name="line2" label={t('line2')} required={false} autoComplete="address-line2" value={fields.line2 ?? ''} onChange={setField('line2')} />
         <div className="grid grid-cols-2 gap-4">
-          <Field name="city" label={t('city')} autoComplete="address-level2" />
-          <Field name="postalCode" label={t('postalCode')} autoComplete="postal-code" />
+          <Field name="city" label={t('city')} autoComplete="address-level2" value={fields.city ?? ''} onChange={setField('city')} />
+          <Field name="postalCode" label={t('postalCode')} autoComplete="postal-code" value={fields.postalCode ?? ''} onChange={setField('postalCode')} />
         </div>
-        <Field name="country" label={t('country')} autoComplete="country" defaultValue="TH" />
-        <Field name="phone" label={t('phone')} required={false} type="tel" autoComplete="tel" />
+        <Field name="country" label={t('country')} autoComplete="country" value={fields.country ?? ''} onChange={setField('country')} />
+        <Field name="phone" label={t('phone')} required={false} type="tel" autoComplete="tel" value={fields.phone ?? ''} onChange={setField('phone')} />
       </section>
 
       <section aria-labelledby="payment-heading" className="space-y-4">

@@ -1,24 +1,15 @@
 'use server';
 
-import { z } from 'zod';
+import { getLocale } from 'next-intl/server';
 import type { Address } from '@/lib/domain';
 import { checkoutService } from '@/lib/services/checkout-service';
+import { redirect } from '@/lib/i18n/navigation';
+import { checkoutFormSchema } from './checkout-schema';
 
-export type PlaceOrderActionState =
-  | { ok: true; orderId: string }
-  | { ok: false; error: 'payment_declined' | 'empty_cart' | 'out_of_stock' };
-
-export const checkoutFormSchema = z.object({
-  email: z.string().email(),
-  fullName: z.string().min(1),
-  line1: z.string().min(1),
-  line2: z.string().optional(),
-  city: z.string().min(1),
-  postalCode: z.string().min(1),
-  country: z.string().length(2),
-  phone: z.string().optional(),
-  paymentToken: z.enum(['tok_ok', 'tok_decline']),
-});
+// A "use server" file may only export async functions — re-export the type only
+// (types are erased at runtime); the schema + type live in ./checkout-schema.
+export type { PlaceOrderActionState } from './checkout-schema';
+import type { PlaceOrderActionState } from './checkout-schema';
 
 function normalizeOptional(value: FormDataEntryValue | null): string | undefined {
   if (value === null) return undefined;
@@ -30,6 +21,19 @@ export async function placeOrder(
   prevState: PlaceOrderActionState,
   formData: FormData,
 ): Promise<PlaceOrderActionState> {
+  // Echo the typed fields back on any failure so the form re-populates on retry
+  // (React 19 resets uncontrolled <form action> inputs after a submit).
+  const submitted = {
+    email: String(formData.get('email') ?? ''),
+    fullName: String(formData.get('fullName') ?? ''),
+    line1: String(formData.get('line1') ?? ''),
+    line2: String(formData.get('line2') ?? ''),
+    city: String(formData.get('city') ?? ''),
+    postalCode: String(formData.get('postalCode') ?? ''),
+    country: String(formData.get('country') ?? ''),
+    phone: String(formData.get('phone') ?? ''),
+  };
+
   const parsed = checkoutFormSchema.safeParse({
     email: formData.get('email'),
     fullName: formData.get('fullName'),
@@ -44,7 +48,7 @@ export async function placeOrder(
 
   if (!parsed.success) {
     // Client form guarantees field shape; a parse miss means nothing to charge.
-    return { ok: false, error: 'empty_cart' };
+    return { ok: false, error: 'empty_cart', values: submitted };
   }
 
   const data = parsed.data;
@@ -65,8 +69,12 @@ export async function placeOrder(
     paymentToken: data.paymentToken,
   });
 
-  if (result.ok) {
-    return { ok: true, orderId: result.order.id };
+  if (!result.ok) {
+    return { ok: false, error: result.error, values: submitted };
   }
-  return { ok: false, error: result.error };
+
+  // Redirect server-side so navigation is atomic with the cart-cleared revalidation
+  // (a client useEffect push raced the revalidation and stranded the user on an empty checkout).
+  const locale = await getLocale();
+  return redirect({ href: `/checkout/${result.order.id}`, locale });
 }

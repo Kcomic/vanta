@@ -19,6 +19,9 @@ import { useCartStore } from '@/lib/store/cart-store';
  * no stale/wrong count persists beyond that frame.
  */
 export function CartHydrator({ serverCart }: { serverCart: Cart }): null {
+  // Seed once on mount. (Re-hydrating on every serverCart change caused an extra
+  // re-render that disrupted the cart-drawer's focus-return; the post-order header
+  // count refresh is handled on a hard load and is tracked as Phase-9 polish.)
   useEffect(() => {
     useCartStore.getState().hydrate(serverCart);
     // eslint-disable-next-line react-hooks/exhaustive-deps
