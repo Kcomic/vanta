@@ -210,7 +210,6 @@
       "price": "Price",
       "minPrice": "Min",
       "maxPrice": "Max",
-      "apply": "Apply",
       "clear": "Clear all"
     },
     "card": {
