@@ -42,6 +42,15 @@ export default defineConfig({
       'next-intl/navigation': fileURLToPath(
         new URL('./tests/__mocks__/next-intl-navigation.ts', import.meta.url),
       ),
+      // 'server-only' throws in non-RSC environments; stub it so pure exports
+      // (enforceRole, AuthError) from auth-service can be tested without a request scope.
+      'server-only': fileURLToPath(
+        new URL('./tests/__mocks__/server-only.ts', import.meta.url),
+      ),
+      // 'next/headers' requires the Next.js runtime; stub for unit tests.
+      'next/headers': fileURLToPath(
+        new URL('./tests/__mocks__/next-headers.ts', import.meta.url),
+      ),
     },
   },
 });

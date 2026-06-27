@@ -1,6 +1,6 @@
 import 'server-only';
 import { cookies } from 'next/headers';
-import type { User } from '@/lib/domain';
+import type { User, Role } from '@/lib/domain';
 import { users } from '@/lib/data';
 import { SESSION_COOKIE, signSession, verifySession } from './session';
 
@@ -70,29 +70,30 @@ class CookieAuthService implements AuthService {
 export const authService: AuthService = new CookieAuthService();
 
 /**
+ * PURE authorization decision (testable without a request scope).
+ * Guest (null) => 'unauthorized'; wrong role => 'forbidden'.
+ */
+export function enforceRole(user: User | null, allowed: readonly Role[]): User {
+  if (!user) throw new AuthError('unauthorized');
+  if (!allowed.includes(user.role)) throw new AuthError('forbidden');
+  return user;
+}
+
+/**
  * Requires any authenticated user (role member or admin).
  * Per errata #5: 'guest' is not a valid authenticated role — getCurrentUser() returning null
  * is the only guest path.
  */
 export async function requireUser(): Promise<User> {
-  const user = await authService.getCurrentUser();
-  if (!user) throw new AuthError('unauthorized');
-  if (user.role !== 'member' && user.role !== 'admin') throw new AuthError('unauthorized');
-  return user;
+  return enforceRole(await authService.getCurrentUser(), ['member', 'admin']);
 }
 
 /** Requires member or admin role. */
 export async function requireMember(): Promise<User> {
-  const user = await authService.getCurrentUser();
-  if (!user) throw new AuthError('unauthorized');
-  if (user.role !== 'member' && user.role !== 'admin') throw new AuthError('forbidden');
-  return user;
+  return enforceRole(await authService.getCurrentUser(), ['member', 'admin']);
 }
 
 /** Requires admin role. */
 export async function requireAdmin(): Promise<User> {
-  const user = await authService.getCurrentUser();
-  if (!user) throw new AuthError('unauthorized');
-  if (user.role !== 'admin') throw new AuthError('forbidden');
-  return user;
+  return enforceRole(await authService.getCurrentUser(), ['admin']);
 }
