@@ -20,6 +20,7 @@ const VARIANT_CLASS: Record<ButtonVariant, string> = {
 };
 
 const MAGNET_STRENGTH = 0.35; // fraction of cursor offset applied as translate
+const MAX_SHIFT = 16; // px clamp — CTA never detaches from its label
 
 export function Button({
   variant = 'default',
@@ -42,8 +43,10 @@ export function Button({
     if (frame.current !== null) cancelAnimationFrame(frame.current);
     frame.current = requestAnimationFrame(() => {
       const rect = node.getBoundingClientRect();
-      const dx = (px - (rect.left + rect.width / 2)) * MAGNET_STRENGTH;
-      const dy = (py - (rect.top + rect.height / 2)) * MAGNET_STRENGTH;
+      const rawDx = (px - (rect.left + rect.width / 2)) * MAGNET_STRENGTH;
+      const rawDy = (py - (rect.top + rect.height / 2)) * MAGNET_STRENGTH;
+      const dx = Math.max(-MAX_SHIFT, Math.min(MAX_SHIFT, rawDx));
+      const dy = Math.max(-MAX_SHIFT, Math.min(MAX_SHIFT, rawDy));
       node.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`;
     });
   };
@@ -51,7 +54,8 @@ export function Button({
   const handlePointerLeave = () => {
     if (!ref.current) return;
     if (frame.current !== null) cancelAnimationFrame(frame.current);
-    ref.current.style.transform = 'translate(0px, 0px)';
+    // Clear inline transform — CSS transition-transform on the variant class springs it back.
+    ref.current.style.transform = '';
   };
 
   const cls = [BASE, VARIANT_CLASS[variant], className].filter(Boolean).join(' ');
