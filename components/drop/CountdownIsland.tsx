@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { computeCountdown, type CountdownParts } from '@/lib/motion/countdown';
 import { useMotionCapability } from '@/lib/motion/capability';
@@ -10,6 +10,12 @@ export type CountdownIslandProps = {
   deadlineIso: string;
   /** Optional override; defaults to t('countdownDone'). */
   onDoneLabel?: string;
+  /**
+   * Server-computed countdown parts for SSR/first-paint accuracy.
+   * Eliminates the "LIVE" flash that occurs when seeding with deadlineMs→deadlineMs.
+   * Passed from the Server Component; client ticks from this initial state.
+   */
+  serverParts?: CountdownParts;
 };
 
 function pad(n: number): string {
@@ -27,22 +33,25 @@ function Segment({ value, unit }: { value: number; unit: string }): React.JSX.El
 
 /**
  * Client island: deadline comes from server as a prop; the per-second tick is
- * client-only (setInterval), never refetches. Flips to LIVE at the deadline.
+ * client-only (setInterval), never refetches. Flips to the done label at the deadline.
  * Reduced-motion = static display, no interval, no flashing.
+ *
+ * `serverParts` is computed by the Server Component from the same `now` used to build
+ * the page — this eliminates the "LIVE" flash that the old deadlineMs→deadlineMs seed
+ * caused (that always rendered done=true for SSR, corrected only after mount).
  */
-export function CountdownIsland({ deadlineIso, onDoneLabel }: CountdownIslandProps): React.JSX.Element {
+export function CountdownIsland({ deadlineIso, onDoneLabel, serverParts }: CountdownIslandProps): React.JSX.Element {
   const t = useTranslations('drop');
   const units = useTranslations('drop.units');
   const motionEnabled = useMotionCapability();
 
   const deadlineMs = useMemo(() => new Date(deadlineIso).getTime(), [deadlineIso]);
 
-  // Server render + first client paint use a deterministic snapshot so hydration
-  // matches: seed with deadlineMs => deadlineMs produces done:false total:0 => done.
-  // We use the zero-remaining seed (done state) as the SSR snapshot, then immediately
-  // correct it after mount. Content is never stranded at opacity:0.
-  const [parts, setParts] = useState<CountdownParts>(() =>
-    computeCountdown(deadlineMs, deadlineMs),
+  // When serverParts is provided, use it as the SSR seed so first paint is accurate.
+  // Without serverParts, fall back to the old deadlineMs→deadlineMs seed (done state).
+  // After mount the interval takes over for both paths.
+  const [parts, setParts] = useState<CountdownParts>(
+    () => serverParts ?? computeCountdown(deadlineMs, deadlineMs),
   );
   const [mounted, setMounted] = useState(false);
 
@@ -62,8 +71,9 @@ export function CountdownIsland({ deadlineIso, onDoneLabel }: CountdownIslandPro
 
   const doneLabel = onDoneLabel ?? t('countdownDone');
 
-  // Before mount: render the deterministic seed frame (hydration-safe).
-  const view: CountdownParts = mounted ? parts : computeCountdown(deadlineMs, deadlineMs);
+  // Before mount: use serverParts when available (accurate SSR), otherwise fall back to
+  // the zero-remaining seed (hydration-safe, avoids mismatch between server and client).
+  const view: CountdownParts = mounted ? parts : (serverParts ?? computeCountdown(deadlineMs, deadlineMs));
 
   if (view.done) {
     return (

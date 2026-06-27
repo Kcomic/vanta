@@ -4,15 +4,19 @@ import { CountdownIsland } from '@/components/drop/CountdownIsland';
 import { AvailabilityBadge } from '@/components/drop/AvailabilityBadge';
 import { StockMeter } from '@/components/drop/StockMeter';
 import { FormattedDate } from '@/components/ui/FormattedDate';
+import { computeCountdown } from '@/lib/motion/countdown';
 import type { HomeView } from '@/lib/services/home-view';
 import type { Locale } from '@/lib/domain';
 
 export async function LiveDropSection({
   view,
   locale,
+  now,
 }: {
   view: HomeView;
   locale: Locale;
+  /** The same `now` used to build the HomeView — single clock read, SSR-accurate. */
+  now: Date;
 }): Promise<React.JSX.Element | null> {
   const t = await getTranslations('drop');
   const { drop, dropProducts, anyEarlyAccessGated } = view;
@@ -21,7 +25,18 @@ export async function LiveDropSection({
   // Server picks the LIVE-flip deadline: coming_soon counts down to earlyAccessAt;
   // members/guests count down to releaseAt. The island never refetches — it only ticks.
   const anyComingSoon = dropProducts.some((p) => p.leadVariant.availability === 'coming_soon');
-  const deadlineIso = anyComingSoon ? drop.earlyAccessAt : drop.releaseAt;
+  const isEarlyAccessDeadline = anyComingSoon;
+  const deadlineIso = isEarlyAccessDeadline ? drop.earlyAccessAt : drop.releaseAt;
+
+  // B: done-label differs by deadline type:
+  //   earlyAccessAt → "EARLY ACCESS UNLOCKED" (not "LIVE" — public release isn't open yet)
+  //   releaseAt     → "LIVE" (the canonical countdownDone label)
+  const onDoneLabel = isEarlyAccessDeadline ? t('earlyAccessUnlocked') : t('countdownDone');
+
+  // C: pre-compute countdown parts on the server from the page's `now` so first paint
+  // shows the correct time remaining — eliminates the "LIVE" flash from the old seed.
+  const deadlineMs = new Date(deadlineIso).getTime();
+  const serverParts = computeCountdown(deadlineMs, now.getTime());
 
   return (
     <section data-testid="live-drop" className="bg-ink px-6 py-20 text-paper">
@@ -38,7 +53,11 @@ export async function LiveDropSection({
             </p>
           </div>
           <div data-testid="live-drop-countdown" className="min-w-[18rem]">
-            <CountdownIsland deadlineIso={deadlineIso} />
+            <CountdownIsland
+              deadlineIso={deadlineIso}
+              onDoneLabel={onDoneLabel}
+              serverParts={serverParts}
+            />
           </div>
         </header>
 
