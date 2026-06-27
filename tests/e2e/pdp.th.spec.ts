@@ -19,9 +19,9 @@ test.describe('PDP — Thai', () => {
     await expect(page.getByTestId('add-to-cart')).toContainText('เพิ่มลงตะกร้า');
 
     // Clicking add-to-cart increments the cart count.
-    const countBefore = Number((await page.getByTestId('cart-count').textContent()) ?? '0');
+    const countBefore = Number((await page.getByTestId('cart-count-value').textContent()) ?? '0');
     await page.getByTestId('add-to-cart').click();
-    await expect(page.getByTestId('cart-count')).toHaveText(String(countBefore + 1));
+    await expect(page.getByTestId('cart-count-value')).toHaveText(String(countBefore + 1));
   });
 
   test('low-stock badge uses Thai copy when a low-stock variant is selected', async ({

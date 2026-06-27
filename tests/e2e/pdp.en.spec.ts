@@ -21,9 +21,9 @@ test.describe('PDP — English', () => {
     await expect(page.getByTestId('low-stock-badge')).toBeVisible();
 
     // Add to cart increments the header cart count.
-    const countBefore = Number((await page.getByTestId('cart-count').textContent()) ?? '0');
+    const countBefore = Number((await page.getByTestId('cart-count-value').textContent()) ?? '0');
     await page.getByTestId('add-to-cart').click();
-    await expect(page.getByTestId('cart-count')).toHaveText(String(countBefore + 1));
+    await expect(page.getByTestId('cart-count-value')).toHaveText(String(countBefore + 1));
   });
 
   test('swatch swaps gallery hero when color changes', async ({ page }) => {
