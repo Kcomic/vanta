@@ -273,6 +273,12 @@
     "continue": "เลือกซื้อสินค้าต่อ",
     "ogTagline": "ยืนยันคำสั่งซื้อแล้ว — VANTA®"
   },
+  "motion": {
+    "label": "การเคลื่อนไหว",
+    "system": "ตามระบบ",
+    "full": "เต็มรูปแบบ",
+    "reduced": "ลดทอน"
+  },
   "catalog": {
     "title": "ช็อป",
     "resultCount": "{count, plural, other {# รายการ}}",

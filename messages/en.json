@@ -273,6 +273,12 @@
     "continue": "Continue shopping",
     "ogTagline": "Order confirmed — VANTA®"
   },
+  "motion": {
+    "label": "Motion",
+    "system": "System",
+    "full": "Full",
+    "reduced": "Reduced"
+  },
   "catalog": {
     "title": "Shop",
     "resultCount": "{count, plural, =0 {No items} one {# item} other {# items}}",

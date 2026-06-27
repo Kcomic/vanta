@@ -4,6 +4,7 @@ import { Link } from '@/lib/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useCartDrawer } from '@/components/cart/CartDrawerContext';
 import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
+import { MotionToggle } from '@/components/layout/MotionToggle';
 import { useCartCount } from '@/lib/store/cart-store';
 
 export function Header(): React.JSX.Element {
@@ -36,6 +37,9 @@ export function Header(): React.JSX.Element {
 
         {/* LocaleSwitcher slot — renders inline within the nav. */}
         <LocaleSwitcher />
+
+        {/* Motion preference toggle — small, unobtrusive; sits in header controls cluster. */}
+        <MotionToggle />
 
         <button
           type="button"
