@@ -34,4 +34,15 @@ export const seedCollections: Collection[] = [
     heroImageUrl: '/images/collections/mono-hero.jpg',
     productIds: ['prd_mono_longsleeve', 'prd_mono_pants', 'prd_mono_beanie', 'prd_mono_tote'],
   },
+  {
+    id: 'col_nightfall',
+    slug: 'nightfall',
+    title: { en: 'NIGHTFALL', th: 'ไนท์ฟอลล์' },
+    description: {
+      en: 'Pieces born after midnight — restless, dark, precise.',
+      th: 'ชิ้นงานที่เกิดหลังเที่ยงคืน — คมชัด ดิบ และมืดสนิท',
+    },
+    heroImageUrl: '/images/collections/nightfall-hero.jpg',
+    productIds: ['prd_void_tee', 'prd_void_hoodie', 'prd_void_cargo', 'prd_void_cap'],
+  },
 ];

@@ -177,6 +177,10 @@
       "subtitle": "Bangkok-born. Globally worn.",
       "view": "View collection",
       "count": "{count, plural, =0 {No drops} one {# piece} other {# pieces}}"
+    },
+    "detail": {
+      "shopThe": "Shop the collection",
+      "back": "All collections"
     }
   },
   "catalog": {
