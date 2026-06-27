@@ -28,7 +28,7 @@ export function DropMarquee({ soldOut = false }: DropMarqueeProps): React.JSX.El
           motionEnabled ? 'animate-[marquee_18s_linear_infinite]' : ''
         }`}
       >
-        {run.map((w, i) => (
+        {run.map((_, i) => (
           <span key={i} className="inline-flex">
             {letters.map((g, j) => (
               <span key={`${i}-${j}`}>{g}</span>

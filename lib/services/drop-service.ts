@@ -2,14 +2,15 @@ import type { Drop, Product } from '@/lib/domain';
 import { drops, products } from '@/lib/data';
 
 export interface DropService {
-  getActiveDrop(): Promise<Drop | null>;
+  /** Pass the request's `now` so there is one clock read per request. */
+  getActiveDrop(now: Date): Promise<Drop | null>;
   getDropById(dropId: string): Promise<Drop | null>;
   getDropProducts(dropId: string): Promise<Product[]>;
 }
 
 export const dropService: DropService = {
-  async getActiveDrop(): Promise<Drop | null> {
-    return drops.getActive(new Date());
+  async getActiveDrop(now: Date): Promise<Drop | null> {
+    return drops.getActive(now);
   },
   async getDropById(dropId: string): Promise<Drop | null> {
     return drops.getById(dropId);

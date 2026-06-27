@@ -45,7 +45,7 @@ function toLeadView(
 }
 
 export async function buildHomeView(now: Date, user: User | null): Promise<HomeView> {
-  const drop = await dropService.getActiveDrop();
+  const drop = await dropService.getActiveDrop(now);
   const dropProductList = drop ? await dropService.getDropProducts(drop.id) : [];
   const dropProducts = dropProductList
     .map((p) => toLeadView(p, drop, now, user))
