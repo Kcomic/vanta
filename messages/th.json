@@ -260,6 +260,19 @@
     "emptyCartHeading": "ไม่มีสินค้าให้ชำระเงิน",
     "emptyCartCta": "เลือกซื้อสินค้าต่อ"
   },
+  "confirmation": {
+    "heading": "ยืนยันคำสั่งซื้อแล้ว",
+    "thanks": "ขอบคุณ — คุณได้รับสินค้าจากดรอปนี้แล้ว",
+    "orderNumber": "คำสั่งซื้อ",
+    "placedOn": "สั่งซื้อเมื่อ",
+    "shipTo": "จัดส่งถึง",
+    "subtotal": "ยอดรวมย่อย",
+    "shipping": "ค่าจัดส่ง",
+    "total": "ยอดรวมทั้งหมด",
+    "shareTitle": "ฉันเพิ่งช้อปจาก VANTA®",
+    "continue": "เลือกซื้อสินค้าต่อ",
+    "ogTagline": "ยืนยันคำสั่งซื้อแล้ว — VANTA®"
+  },
   "catalog": {
     "title": "ช็อป",
     "resultCount": "{count, plural, other {# รายการ}}",
