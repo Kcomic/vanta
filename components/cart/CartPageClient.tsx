@@ -103,7 +103,7 @@ export function CartPageClient({
         </div>
         <Link
           href="/checkout"
-          className="block w-full bg-blaze-on-light py-3 text-center font-mono uppercase text-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink"
+          className="block w-full bg-blaze py-3 text-center font-mono uppercase text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink"
         >
           {t('checkout')}
         </Link>

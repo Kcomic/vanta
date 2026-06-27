@@ -32,7 +32,8 @@ test.describe('reduced motion = a real second experience', () => {
 
   test('hero magnetic CTA does not translate on hover under reduced motion', async ({ page }) => {
     await page.goto('/en');
-    const cta = page.getByRole('button', { name: /shop|drop/i }).first();
+    // The magnetic CTA is a real link (MagneticLink renders an <a>), not a <button>.
+    const cta = page.getByRole('link', { name: /shop|drop/i }).first();
     await cta.hover();
     const transform = await cta.evaluate((el) => window.getComputedStyle(el).transform);
     // identity / none — magnetic effect is inert

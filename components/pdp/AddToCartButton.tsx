@@ -63,7 +63,7 @@ export function AddToCartButton({
         'w-full py-4 font-mono text-sm uppercase tracking-wide',
         noSize || busy
           ? 'cursor-not-allowed bg-smoke-700 text-smoke-300'
-          : 'bg-blaze text-paper hover:bg-blaze-on-light',
+          : 'bg-blaze text-ink hover:bg-blaze-on-light',
       ].join(' ')}
     >
       {variant === null

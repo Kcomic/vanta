@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/lib/i18n/navigation';
-import { Button } from '@/components/ui/Button';
+import { MagneticLink } from '@/components/ui/MagneticLink';
+import { buttonClass } from '@/components/ui/button-styles';
 import { splitGraphemes } from '@/lib/motion/segment';
 import type { Locale } from '@/lib/domain';
 
@@ -40,12 +41,12 @@ export async function HeroSection({ locale }: { locale: Locale }): Promise<React
         {t('heroSub')}
       </p>
       <div className="mt-10 flex flex-wrap gap-4">
-        <Button asChild variant="magnetic">
-          <Link href="/shop">{t('ctaShopDrop')}</Link>
-        </Button>
-        <Button asChild variant="ghost-dark">
-          <Link href="/collections">{t('ctaExplore')}</Link>
-        </Button>
+        {/* Real <a> CTAs (not <Button asChild>, which can't clone a Server-passed Link and
+            would degrade to an invalid <button><a> with a 20px tap target). */}
+        <MagneticLink href="/shop">{t('ctaShopDrop')}</MagneticLink>
+        <Link href="/collections" className={buttonClass('ghost-dark')}>
+          {t('ctaExplore')}
+        </Link>
       </div>
     </section>
   );

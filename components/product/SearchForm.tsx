@@ -32,7 +32,7 @@ export function SearchForm({ defaultQuery }: { defaultQuery: string }): React.JS
       <button
         type="submit"
         data-testid="search-submit"
-        className="bg-blaze px-4 py-2 font-[family-name:var(--font-mono)] text-sm text-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime"
+        className="bg-blaze px-4 py-2 font-[family-name:var(--font-mono)] text-sm text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime"
       >
         {t('submit')}
       </button>

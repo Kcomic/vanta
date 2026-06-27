@@ -6,10 +6,10 @@ export function Footer(): React.JSX.Element {
       <div className="mx-auto flex max-w-[1440px] flex-col gap-2">
         <span className="display text-lg text-paper">VANTA</span>
         <nav aria-label="Site links" className="flex gap-6 text-xs uppercase tracking-wide">
-          <Link href="/shop" className="hover:text-paper">
+          <Link href="/shop" className="inline-block py-1.5 hover:text-paper">
             Shop
           </Link>
-          <Link href="/collections" className="hover:text-paper">
+          <Link href="/collections" className="inline-block py-1.5 hover:text-paper">
             Collections
           </Link>
         </nav>

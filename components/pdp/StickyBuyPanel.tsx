@@ -44,7 +44,7 @@ export function StickyBuyPanel({
       {view.lowStockRemaining !== null ? (
         <p
           data-testid="low-stock-badge"
-          className="w-fit bg-blaze px-3 py-1 font-mono text-xs uppercase tracking-wide text-paper"
+          className="w-fit bg-blaze px-3 py-1 font-mono text-xs uppercase tracking-wide text-ink"
         >
           {t('onlyNLeft', { count: view.lowStockRemaining })}
         </p>

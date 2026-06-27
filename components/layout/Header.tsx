@@ -24,13 +24,13 @@ export function Header(): React.JSX.Element {
       <nav aria-label="Main navigation" className="flex items-center gap-6 text-sm uppercase tracking-wide">
         <Link
           href="/shop"
-          className="hover:text-blaze focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime"
+          className="inline-block py-1.5 hover:text-blaze focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime"
         >
           {t('shop')}
         </Link>
         <Link
           href="/collections"
-          className="hover:text-blaze focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime"
+          className="inline-block py-1.5 hover:text-blaze focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime"
         >
           {t('collections')}
         </Link>
@@ -46,8 +46,9 @@ export function Header(): React.JSX.Element {
           data-testid="cart-count"
           onClick={open}
           className="rounded-full border border-paper px-3 py-1 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime"
-          aria-label={t('cart')}
         >
+          {/* No aria-label: the visible "Cart (N)" text IS the accessible name (an
+              aria-label of just "Cart" would mismatch the visible label per WCAG 2.5.3). */}
           {t('cart')} (<span data-testid="cart-count-value">{count}</span>)
         </button>
       </nav>
