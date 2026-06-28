@@ -11,9 +11,9 @@ export const alt = 'VANTA® order confirmation';
 export default async function OpengraphImage({
   params,
 }: {
-  params: { locale: Locale; orderId: string };
+  params: Promise<{ locale: Locale; orderId: string }>;
 }) {
-  const { locale, orderId } = params;
+  const { locale, orderId } = await params;
   const order = await orders.getById(orderId);
   const t = await getTranslations({ locale, namespace: 'confirmation' });
 

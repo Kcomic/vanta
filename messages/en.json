@@ -256,5 +256,15 @@
       "colorCount": "{count, plural, one {# color} other {# colors}}"
     },
     "empty": "Nothing matches these filters."
+  },
+  "notFound": {
+    "heading": "Lost in the void",
+    "body": "This page slipped into the void. Let's get you back to the drop.",
+    "cta": "Back to shop"
+  },
+  "error": {
+    "heading": "Something broke",
+    "body": "An unexpected error interrupted this page — you can try again.",
+    "retry": "Try again"
   }
 }
