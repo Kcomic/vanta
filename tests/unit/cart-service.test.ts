@@ -187,4 +187,30 @@ describe('cartService — edge cases', () => {
       expect(cart.subtotal.amount).toBe(199000 * 3);
     });
   });
+
+  describe('addItem — reservation must not double-count stock (DOMA fix)', () => {
+    it('adding one unit at a time can fill the cart up to full live stock (no half-stock cap)', async () => {
+      variantA.stock = 10;
+      let cart = await cartService.getCart();
+      for (let i = 0; i < 10; i++) {
+        cart = await cartService.addItem(variantA.id, 1);
+      }
+      expect(cart.items).toEqual([{ variantId: variantA.id, quantity: 10 }]);
+      expect(cart.itemCount).toBe(10);
+    });
+
+    it('addItem(id, 99) on stock 3 grants exactly 3 — never clamps the line away to empty', async () => {
+      variantA.stock = 3;
+      const cart = await cartService.addItem(variantA.id, 99);
+      expect(cart.items).toEqual([{ variantId: variantA.id, quantity: 3 }]);
+      expect(cart.itemCount).toBe(3);
+    });
+
+    it('does not mutate shared variant stock on add (prevents cross-session / E2E depletion)', async () => {
+      variantA.stock = 8;
+      await cartService.addItem(variantA.id, 2);
+      expect(mockProducts.decrementStock).not.toHaveBeenCalled();
+      expect(variantA.stock).toBe(8);
+    });
+  });
 });

@@ -32,8 +32,11 @@ It is read **identically** by the home hero, the catalog cards, the PDP, and the
 marquee — but the home/PDP use a single-variant **precedence** order while catalog
 cards use a different **roll-up** order (a sold-out size shouldn't black out a card
 that still has stock). The countdown flips the drop to `live` at a real timestamp,
-`early_access` unlocks for the seed member before the public, and stock ticks down
-on add-to-cart until `low_stock` (≤ 5) and finally `sold_out`.
+`early_access` unlocks for the seed member before the public, and a variant's
+inventory level drives `low_stock` (≤ 5) and finally `sold_out`. (Adding to cart is
+deliberately side-effect-free — it never mutates shared inventory — so the seam stays
+pure and identical across sessions; a real backend reserves stock transactionally at
+checkout.)
 
 ## Architecture — the seam is the selling point
 

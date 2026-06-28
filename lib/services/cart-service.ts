@@ -53,7 +53,6 @@ export const cartService: CartService = {
   },
 
   async addItem(variantId, quantity) {
-    // NOTE: real backend serializes this in a DB transaction; mock cookie store is single-request.
     if (quantity <= 0) return this.getCart();
     const variant = await products.getVariantById(variantId);
     if (!variant || variant.stock <= 0) return this.getCart();
@@ -61,11 +60,14 @@ export const cartService: CartService = {
     const current = await cartStore.read();
     const existing = current.items.find((i) => i.variantId === variantId);
     const alreadyInCart = existing?.quantity ?? 0;
-    // Only decrement stock by the amount we can actually add (clamped to remaining stock).
+    // `variant.stock` is the authoritative AVAILABLE count. The cart line is bounded by it
+    // (cart can never exceed stock), but adding does NOT mutate shared stock. Decrementing
+    // here double-counted the reservation against the already-decremented live stock
+    // (capping incremental adds at ~half stock) and depleted the shared seed across
+    // sessions/E2E runs. reconcileCart already clamps every line to live stock, so the
+    // cart-vs-stock invariant is enforced consistently in one place.
     const grantable = Math.max(0, Math.min(quantity, variant.stock - alreadyInCart));
-    if (grantable > 0) {
-      await products.decrementStock(variantId, grantable);
-    }
+    if (grantable <= 0) return this.getCart();
     const nextItems: CartItem[] = existing
       ? current.items.map((i) =>
           i.variantId === variantId ? { ...i, quantity: i.quantity + grantable } : i,
