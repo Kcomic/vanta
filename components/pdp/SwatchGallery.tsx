@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import type { PdpView } from '@/lib/pdp/selection';
 import type { Locale } from '@/lib/domain';
@@ -21,6 +22,22 @@ export function SwatchGallery({
   const t = useTranslations('pdp');
   const hero = view.gallery[0];
   const thumbs = view.gallery.slice(1);
+  const groupRef = useRef<HTMLDivElement>(null);
+
+  // Roving-tabindex (mirrors SizeGrid): only the selected swatch is a tab stop; arrow keys
+  // move focus within the radiogroup. Without this every swatch was a tab stop, violating
+  // the ARIA radiogroup pattern.
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!groupRef.current) return;
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft' && e.key !== 'ArrowDown' && e.key !== 'ArrowUp')
+      return;
+    e.preventDefault();
+    const radios = Array.from(groupRef.current.querySelectorAll<HTMLElement>('[role="radio"]'));
+    const idx = radios.indexOf(document.activeElement as HTMLElement);
+    if (idx === -1) return;
+    const dir = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : -1;
+    radios[(idx + dir + radios.length) % radios.length]?.focus();
+  }, []);
 
   return (
     <div className="flex flex-col gap-4">
@@ -58,7 +75,13 @@ export function SwatchGallery({
       )}
 
       {/* Color swatch selector */}
-      <div role="radiogroup" aria-label={t('colorLabel')} className="flex gap-2">
+      <div
+        ref={groupRef}
+        role="radiogroup"
+        aria-label={t('colorLabel')}
+        className="flex gap-2"
+        onKeyDown={handleKeyDown}
+      >
         {view.colors.map((color) => (
           <button
             key={color}
@@ -66,13 +89,14 @@ export function SwatchGallery({
             role="radio"
             aria-checked={color === selectedColor}
             aria-label={color}
+            tabIndex={color === selectedColor ? 0 : -1}
             onClick={() => onSelectColor(color)}
             data-testid={`swatch-${color}`}
-            className={
-              color === selectedColor
-                ? 'h-9 w-9 rounded-full border-2 border-lime'
-                : 'h-9 w-9 rounded-full border-2 border-smoke-700 hover:border-smoke-300'
-            }
+            className={[
+              'h-9 w-9 rounded-full border-2 transition-colors',
+              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime',
+              color === selectedColor ? 'border-lime' : 'border-smoke-700 hover:border-smoke-300',
+            ].join(' ')}
             style={{ backgroundColor: swatchHex(color) }}
           />
         ))}

@@ -29,7 +29,7 @@ export function AddToCartButton({
       <button
         type="button"
         data-testid="notify-me"
-        className="w-full bg-smoke-700 py-4 font-mono text-sm uppercase tracking-wide text-paper"
+        className="w-full bg-smoke-700 py-4 font-mono text-sm uppercase tracking-wide text-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime"
       >
         {t('notifyMe')}
       </button>
@@ -61,6 +61,7 @@ export function AddToCartButton({
       }}
       className={[
         'w-full py-4 font-mono text-sm uppercase tracking-wide',
+        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime',
         noSize || busy
           ? 'cursor-not-allowed bg-smoke-700 text-smoke-300'
           : 'bg-blaze text-ink hover:bg-blaze-on-light',

@@ -29,7 +29,7 @@ export function LocaleSwitcher() {
   } as const;
 
   return (
-    <nav aria-label={t('currentLanguage')}>
+    <nav aria-label={t('currentLanguage')} className="flex items-center gap-1 font-mono text-xs">
       {routing.locales.map((target) => {
         const isCurrent = target === locale;
         return (
@@ -40,6 +40,11 @@ export function LocaleSwitcher() {
             aria-current={isCurrent ? 'true' : undefined}
             disabled={isCurrent}
             onClick={() => router.replace(pathname, { locale: target })}
+            className={
+              'rounded-full px-2 py-1 uppercase tracking-wide transition-colors ' +
+              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime ' +
+              (isCurrent ? 'text-paper' : 'text-smoke-500 hover:text-paper')
+            }
           >
             {/* Screen-reader users hear "Current language: " before the visible label
                 on whichever button represents the active locale. */}
