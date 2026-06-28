@@ -232,10 +232,10 @@ describe('CheckoutForm', () => {
     expect(btn?.textContent).toBe('Pay');
   });
 
-  it('does NOT render the error banner when initial state is empty_cart (not a user-visible error)', () => {
+  it('does NOT render the error banner on the initial idle state (pre-submit)', () => {
     const container = render(React.createElement(CheckoutForm));
-    // The initial state is { ok: false, error: 'empty_cart' } — only payment_declined
-    // and out_of_stock map to visible error messages.
+    // The initial state is { ok: false, error: 'idle' } — a real failure (declined /
+    // out_of_stock / invalid_input / empty_cart) maps to a visible banner; idle does not.
     expect(container.querySelector('[data-testid="checkout-error"]')).toBeNull();
   });
 

@@ -3,10 +3,12 @@
 import React, { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useTranslations } from 'next-intl';
-import { placeOrder, type PlaceOrderActionState } from '@/lib/actions/checkout-actions';
+import { placeOrder } from '@/lib/actions/checkout-actions';
+import {
+  INITIAL_CHECKOUT_STATE,
+  checkoutErrorMessageKey,
+} from '@/lib/actions/checkout-schema';
 import { PaymentMockForm } from './PaymentMockForm';
-
-const INITIAL: PlaceOrderActionState = { ok: false, error: 'empty_cart' };
 
 function SubmitButton() {
   const t = useTranslations('checkout');
@@ -59,17 +61,13 @@ function Field({
 
 export function CheckoutForm() {
   const t = useTranslations('checkout');
-  const [state, formAction] = useActionState(placeOrder, INITIAL);
+  const [state, formAction] = useActionState(placeOrder, INITIAL_CHECKOUT_STATE);
 
   // On success, placeOrder redirects server-side to /checkout/[orderId] (atomic with the
   // cart-cleared revalidation), so the form only renders the failure branches below.
-
-  const errorKey =
-    !state.ok && state.error === 'payment_declined'
-      ? 'errorDeclined'
-      : !state.ok && state.error === 'out_of_stock'
-        ? 'errorOutOfStock'
-        : null;
+  // Every real failure (declined / out-of-stock / invalid-input / empty-cart) maps to a
+  // visible message; the idle initial state shows nothing.
+  const errorKey = checkoutErrorMessageKey(state);
 
   // Controlled fields so values survive a failed attempt (React 19 resets uncontrolled
   // <form action> inputs after a submit). Seed the country to TH.

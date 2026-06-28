@@ -47,8 +47,10 @@ export async function placeOrder(
   });
 
   if (!parsed.success) {
-    // Client form guarantees field shape; a parse miss means nothing to charge.
-    return { ok: false, error: 'empty_cart', values: submitted };
+    // A field failed validation (e.g. a malformed email or a country that isn't 2 letters).
+    // Distinct from empty_cart so the user gets an actionable "check your details" message
+    // instead of a silent no-op or a misleading "cart is empty".
+    return { ok: false, error: 'invalid_input', values: submitted };
   }
 
   const data = parsed.data;

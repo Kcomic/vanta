@@ -204,6 +204,7 @@
     "testCardDecline": "Test card — declines",
     "errorDeclined": "Your card was declined. Try the succeeding test card.",
     "errorEmptyCart": "Your cart is empty.",
+    "errorInvalidInput": "Please check your details and try again.",
     "errorOutOfStock": "An item went out of stock. Please review your cart.",
     "emptyCartHeading": "Nothing to check out",
     "emptyCartCta": "Continue shopping"

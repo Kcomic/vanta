@@ -69,12 +69,25 @@ describe('placeOrder action', () => {
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
-  it('returns empty_cart when validation fails (missing required field)', async () => {
+  it('returns invalid_input (NOT empty_cart) when a required field is missing', async () => {
     const { email, ...missingEmail } = VALID;
     void email;
     const result = await placeOrder(PREV, form(missingEmail));
-    expect(result).toMatchObject({ ok: false, error: 'empty_cart' });
+    expect(result).toMatchObject({ ok: false, error: 'invalid_input' });
     expect(placeOrderSvc).not.toHaveBeenCalled();
     expect(redirectMock).not.toHaveBeenCalled();
+  });
+
+  it('returns invalid_input when a field fails its shape (3-letter country)', async () => {
+    const result = await placeOrder(PREV, form({ ...VALID, country: 'THA' }));
+    expect(result).toMatchObject({ ok: false, error: 'invalid_input' });
+    expect(placeOrderSvc).not.toHaveBeenCalled();
+  });
+
+  it('passes through a service empty_cart result (distinct from a validation failure)', async () => {
+    placeOrderSvc.mockResolvedValue({ ok: false, error: 'empty_cart' });
+    const result = await placeOrder(PREV, form(VALID));
+    expect(result).toMatchObject({ ok: false, error: 'empty_cart' });
+    expect(placeOrderSvc).toHaveBeenCalledTimes(1);
   });
 });

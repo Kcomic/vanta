@@ -15,7 +15,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
 
   if (cart.items.length === 0) {
     return (
-      <main className="mx-auto max-w-shell px-6 py-24 text-center">
+      <main className="mx-auto w-full max-w-[var(--max-w-shell)] px-6 py-24 text-center">
         <h1 className="display text-3xl text-paper">{t('emptyCartHeading')}</h1>
         <Link
           href="/shop"
@@ -47,7 +47,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
   const total: Money = { amount: subtotal.amount + shipping.amount, currency: 'THB' };
 
   return (
-    <main className="mx-auto grid max-w-shell gap-12 px-6 py-16 lg:grid-cols-[1fr_400px]">
+    <main className="mx-auto grid w-full max-w-[var(--max-w-shell)] gap-12 px-6 py-16 lg:grid-cols-[1fr_400px]">
       <div>
         <h1 className="display text-3xl text-paper">{t('title')}</h1>
         <div className="mt-10">
