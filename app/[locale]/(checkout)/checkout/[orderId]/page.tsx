@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import type { Locale } from '@/lib/domain';
 import { orders } from '@/lib/data';
+import { authService } from '@/lib/services/auth-service';
+import { canViewOrder } from '@/lib/services/order-access';
 import { formatMoney } from '@/lib/format/money';
 import { formatDate } from '@/lib/format/date';
 import { Link } from '@/lib/i18n/navigation';
@@ -35,11 +37,17 @@ export default async function ConfirmationPage({ params }: { params: Promise<Par
   const order = await orders.getById(orderId);
   if (!order) notFound();
 
+  // Authorization: a member order is private to its owner (or an admin); a guest order is
+  // reachable only via its unguessable id. notFound() (not 403) so we never confirm an
+  // order id exists to someone not allowed to see it.
+  const viewer = await authService.getCurrentUser();
+  if (!canViewOrder(order, viewer)) notFound();
+
   const t = await getTranslations('confirmation');
   const addr = order.shippingAddress;
 
   return (
-    <main className="mx-auto max-w-shell px-6 py-20">
+    <main className="mx-auto w-full max-w-[var(--max-w-shell)] px-6 py-20">
       <div className="mx-auto max-w-2xl rounded-xl bg-ink p-10 text-paper">
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-lime">VANTA®</p>
         <h1 className="display mt-4 text-4xl">{t('heading')}</h1>

@@ -7,7 +7,7 @@
 
 **Live demo:** _deploy with `npx vercel --prod` (see [DEPLOY.md](docs/case-study/DEPLOY.md))_
 · **Demo member:** `member@vanta.shop` / `vanta-demo` (shown on `/login`)
-· **Seeded order:** [`/en/checkout/ord_seed_demo`](http://localhost:3000/en/checkout/ord_seed_demo) walks the confirmation instantly.
+· **Seeded order:** [`/en/checkout/ord_seed_demo`](http://localhost:3000/en/checkout/ord_seed_demo) — the demo member's order; sign in as the demo member first (it's ownership-gated, so a stranger can't read another customer's confirmation).
 
 ---
 
@@ -99,7 +99,8 @@ re-exposes the *same* seam over HTTP so the one-import story is checkable.
 ## Decisions a reviewer should notice
 
 - **Authorization lives in the service / Server-Action layer, never in
-  middleware.** `requireUser` / `requireMember` are re-verified on every mutate.
+  middleware.** `requireMember` / `requireAdmin` are re-verified on every protected
+  call (mutations *and* the order-confirmation read, which is ownership-gated).
   Middleware only does locale routing and an *optimistic* redirect — it is not the
   security boundary (it deliberately sidesteps the class of bug behind
   CVE-2025-29927).

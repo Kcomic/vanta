@@ -225,4 +225,25 @@ describe('placeOrder', () => {
     expect(create).toHaveBeenCalledTimes(1);
     expect(clear).toHaveBeenCalledTimes(1);
   });
+
+  it('assigns a high-entropy unguessable (UUID) order id, unique per order', async () => {
+    read.mockResolvedValue(CART_2X);
+    charge.mockResolvedValue({ ok: true, chargeId: 'ch_123' });
+    const r1 = await checkoutService.placeOrder({
+      email: 'a@b.co',
+      shippingAddress: ADDRESS,
+      paymentToken: 'tok_ok',
+    });
+    const r2 = await checkoutService.placeOrder({
+      email: 'a@b.co',
+      shippingAddress: ADDRESS,
+      paymentToken: 'tok_ok',
+    });
+    if (!r1.ok || !r2.ok) throw new Error('expected ok');
+    // ord_ + RFC-4122 v4 UUID — not time-derived, not enumerable (mitigates the IDOR).
+    expect(r1.order.id).toMatch(
+      /^ord_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+    expect(r1.order.id).not.toBe(r2.order.id);
+  });
 });

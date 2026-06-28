@@ -9,15 +9,21 @@ export const SESSION_COOKIE = 'vanta_session';
  */
 const DEV_FALLBACK = 'vanta-dev-session-secret-do-not-use-in-prod';
 
-const SECRET = process.env.SESSION_SECRET ?? DEV_FALLBACK;
-
-// Warn once at module initialisation when running in production without the env var.
-if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
-  console.warn(
-    '[vanta] SESSION_SECRET is unset in production — using the insecure dev fallback. ' +
-      'Set SESSION_SECRET to a long random string before deploying.',
+// Fail CLOSED at runtime boot in production: a forgotten SESSION_SECRET would let anyone
+// who reads the public source forge a session cookie (signSession('usr_admin')). The
+// NEXT_PHASE guard skips this during `next build` (which also runs as NODE_ENV=production)
+// so the build does not require the secret — only the running server does.
+const isProdRuntime =
+  process.env.NODE_ENV === 'production' &&
+  process.env.NEXT_PHASE !== 'phase-production-build';
+if (isProdRuntime && !process.env.SESSION_SECRET) {
+  throw new Error(
+    '[vanta] SESSION_SECRET is required in production. Set it to a long random string ' +
+      '(e.g. `openssl rand -hex 32`) before deploying.',
   );
 }
+
+const SECRET = process.env.SESSION_SECRET ?? DEV_FALLBACK;
 
 function sign(payloadB64: string): string {
   return createHmac('sha256', SECRET).update(payloadB64).digest('base64url');

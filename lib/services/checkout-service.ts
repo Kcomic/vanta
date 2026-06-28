@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type {
   Order,
   OrderLineItem,
@@ -86,8 +87,12 @@ function computeTotals(lineItems: OrderLineItem[]): OrderTotals {
   return { subtotal, shipping, total };
 }
 
+/**
+ * High-entropy, unguessable order id. A guest order's confirmation URL is its only access
+ * grant (see `canViewOrder`), so the id must not be time-derived or enumerable.
+ */
 function newOrderId(): string {
-  return `ord_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  return `ord_${randomUUID()}`;
 }
 
 export const checkoutService: CheckoutService = {
