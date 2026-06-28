@@ -230,7 +230,7 @@
   },
   "catalog": {
     "title": "ช็อป",
-    "resultCount": "{count, plural, other {# รายการ}}",
+    "resultCount": "{count, plural, =0 {ไม่มีสินค้า} other {# รายการ}}",
     "sort": {
       "label": "เรียงตาม",
       "featured": "แนะนำ",

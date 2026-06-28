@@ -39,6 +39,13 @@ describe('repository interfaces', () => {
         getById: async () => null,
         getByEmail: async () => null,
         verifyCredentials: async (): Promise<User | null> => null,
+        create: async (): Promise<User> => ({
+          id: 'usr_stub',
+          email: '',
+          name: '',
+          role: 'member',
+          addresses: [],
+        }),
       },
       cart: {
         read: async () => emptyCart,

@@ -8,7 +8,7 @@ import type { DropRepository } from './drop-repository';
 export type { ProductRepository } from './product-repository';
 export type { CollectionRepository } from './collection-repository';
 export type { OrderRepository } from './order-repository';
-export type { UserRepository } from './user-repository';
+export type { UserRepository, CreateUserInput } from './user-repository';
 export type { CartStore } from './cart-store';
 export type { DropRepository } from './drop-repository';
 

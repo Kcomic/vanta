@@ -40,4 +40,32 @@ describe('MockUserRepository', () => {
     expect(await r.verifyCredentials('member@vanta.shop', 'wrong')).toBeNull();
     expect(await r.verifyCredentials('nobody@vanta.shop', 'vanta-demo')).toBeNull();
   });
+
+  describe('create (registration)', () => {
+    it('persists a new user with a generated id, retrievable by id and email, no password leak', async () => {
+      const r = new MockUserRepository([]);
+      const u = await r.create({ email: 'new@vanta.shop', name: 'New', password: 'pw' });
+      expect(u.id).toMatch(/^usr_/);
+      expect(u.role).toBe('member');
+      expect(Object.keys(u)).not.toContain('password');
+      expect(await r.getById(u.id)).toMatchObject({ email: 'new@vanta.shop', name: 'New' });
+      expect((await r.getByEmail('NEW@VANTA.SHOP'))?.id).toBe(u.id);
+    });
+
+    it('gives each registrant a DISTINCT id (never the shared seed member) so order history cannot mix', async () => {
+      const r = new MockUserRepository([]);
+      const a = await r.create({ email: 'a@vanta.shop', name: 'A', password: 'x' });
+      const b = await r.create({ email: 'b@vanta.shop', name: 'B', password: 'y' });
+      expect(a.id).not.toBe(b.id);
+      expect(a.id).not.toBe('usr_member');
+      expect(b.id).not.toBe('usr_member');
+    });
+
+    it('a freshly created user can authenticate with its own password', async () => {
+      const r = new MockUserRepository([]);
+      const u = await r.create({ email: 'c@vanta.shop', name: 'C', password: 'secret' });
+      expect((await r.verifyCredentials('c@vanta.shop', 'secret'))?.id).toBe(u.id);
+      expect(await r.verifyCredentials('c@vanta.shop', 'wrong')).toBeNull();
+    });
+  });
 });

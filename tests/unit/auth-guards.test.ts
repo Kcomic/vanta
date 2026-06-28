@@ -19,9 +19,10 @@ const admin: User = {
 };
 
 describe('enforceRole (guard core)', () => {
-  it('requireUser shape: member and admin pass; a guest is unauthorized', () => {
-    // requireUser uses the ['member', 'admin'] allowlist (errata #5 dropped 'guest' — an
-    // unauthenticated visitor is null, and a 'guest'-role user must not be admitted either).
+  it('authenticated allowlist (member + admin) passes; a guest is unauthorized', () => {
+    // The single "must be signed in" guard (requireMember) uses the ['member', 'admin']
+    // allowlist (errata #5 dropped 'guest' — an unauthenticated visitor is null, and a
+    // 'guest'-role user must not be admitted either). There is no separate requireUser.
     expect(enforceRole(member, ['member', 'admin']).id).toBe('usr_member');
     expect(enforceRole(admin, ['member', 'admin']).role).toBe('admin');
     expect(() => enforceRole(guest, ['member', 'admin'])).toThrowError(

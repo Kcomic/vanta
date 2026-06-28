@@ -43,15 +43,13 @@ class CookieAuthService implements AuthService {
   }
 
   async register(email: string, password: string, name: string): Promise<User> {
-    // Mock path: registration is a non-goal beyond the seam. If the email is a
-    // known seed user, treat it as taken; otherwise log the member in as a demo.
     const existing = await users.getByEmail(email);
     if (existing) throw new AuthError('email_taken');
-    // No write-back in the mock (no churn sim); hand the registrant the demo member identity.
-    const member = await users.getById('usr_member');
-    if (!member) throw new AuthError('invalid_credentials');
-    await setSession(member.id);
-    return { ...member, email, name };
+    // Create a DISTINCT user via the repository (not the seed member's identity), so each
+    // registrant has their own id and OrderRepository.listByUser never mixes them.
+    const user = await users.create({ email, name, password, role: 'member' });
+    await setSession(user.id);
+    return user;
   }
 
   async logout(): Promise<void> {
@@ -80,15 +78,11 @@ export function enforceRole(user: User | null, allowed: readonly Role[]): User {
 }
 
 /**
- * Requires any authenticated user (role member or admin).
+ * Requires an authenticated user — role member OR admin (admin is a superset of member access).
  * Per errata #5: 'guest' is not a valid authenticated role — getCurrentUser() returning null
- * is the only guest path.
+ * is the only guest path. This is the single "must be signed in" guard; there is deliberately
+ * no separate requireUser, since the role model makes it identical.
  */
-export async function requireUser(): Promise<User> {
-  return enforceRole(await authService.getCurrentUser(), ['member', 'admin']);
-}
-
-/** Requires member or admin role. */
 export async function requireMember(): Promise<User> {
   return enforceRole(await authService.getCurrentUser(), ['member', 'admin']);
 }

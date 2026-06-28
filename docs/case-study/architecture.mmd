@@ -9,7 +9,7 @@ flowchart TD
 
   subgraph SVC["lib/services — authorization re-verified per call"]
     CART["cartService"]
-    AUTH["authService<br/>requireUser / requireMember"]
+    AUTH["authService<br/>requireMember / requireAdmin"]
     CHK["checkoutService<br/>(snapshot + integer totals)"]
     DROP["dropService"]
     PAY["PaymentService<br/>(mock → Stripe / Omise)"]
