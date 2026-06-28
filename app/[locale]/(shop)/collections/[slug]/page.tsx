@@ -1,8 +1,10 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import type { Locale } from '@/lib/domain';
+import type { Locale, Drop } from '@/lib/domain';
 import { collections, products } from '@/lib/data';
+import { authService } from '@/lib/services/auth-service';
+import { dropService } from '@/lib/services/drop-service';
 import { toCatalogCard } from '@/components/product/catalog-card';
 import { LookbookHero } from '@/components/collection/LookbookHero';
 import { LookbookSequence, type LookbookItem } from '@/components/collection/LookbookSequence';
@@ -30,8 +32,18 @@ export default async function CollectionDetailPage({
 
   const collectionProducts = await products.listByCollection(collection.id);
 
+  // Cards derive LIVE availability (deriveAvailability) so a gated/sold-out badge matches
+  // the hero and PDP; collect the drops + the current user the variants are gated by.
+  const now = new Date();
+  const user = await authService.getCurrentUser();
+  const dropIds = new Set<string>();
+  for (const p of collectionProducts) if (p.dropId) dropIds.add(p.dropId);
+  const dropList = await Promise.all([...dropIds].map((id) => dropService.getDropById(id)));
+  const dropsById: Record<string, Drop> = {};
+  for (const d of dropList) if (d) dropsById[d.id] = d;
+
   const items: LookbookItem[] = collectionProducts.map((product) => {
-    const card = toCatalogCard(product, locale);
+    const card = toCatalogCard(product, dropsById, now, user, locale);
     const firstColor = card.matchedColors[0] ?? product.optionAxes.color[0] ?? '';
     const image = (product.imagesByColor[firstColor] ?? [])[0];
     return {

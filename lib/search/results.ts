@@ -18,21 +18,19 @@ export function normalizeSearchQuery(raw: string | null | undefined): string {
  * The repository's search() performs the actual text matching; this function:
  *  - normalizes/echoes the query
  *  - returns empty for a blank query (repository was never asked)
- *  - maps each Product to a CatalogCard via toCatalogCard (CARD_ROLLUP_ORDER roll-up)
- *
- * The dropsById, now, and user params are accepted for API consistency with deriveCatalogView
- * but the card shape is derived from static variant.availability (see toCatalogCard).
+ *  - maps each Product to a CatalogCard via toCatalogCard, which derives LIVE availability
+ *    (drop window + stock + user) so search cards agree with home/PDP — not the static baseline.
  */
 export function buildSearchResults(
   rawQuery: string | null | undefined,
   matches: Product[],
-  _dropsById: Record<string, Drop>,
-  _now: Date,
-  _user: User | null,
+  dropsById: Record<string, Drop>,
+  now: Date,
+  user: User | null,
   locale: Locale = 'en',
 ): SearchResults {
   const query = normalizeSearchQuery(rawQuery);
   if (query === '') return { query: '', count: 0, cards: [] };
-  const cards = matches.map((product) => toCatalogCard(product, locale));
+  const cards = matches.map((product) => toCatalogCard(product, dropsById, now, user, locale));
   return { query, count: cards.length, cards };
 }

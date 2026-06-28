@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { deriveAvailability, LOW_STOCK_THRESHOLD } from '@/lib/services/availability';
+import {
+  deriveAvailability,
+  LOW_STOCK_THRESHOLD,
+  AVAILABILITY_PRECEDENCE,
+} from '@/lib/services/availability';
 import type { Variant, Drop, User } from '@/lib/domain';
 
 const variantWith = (stock: number): Variant => ({
@@ -150,5 +154,33 @@ describe('deriveAvailability — purity', () => {
     const snapshot = JSON.stringify(v);
     deriveAvailability(v, drop, IN_EARLY, member);
     expect(JSON.stringify(v)).toBe(snapshot);
+  });
+});
+
+describe('AVAILABILITY_PRECEDENCE — single source of truth for the tie-break order', () => {
+  it('lists exactly the 5 states, most-urgent first', () => {
+    expect([...AVAILABILITY_PRECEDENCE]).toEqual([
+      'sold_out',
+      'coming_soon',
+      'early_access',
+      'low_stock',
+      'live',
+    ]);
+  });
+
+  it('deriveAvailability resolves a multi-eligible variant to the higher-precedence state', () => {
+    const idx = (a: string) => AVAILABILITY_PRECEDENCE.indexOf(a as never);
+    // sold_out (stock 0) outranks coming_soon (pre-early window), even for a member.
+    expect(deriveAvailability(variantWith(0), drop, BEFORE_EARLY, member)).toBe('sold_out');
+    expect(idx('sold_out')).toBeLessThan(idx('coming_soon'));
+    // coming_soon (pre-early) outranks early_access / low_stock / live.
+    expect(deriveAvailability(variantWith(3), drop, BEFORE_EARLY, null)).toBe('coming_soon');
+    expect(idx('coming_soon')).toBeLessThan(idx('early_access'));
+    // early_access (gated window, guest) outranks the buyable states.
+    expect(deriveAvailability(variantWith(3), drop, IN_EARLY, null)).toBe('early_access');
+    expect(idx('early_access')).toBeLessThan(idx('low_stock'));
+    // low_stock outranks live.
+    expect(deriveAvailability(variantWith(3), null, AFTER_RELEASE, null)).toBe('low_stock');
+    expect(idx('low_stock')).toBeLessThan(idx('live'));
   });
 });

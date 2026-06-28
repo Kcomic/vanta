@@ -3,8 +3,8 @@
  * Exported from here so both Server Components and client components can import them.
  * ProductCard.tsx re-exports these for backward compat.
  */
-import type { Product, Locale, Availability, Money } from '@/lib/domain';
-import { CARD_ROLLUP_ORDER } from '@/lib/services/availability';
+import type { Product, Locale, Availability, Money, Drop, User } from '@/lib/domain';
+import { CARD_ROLLUP_ORDER, deriveAvailability } from '@/lib/services/availability';
 
 export type CatalogCard = {
   productId: string; // stable id (View Transition key origin)
@@ -16,8 +16,21 @@ export type CatalogCard = {
   imageUrl: string; // first image for the first matchedColor
 };
 
-/** PURE. Build a card from a product: lowest price, sale flag, most-buyable availability. */
-export function toCatalogCard(product: Product, _locale: Locale): CatalogCard {
+/**
+ * PURE. Build a card from a product: lowest price, sale flag, most-buyable availability.
+ *
+ * Availability is derived LIVE via `deriveAvailability` (drop window + stock + user role) —
+ * NOT the static `variant.availability` seed baseline — so catalog/search/collection cards
+ * agree with the home hero and PDP once a countdown flips or early access unlocks. Mirrors
+ * `deriveCatalogView`; the two are the single way a card's state is computed.
+ */
+export function toCatalogCard(
+  product: Product,
+  dropsById: Record<string, Drop>,
+  now: Date,
+  user: User | null,
+  _locale: Locale,
+): CatalogCard {
   const variants = product.variants;
 
   // Product must have at least one variant (domain invariant). Guard for strict TS.
@@ -35,12 +48,18 @@ export function toCatalogCard(product: Product, _locale: Locale): CatalogCard {
   // Sale flag: present when any variant has a compareAtPrice
   const onSaleVariant = variants.find((v) => v.compareAtPrice != null) ?? null;
 
-  // Most-buyable availability via CARD_ROLLUP_ORDER (lower index = more buyable)
-  const availability = variants.reduce<Availability>((best, v) => {
-    return CARD_ROLLUP_ORDER.indexOf(v.availability) < CARD_ROLLUP_ORDER.indexOf(best)
-      ? v.availability
-      : best;
-  }, first.availability);
+  // Most-buyable LIVE availability via CARD_ROLLUP_ORDER (lower index = more buyable).
+  const drop = product.dropId != null ? (dropsById[product.dropId] ?? null) : null;
+  let bestRollupIdx = Number.POSITIVE_INFINITY;
+  let availability: Availability = 'sold_out';
+  for (const v of variants) {
+    const state = deriveAvailability(v, drop, now, user);
+    const idx = CARD_ROLLUP_ORDER.indexOf(state);
+    if (idx < bestRollupIdx) {
+      bestRollupIdx = idx;
+      availability = state;
+    }
+  }
 
   // Deduplicated color list preserving insertion order
   const matchedColors = [...new Set(variants.map((v) => v.optionValues.color))];
