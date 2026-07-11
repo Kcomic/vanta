@@ -1,0 +1,42 @@
+%% VANTA® — layered architecture. The single swap point is lib/data/index.ts.
+%% Render: npx -y @mermaid-js/mermaid-cli -i architecture.mmd -o architecture.svg
+flowchart TD
+  subgraph UI["App Router (Next.js 15 / React 19.2)"]
+    RSC["Server Components<br/>read data (no client fetch)"]
+    SA["Server Actions<br/>'use server' mutate"]
+    MW["middleware.ts<br/>(UX-only: locale + optimistic redirect,<br/>never the authz boundary)"]
+  end
+
+  subgraph SVC["lib/services — authorization re-verified per call"]
+    CART["cartService"]
+    AUTH["authService<br/>requireMember / requireAdmin"]
+    CHK["checkoutService<br/>(snapshot + integer totals)"]
+    DROP["dropService"]
+    PAY["PaymentService<br/>(mock → Stripe / Omise)"]
+    AVAIL["deriveAvailability<br/>(pure: coming_soon→sold_out)"]
+  end
+
+  subgraph DATA["lib/data"]
+    SWAP["lib/data/index.ts<br/><b>THE SWAP POINT</b><br/>change one import to go live"]
+    REPO["repositories/*<br/>async, request-context-free interfaces"]
+    MOCK["mock/* adapters + seed"]
+    PRISMA["prismaRepositories<br/>(future: Prisma + Postgres)"]:::future
+    APIREPO["apiRepositories<br/>(future: NestJS REST)"]:::future
+  end
+
+  DOMAIN["lib/domain<br/>pure types: Money, Product, Variant, Cart, Order, User"]
+  APIROUTE["app/api/products<br/>curl-able JSON seam<br/>(documented, not client-fetched)"]
+
+  RSC --> REPO
+  SA --> SVC
+  SVC --> REPO
+  AVAIL -.reads.-> DOMAIN
+  REPO --> SWAP
+  SWAP --> MOCK
+  SWAP -.swap target.-> PRISMA
+  SWAP -.swap target.-> APIREPO
+  APIROUTE --> SWAP
+  REPO --> DOMAIN
+  MOCK --> DOMAIN
+
+  classDef future stroke-dasharray: 5 5,fill:#141414,color:#B8B8B8;

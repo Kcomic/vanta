@@ -1,0 +1,270 @@
+{
+  "Shell": {
+    "brand": "VANTA®",
+    "tagline": "Bangkok-born. Globally worn.",
+    "skipToContent": "Skip to content",
+    "localeName": "English"
+  },
+  "Locale": {
+    "switchTo": "Switch language",
+    "en": "EN",
+    "th": "TH"
+  },
+  "Common": {
+    "brandName": "VANTA®",
+    "tagline": "Bangkok-born. Globally worn.",
+    "currencySymbol": "฿",
+    "loading": "Loading",
+    "addToCart": "Add to cart",
+    "notifyMe": "Notify me",
+    "viewProduct": "View product"
+  },
+  "Nav": {
+    "home": "Home",
+    "shop": "Shop",
+    "collections": "Collections",
+    "siteLinks": "Site links",
+    "skipToContent": "Skip to content",
+    "search": "Search",
+    "cart": "Cart",
+    "account": "Account",
+    "login": "Log in",
+    "logout": "Log out",
+    "switchToThai": "ไทย",
+    "switchToEnglish": "EN",
+    "currentLanguage": "Current language",
+    "motionToggle": "Reduce motion"
+  },
+  "Drop": {
+    "comingSoon": "Coming soon",
+    "earlyAccess": "Early access",
+    "earlyAccessMembers": "Members unlock early",
+    "live": "Live now",
+    "lowStock": "Only {count} left",
+    "soldOut": "Sold out",
+    "countdownLabel": "Drops in",
+    "days": "d",
+    "hours": "h",
+    "minutes": "m",
+    "seconds": "s",
+    "marqueeDrop": "DROP",
+    "marqueeSoldOut": "SOLD OUT"
+  },
+  "Account": {
+    "dashboard": "Dashboard",
+    "welcome": "Welcome back, {name}",
+    "orders": "Orders",
+    "addresses": "Addresses",
+    "settings": "Settings",
+    "memberSince": "Member",
+    "noOrders": "No orders yet.",
+    "viewOrder": "View order",
+    "defaultAddress": "Default address",
+    "navLabel": "Account navigation",
+    "navDashboard": "Dashboard",
+    "navOrders": "Orders",
+    "navAddresses": "Addresses",
+    "navSettings": "Settings",
+    "logout": "Sign out",
+    "dashTitle": "Welcome back, {name}",
+    "dashRole": "Membership",
+    "dashRecentOrder": "Most recent order",
+    "ordersTitle": "Order history",
+    "ordersEmpty": "No orders yet.",
+    "orderPlaced": "Placed",
+    "orderStatus": "Status",
+    "orderTotal": "Total",
+    "addressesTitle": "Saved address",
+    "addressesEmpty": "No saved address.",
+    "settingsTitle": "Settings",
+    "settingsName": "Name",
+    "settingsEmail": "Email",
+    "settingsLocale": "Preferred language",
+    "settingsNote": "Profile editing is out of scope for this demo."
+  },
+  "Admin": {
+    "title": "Admin",
+    "reserved": "Reserved for admins. Product, order, and inventory tools are built later."
+  },
+  "Auth": {
+    "loginTitle": "Sign in",
+    "registerTitle": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "submitLogin": "Sign in",
+    "submitRegister": "Create account",
+    "toRegister": "New here? Create an account",
+    "toLogin": "Already have an account? Sign in",
+    "errorInvalid": "Email or password is incorrect.",
+    "errorTaken": "That email is already registered.",
+    "demoHeading": "Demo account",
+    "demoBody": "Use these credentials to sign in as a member:",
+    "demoEmail": "member@vanta.shop",
+    "demoPassword": "vanta-demo"
+  },
+  "cart": {
+    "title": "Cart",
+    "empty": "Your cart is empty.",
+    "subtotal": "Subtotal",
+    "checkout": "Checkout",
+    "viewCart": "View cart",
+    "remove": "Remove",
+    "decrease": "Decrease quantity",
+    "increase": "Increase quantity",
+    "quantityLabel": "Quantity",
+    "close": "Close cart",
+    "addedAnnouncement": "{title} added to cart. Cart now has {count} items.",
+    "openCart": "Open cart, {count} items"
+  },
+  "home": {
+    "heroKicker": "BANGKOK / OUT OF THE VOID",
+    "heroHeadline": "VANTA",
+    "heroSub": "Streetwear that materializes out of black.",
+    "ctaShopDrop": "SHOP THE DROP",
+    "ctaExplore": "EXPLORE",
+    "featuredTitle": "FEATURED",
+    "lookbookTeaserTitle": "THE LOOKBOOK",
+    "lookbookTeaserCta": "VIEW EDITORIAL"
+  },
+  "drop": {
+    "label": "LIVE DROP",
+    "comingSoon": "DROPS IN",
+    "earlyAccessLocked": "MEMBER EARLY ACCESS",
+    "earlyAccessUnlocked": "EARLY ACCESS UNLOCKED",
+    "live": "LIVE NOW",
+    "lowStock": "ONLY {count} LEFT",
+    "soldOut": "SOLD OUT",
+    "notifyMe": "NOTIFY ME",
+    "unlockHint": "Log in as a member to unlock early access.",
+    "releaseAtLabel": "Public release",
+    "countdownDone": "LIVE",
+    "srCountdown": "{days}d {hours}h {minutes}m {seconds}s until live",
+    "units": { "days": "D", "hours": "H", "minutes": "M", "seconds": "S" }
+  },
+  "pdp": {
+    "addToCart": "Add to cart",
+    "adding": "Adding…",
+    "selectSize": "Select a size",
+    "colorLabel": "Color",
+    "notifyMe": "Notify me",
+    "onlyNLeft": "Only {count} left",
+    "addedToCart": "Added to cart",
+    "notFound": "Product not found",
+    "sizeFit": {
+      "title": "Size & Fit",
+      "unitLabel": "Measurement unit",
+      "size": "Size",
+      "chest": "Chest",
+      "length": "Length",
+      "openButton": "Size & Fit"
+    }
+  },
+  "collections": {
+    "index": {
+      "title": "Collections",
+      "subtitle": "Bangkok-born. Globally worn.",
+      "view": "View collection",
+      "count": "{count, plural, =0 {No drops} one {# piece} other {# pieces}}"
+    },
+    "detail": {
+      "shopThe": "Shop the collection",
+      "back": "All collections"
+    }
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search products…",
+    "submit": "Search",
+    "resultsFor": "Results for \"{query}\"",
+    "count": "{count, plural, =0 {No results} one {# result} other {# results}}",
+    "empty": "No products match \"{query}\".",
+    "prompt": "Type a query to search the catalog."
+  },
+  "checkout": {
+    "title": "Checkout",
+    "contactSection": "Contact & shipping",
+    "paymentSection": "Payment",
+    "email": "Email",
+    "fullName": "Full name",
+    "line1": "Address",
+    "line2": "Apartment, suite (optional)",
+    "city": "City",
+    "postalCode": "Postal code",
+    "country": "Country",
+    "phone": "Phone (optional)",
+    "summaryTitle": "Order summary",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "total": "Total",
+    "payButton": "Pay",
+    "processing": "Processing…",
+    "paymentMethod": "Payment method",
+    "testCardSuccess": "Test card — succeeds",
+    "testCardDecline": "Test card — declines",
+    "errorDeclined": "Your card was declined. Try the succeeding test card.",
+    "errorEmptyCart": "Your cart is empty.",
+    "errorInvalidInput": "Please check your details and try again.",
+    "errorOutOfStock": "An item went out of stock. Please review your cart.",
+    "emptyCartHeading": "Nothing to check out",
+    "emptyCartCta": "Continue shopping"
+  },
+  "confirmation": {
+    "heading": "Order confirmed",
+    "thanks": "Thank you — your drop is secured.",
+    "orderNumber": "Order",
+    "placedOn": "Placed on",
+    "shipTo": "Ship to",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "total": "Total",
+    "shareTitle": "I just copped from VANTA®",
+    "continue": "Continue shopping",
+    "ogTagline": "Order confirmed — VANTA®"
+  },
+  "motion": {
+    "label": "Motion",
+    "system": "System",
+    "full": "Full",
+    "reduced": "Reduced"
+  },
+  "catalog": {
+    "title": "Shop",
+    "resultCount": "{count, plural, =0 {No items} one {# item} other {# items}}",
+    "sort": {
+      "label": "Sort",
+      "featured": "Featured",
+      "price_asc": "Price: Low to High",
+      "price_desc": "Price: High to Low",
+      "newest": "Newest"
+    },
+    "filters": {
+      "heading": "Filter",
+      "size": "Size",
+      "color": "Color",
+      "category": "Category",
+      "price": "Price",
+      "minPrice": "Min",
+      "maxPrice": "Max",
+      "clear": "Clear all"
+    },
+    "card": {
+      "from": "From",
+      "sale": "Sale",
+      "wishlist": "Add to wishlist",
+      "wishlistRemove": "Remove from wishlist",
+      "colorCount": "{count, plural, one {# color} other {# colors}}"
+    },
+    "empty": "Nothing matches these filters."
+  },
+  "notFound": {
+    "heading": "Lost in the void",
+    "body": "This page slipped into the void. Let's get you back to the drop.",
+    "cta": "Back to shop"
+  },
+  "error": {
+    "heading": "Something broke",
+    "body": "An unexpected error interrupted this page — you can try again.",
+    "retry": "Try again"
+  }
+}

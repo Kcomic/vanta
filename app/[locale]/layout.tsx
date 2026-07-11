@@ -1,0 +1,100 @@
+import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { hasLocale, NextIntlClientProvider } from 'next-intl';
+import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
+import { routing } from '@/lib/i18n/routing';
+import { fontClassNames } from '@/lib/fonts';
+import { CartDrawerProvider } from '@/components/cart/CartDrawerContext';
+import { CartDrawer } from '@/components/cart/CartDrawer';
+import { CartHydrator } from '@/components/cart/CartHydrator';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
+import { cartService } from '@/lib/services/cart-service';
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Common' });
+  const title = t('brandName');
+  const description = t('tagline');
+  return {
+    metadataBase: new URL(
+      process.env.NEXT_PUBLIC_SITE_URL ?? 'https://vanta.example.com',
+    ),
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      locale,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+    alternates: {
+      languages: {
+        en: '/en',
+        th: '/th',
+      },
+    },
+  };
+}
+
+type Props = {
+  children: ReactNode;
+  params: Promise<{ locale: string }>;
+};
+
+export default async function LocaleLayout({ children, params }: Props) {
+  const { locale } = await params;
+
+  // hasLocale narrows locale to the routing.locales union; anything else 404s.
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
+
+  // Enable static rendering for this locale.
+  setRequestLocale(locale);
+  const messages = await getMessages();
+  const t = await getTranslations('Nav');
+
+  // Read the server cart via cartService (never cartStore.read directly) so
+  // itemCount + subtotal are always reconciled before the Zustand mirror is seeded.
+  const serverCart = await cartService.getCart();
+
+  return (
+    // lang + dir set server-side so SSR output carries the correct attributes
+    // from the first byte — required for screen readers, SEO, and :lang() CSS selectors.
+    // dir="ltr" is explicit; future RTL locale support changes this per-locale.
+    <html lang={locale} dir="ltr" className={fontClassNames} suppressHydrationWarning>
+      <body>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <CartDrawerProvider>
+            <a
+              href="#main-content"
+              className="sr-only z-[100] bg-blaze px-4 py-2 font-mono text-ink focus:not-sr-only focus:fixed focus:left-2 focus:top-2"
+            >
+              {t('skipToContent')}
+            </a>
+            <CartHydrator serverCart={serverCart} />
+            <Header />
+            <main id="main-content">{children}</main>
+            <Footer />
+            <CartDrawer />
+          </CartDrawerProvider>
+        </NextIntlClientProvider>
+      </body>
+    </html>
+  );
+}

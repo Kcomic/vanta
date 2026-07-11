@@ -1,0 +1,84 @@
+@import 'tailwindcss';
+
+/* Canonical @font-face for Clash Display so the 'Clash Display' family name resolves
+   in computed styles (Next.js localFont generates an internal alias; this ensures the
+   spec-checked name works at both type-level and Playwright assertion level). */
+@font-face {
+  font-family: 'Clash Display';
+  src: url('/fonts/ClashDisplay-Variable.woff2') format('woff2-variations');
+  font-weight: 200 700;
+  font-display: swap;
+}
+
+@theme {
+  --color-ink: #0a0a0a;
+  --color-paper: #f5f4ef;
+  --color-blaze: #ff3b1f;
+  --color-blaze-on-light: #c42a13; /* AA-safe on paper — darkened for WCAG AA (≥4.5:1 on #F5F4EF) */
+  --color-lime: #d4ff2e; /* lime-on-dark ONLY */
+  --color-smoke-900: #141414;
+  --color-smoke-700: #2a2a2a;
+  --color-smoke-500: #6b6b6b;
+  --color-smoke-300: #b8b8b8;
+
+  --font-display-en: 'Clash Display', system-ui, sans-serif;
+  --font-display-th: 'Kanit', system-ui, sans-serif;
+  --font-body: 'Geist', 'IBM Plex Sans Thai', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+
+  --spacing: 0.5rem; /* 8pt grid base */
+  --max-w-shell: 1440px;
+}
+
+/* Per-locale headline tokens */
+:lang(en) .display {
+  font-family: var(--font-display-en);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+:lang(th) .display {
+  font-family: var(--font-display-th);
+  text-transform: none;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
+
+/* View Transitions: hard cut (no cross-fade) for reduced-motion users.
+   Belt-and-suspenders: the card side already suppresses the transition name via
+   useMotionCapability(); this rule also neutralises the PDP hero's unconditional
+   view-transition-name so no fade plays even when the name is present. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* Bind next/font variables to the @theme family names. */
+:root {
+  --font-body: var(--font-geist-sans), var(--font-body-th), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Base: the void renders dark by default; reduced-motion safe (no opacity:0 anywhere). */
+html {
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+}

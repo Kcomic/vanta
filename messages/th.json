@@ -1,0 +1,270 @@
+{
+  "Shell": {
+    "brand": "VANTA®",
+    "tagline": "เกิดที่กรุงเทพฯ ใส่ได้ทั่วโลก",
+    "skipToContent": "ข้ามไปยังเนื้อหา",
+    "localeName": "ไทย"
+  },
+  "Locale": {
+    "switchTo": "เปลี่ยนภาษา",
+    "en": "EN",
+    "th": "TH"
+  },
+  "Common": {
+    "brandName": "VANTA®",
+    "tagline": "เกิดที่กรุงเทพฯ ใส่ได้ทั่วโลก",
+    "currencySymbol": "฿",
+    "loading": "กำลังโหลด",
+    "addToCart": "หยิบใส่ตะกร้า",
+    "notifyMe": "แจ้งเตือนฉัน",
+    "viewProduct": "ดูสินค้า"
+  },
+  "Nav": {
+    "home": "หน้าแรก",
+    "shop": "ช้อป",
+    "collections": "คอลเลกชัน",
+    "siteLinks": "ลิงก์เว็บไซต์",
+    "skipToContent": "ข้ามไปยังเนื้อหา",
+    "search": "ค้นหา",
+    "cart": "ตะกร้า",
+    "account": "บัญชี",
+    "login": "เข้าสู่ระบบ",
+    "logout": "ออกจากระบบ",
+    "switchToThai": "ไทย",
+    "switchToEnglish": "EN",
+    "currentLanguage": "ภาษาปัจจุบัน",
+    "motionToggle": "ลดการเคลื่อนไหว"
+  },
+  "Drop": {
+    "comingSoon": "เร็วๆ นี้",
+    "earlyAccess": "เข้าถึงก่อนใคร",
+    "earlyAccessMembers": "สมาชิกปลดล็อกก่อน",
+    "live": "เปิดขายแล้ว",
+    "lowStock": "เหลือเพียง {count} ชิ้น",
+    "soldOut": "ขายหมดแล้ว",
+    "countdownLabel": "เปิดขายอีกใน",
+    "days": "วัน",
+    "hours": "ชม.",
+    "minutes": "นาที",
+    "seconds": "วิ",
+    "marqueeDrop": "DROP",
+    "marqueeSoldOut": "SOLD OUT"
+  },
+  "Account": {
+    "dashboard": "แดชบอร์ด",
+    "welcome": "ยินดีต้อนรับกลับมา {name}",
+    "orders": "คำสั่งซื้อ",
+    "addresses": "ที่อยู่",
+    "settings": "ตั้งค่า",
+    "memberSince": "สมาชิก",
+    "noOrders": "ยังไม่มีคำสั่งซื้อ",
+    "viewOrder": "ดูคำสั่งซื้อ",
+    "defaultAddress": "ที่อยู่หลัก",
+    "navLabel": "เมนูบัญชี",
+    "navDashboard": "แดชบอร์ด",
+    "navOrders": "ประวัติคำสั่งซื้อ",
+    "navAddresses": "ที่อยู่",
+    "navSettings": "ตั้งค่า",
+    "logout": "ออกจากระบบ",
+    "dashTitle": "ยินดีต้อนรับกลับมา {name}",
+    "dashRole": "สมาชิกภาพ",
+    "dashRecentOrder": "คำสั่งซื้อล่าสุด",
+    "ordersTitle": "ประวัติคำสั่งซื้อ",
+    "ordersEmpty": "ยังไม่มีคำสั่งซื้อ",
+    "orderPlaced": "สั่งซื้อเมื่อ",
+    "orderStatus": "สถานะ",
+    "orderTotal": "ยอดรวม",
+    "addressesTitle": "ที่อยู่ที่บันทึกไว้",
+    "addressesEmpty": "ยังไม่มีที่อยู่ที่บันทึกไว้",
+    "settingsTitle": "ตั้งค่า",
+    "settingsName": "ชื่อ",
+    "settingsEmail": "อีเมล",
+    "settingsLocale": "ภาษาที่ต้องการ",
+    "settingsNote": "การแก้ไขโปรไฟล์อยู่นอกขอบเขตของเดโมนี้"
+  },
+  "Admin": {
+    "title": "ผู้ดูแลระบบ",
+    "reserved": "สงวนไว้สำหรับผู้ดูแลระบบ เครื่องมือจัดการสินค้า คำสั่งซื้อ และสต็อกจะสร้างในภายหลัง"
+  },
+  "Auth": {
+    "loginTitle": "เข้าสู่ระบบ",
+    "registerTitle": "สร้างบัญชี",
+    "email": "อีเมล",
+    "password": "รหัสผ่าน",
+    "name": "ชื่อ",
+    "submitLogin": "เข้าสู่ระบบ",
+    "submitRegister": "สร้างบัญชี",
+    "toRegister": "ยังไม่มีบัญชี? สร้างบัญชีใหม่",
+    "toLogin": "มีบัญชีอยู่แล้ว? เข้าสู่ระบบ",
+    "errorInvalid": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+    "errorTaken": "อีเมลนี้ถูกใช้ลงทะเบียนแล้ว",
+    "demoHeading": "บัญชีทดลอง",
+    "demoBody": "ใช้ข้อมูลนี้เพื่อเข้าสู่ระบบในฐานะสมาชิก:",
+    "demoEmail": "member@vanta.shop",
+    "demoPassword": "vanta-demo"
+  },
+  "cart": {
+    "title": "ตะกร้า",
+    "empty": "ตะกร้าของคุณว่างเปล่า",
+    "subtotal": "ยอดรวม",
+    "checkout": "ชำระเงิน",
+    "viewCart": "ดูตะกร้า",
+    "remove": "นำออก",
+    "decrease": "ลดจำนวน",
+    "increase": "เพิ่มจำนวน",
+    "quantityLabel": "จำนวน",
+    "close": "ปิดตะกร้า",
+    "addedAnnouncement": "เพิ่ม {title} ลงตะกร้าแล้ว ตอนนี้ตะกร้ามี {count} รายการ",
+    "openCart": "เปิดตะกร้า {count} รายการ"
+  },
+  "home": {
+    "heroKicker": "กรุงเทพฯ / ออกมาจากความว่างเปล่า",
+    "heroHeadline": "VANTA",
+    "heroSub": "สตรีทแวร์ที่ปรากฏขึ้นจากความมืด",
+    "ctaShopDrop": "ช้อปดรอป",
+    "ctaExplore": "สำรวจ",
+    "featuredTitle": "สินค้าแนะนำ",
+    "lookbookTeaserTitle": "ลุคบุ๊ค",
+    "lookbookTeaserCta": "ดูเอดิทอเรียล"
+  },
+  "drop": {
+    "label": "LIVE DROP",
+    "comingSoon": "เปิดตัวใน",
+    "earlyAccessLocked": "เข้าก่อนสำหรับสมาชิก",
+    "earlyAccessUnlocked": "ปลดล็อกการเข้าก่อนแล้ว",
+    "live": "กำลังไลฟ์",
+    "lowStock": "เหลือเพียง {count} ชิ้น",
+    "soldOut": "สินค้าหมด",
+    "notifyMe": "แจ้งเตือนฉัน",
+    "unlockHint": "เข้าสู่ระบบในฐานะสมาชิกเพื่อปลดล็อกการเข้าก่อน",
+    "releaseAtLabel": "เปิดจำหน่ายทั่วไป",
+    "countdownDone": "LIVE",
+    "srCountdown": "อีก {days} วัน {hours} ชม. {minutes} นาที {seconds} วินาที จึงจะไลฟ์",
+    "units": { "days": "วัน", "hours": "ชม.", "minutes": "นาที", "seconds": "วิ" }
+  },
+  "pdp": {
+    "addToCart": "เพิ่มลงตะกร้า",
+    "adding": "กำลังเพิ่ม…",
+    "selectSize": "เลือกไซซ์",
+    "colorLabel": "สี",
+    "notifyMe": "แจ้งเตือนฉัน",
+    "onlyNLeft": "เหลือเพียง {count} ชิ้น",
+    "addedToCart": "เพิ่มลงตะกร้าแล้ว",
+    "notFound": "ไม่พบสินค้า",
+    "sizeFit": {
+      "title": "ขนาดและการสวมใส่",
+      "unitLabel": "หน่วยวัด",
+      "size": "ไซซ์",
+      "chest": "รอบอก",
+      "length": "ความยาว",
+      "openButton": "ขนาดและการสวมใส่"
+    }
+  },
+  "collections": {
+    "index": {
+      "title": "คอลเลกชัน",
+      "subtitle": "เกิดที่กรุงเทพฯ ใส่ได้ทั่วโลก",
+      "view": "ดูคอลเลกชัน",
+      "count": "{count, plural, other {# ชิ้น}}"
+    },
+    "detail": {
+      "shopThe": "ช็อปคอลเลกชันนี้",
+      "back": "ดูคอลเลกชันทั้งหมด"
+    }
+  },
+  "search": {
+    "title": "ค้นหา",
+    "placeholder": "ค้นหาสินค้า…",
+    "submit": "ค้นหา",
+    "resultsFor": "ผลการค้นหา \"{query}\"",
+    "count": "{count, plural, other {# รายการ}}",
+    "empty": "ไม่พบสินค้าที่ตรงกับ \"{query}\"",
+    "prompt": "พิมพ์คำค้นหาเพื่อค้นหาสินค้า"
+  },
+  "checkout": {
+    "title": "ชำระเงิน",
+    "contactSection": "ข้อมูลติดต่อและที่อยู่จัดส่ง",
+    "paymentSection": "การชำระเงิน",
+    "email": "อีเมล",
+    "fullName": "ชื่อ-นามสกุล",
+    "line1": "ที่อยู่",
+    "line2": "ห้อง/ชั้น (ไม่บังคับ)",
+    "city": "เมือง/อำเภอ",
+    "postalCode": "รหัสไปรษณีย์",
+    "country": "ประเทศ",
+    "phone": "เบอร์โทร (ไม่บังคับ)",
+    "summaryTitle": "สรุปคำสั่งซื้อ",
+    "subtotal": "ยอดรวมย่อย",
+    "shipping": "ค่าจัดส่ง",
+    "total": "ยอดรวมทั้งหมด",
+    "payButton": "ชำระเงิน",
+    "processing": "กำลังดำเนินการ…",
+    "paymentMethod": "วิธีการชำระเงิน",
+    "testCardSuccess": "บัตรทดสอบ — สำเร็จ",
+    "testCardDecline": "บัตรทดสอบ — ถูกปฏิเสธ",
+    "errorDeclined": "บัตรของคุณถูกปฏิเสธ ลองใช้บัตรทดสอบที่สำเร็จ",
+    "errorEmptyCart": "ตะกร้าของคุณว่างเปล่า",
+    "errorInvalidInput": "โปรดตรวจสอบข้อมูลของคุณแล้วลองอีกครั้ง",
+    "errorOutOfStock": "มีสินค้าหมดสต็อก โปรดตรวจสอบตะกร้าอีกครั้ง",
+    "emptyCartHeading": "ไม่มีสินค้าให้ชำระเงิน",
+    "emptyCartCta": "เลือกซื้อสินค้าต่อ"
+  },
+  "confirmation": {
+    "heading": "ยืนยันคำสั่งซื้อแล้ว",
+    "thanks": "ขอบคุณ — คุณได้รับสินค้าจากดรอปนี้แล้ว",
+    "orderNumber": "คำสั่งซื้อ",
+    "placedOn": "สั่งซื้อเมื่อ",
+    "shipTo": "จัดส่งถึง",
+    "subtotal": "ยอดรวมย่อย",
+    "shipping": "ค่าจัดส่ง",
+    "total": "ยอดรวมทั้งหมด",
+    "shareTitle": "ฉันเพิ่งช้อปจาก VANTA®",
+    "continue": "เลือกซื้อสินค้าต่อ",
+    "ogTagline": "ยืนยันคำสั่งซื้อแล้ว — VANTA®"
+  },
+  "motion": {
+    "label": "การเคลื่อนไหว",
+    "system": "ตามระบบ",
+    "full": "เต็มรูปแบบ",
+    "reduced": "ลดทอน"
+  },
+  "catalog": {
+    "title": "ช็อป",
+    "resultCount": "{count, plural, =0 {ไม่มีสินค้า} other {# รายการ}}",
+    "sort": {
+      "label": "เรียงตาม",
+      "featured": "แนะนำ",
+      "price_asc": "ราคา: น้อยไปมาก",
+      "price_desc": "ราคา: มากไปน้อย",
+      "newest": "ใหม่ล่าสุด"
+    },
+    "filters": {
+      "heading": "ตัวกรอง",
+      "size": "ขนาด",
+      "color": "สี",
+      "category": "หมวดหมู่",
+      "price": "ราคา",
+      "minPrice": "ต่ำสุด",
+      "maxPrice": "สูงสุด",
+      "clear": "ล้างทั้งหมด"
+    },
+    "card": {
+      "from": "เริ่มต้น",
+      "sale": "ลดราคา",
+      "wishlist": "เพิ่มในรายการที่ชอบ",
+      "wishlistRemove": "นำออกจากรายการที่ชอบ",
+      "colorCount": "{count} สี"
+    },
+    "empty": "ไม่มีสินค้าที่ตรงกับตัวกรองนี้"
+  },
+  "notFound": {
+    "heading": "หลงเข้าสู่ความว่างเปล่า",
+    "body": "หน้านี้หลุดเข้าไปในความว่างเปล่า กลับไปที่ดรอปกันเถอะ",
+    "cta": "กลับไปที่ร้านค้า"
+  },
+  "error": {
+    "heading": "เกิดข้อผิดพลาด",
+    "body": "มีข้อผิดพลาดที่ไม่คาดคิดขัดจังหวะหน้านี้ คุณสามารถลองอีกครั้งได้",
+    "retry": "ลองอีกครั้ง"
+  }
+}

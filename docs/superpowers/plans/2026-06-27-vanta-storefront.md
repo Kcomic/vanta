@@ -3,12 +3,15 @@
 > **For agentic workers — REQUIRED SUB-SKILL:** Before executing any task in this plan you MUST invoke `superpowers:executing-plans` and follow `superpowers:test-driven-development` for every LOGIC task (repositories, services, `deriveAvailability`, money/date format, cart reconciliation). For UI tasks use Playwright/component tests plus visual verification (Playwright or Chrome DevTools MCP against `npm run dev`). Commits follow clean Conventional Commits with **NO Claude attribution** (this is a portfolio). Read the spec at `d:/MINE/freelance/system/vanta/docs/superpowers/specs/2026-06-27-vanta-storefront-design.md` once before starting.
 
 ## Goal
+
 Ship VANTA®: a deployed, bilingual (EN/TH) streetwear storefront that (1) makes a viewer feel "I want to buy this" within 60–90s via one unforgettable interaction (the LIVE DROP), and (2) proves senior application architecture where a real backend plugs in by changing **one import** (`lib/data/index.ts`), not the UI. The hero slice (Home → PDP → cart → live drop → confirmation) is polished to 100%; breadth is scaffolded, polish is concentrated.
 
 ## Architecture
+
 Approach A: pure domain types (`lib/domain`) consumed through async, request-context-free **repository interfaces** (`lib/data/repositories`), backed by a mock adapter + seed (`lib/data/mock`), wired at the single swap point `lib/data/index.ts`. Server Components read through repositories; Server Actions (`lib/actions`, `'use server'`) mutate through **services** (`lib/services`: cart/auth/checkout/drop/payment) which own authorization (`requireUser`/`requireMember`). The cart's source of truth is a signed cookie (`CartStore`); Zustand is a disciplined client mirror updated only from Server Action return values with `useOptimistic` for in-flight adds. Availability everywhere is the pure function `deriveAvailability`. Middleware is UX-only (locale + optimistic redirect), never authorization (avoids CVE-2025-29927).
 
 ## Tech Stack
+
 Next.js 15 (App Router) + React 19.2 · TypeScript (strict) · Tailwind CSS v4 · GSAP · Zustand · next-intl · Vitest + Playwright · npm · deployed on Vercel. Project folder: `d:/MINE/freelance/system/vanta`.
 
 ## Global Constraints
@@ -155,17 +158,19 @@ vanta/
 Every type, interface, and signature below is **verbatim law**. Later authors import these and MUST NOT redefine or widen them.
 
 ### `lib/domain/money.ts`
+
 ```ts
 export type Currency = 'THB';
 
 /** Integer MINOR units (satang). ฿1,990 === { amount: 199000, currency: 'THB' }. */
 export type Money = {
-  amount: number;   // integer minor units, never a float
+  amount: number; // integer minor units, never a float
   currency: Currency;
 };
 ```
 
 ### `lib/domain/i18n.ts`
+
 ```ts
 export type Locale = 'en' | 'th';
 
@@ -177,15 +182,11 @@ export type LocalizedText = {
 ```
 
 ### `lib/domain/product.ts`
+
 ```ts
 import type { Money } from './money';
 
-export type Availability =
-  | 'coming_soon'
-  | 'early_access'
-  | 'live'
-  | 'low_stock'
-  | 'sold_out';
+export type Availability = 'coming_soon' | 'early_access' | 'live' | 'low_stock' | 'sold_out';
 
 export type ProductImage = {
   id: string;
@@ -201,9 +202,9 @@ export type Variant = {
   sku: string;
   optionValues: { size: string; color: string };
   price: Money;
-  compareAtPrice?: Money;          // present => sale UI
-  stock: number;                   // current in-session stock
-  availability: Availability;      // baseline; UI re-derives via deriveAvailability
+  compareAtPrice?: Money; // present => sale UI
+  stock: number; // current in-session stock
+  availability: Availability; // baseline; UI re-derives via deriveAvailability
 };
 
 export type Product = {
@@ -213,7 +214,7 @@ export type Product = {
   description: LocalizedText;
   optionAxes: { size: string[]; color: string[] };
   variants: Variant[];
-  imagesByColor: Record<string, ProductImage[]>;  // keyed by optionValues.color
+  imagesByColor: Record<string, ProductImage[]>; // keyed by optionValues.color
   collectionIds: string[];
   dropId?: string;
 };
@@ -221,9 +222,11 @@ export type Product = {
 // Re-export so importing from product.ts is allowed:
 export type { LocalizedText } from './i18n';
 ```
+
 > Note: `LocalizedText` is defined in `i18n.ts`; the barrel `lib/domain/index.ts` re-exports both. Authors import domain types from `@/lib/domain`.
 
 ### `lib/domain/collection.ts`
+
 ```ts
 import type { LocalizedText } from './i18n';
 
@@ -238,20 +241,22 @@ export type Collection = {
 ```
 
 ### `lib/domain/drop.ts`
+
 ```ts
 /** All timestamps are ISO-8601 strings (UTC). Deadlines are cacheable; the tick is a client island. */
 export type Drop = {
   id: string;
   name: LocalizedText;
-  earlyAccessAt: string;  // members unlock here
-  releaseAt: string;      // public LIVE flip
-  endAt: string;          // drop window closes
+  earlyAccessAt: string; // members unlock here
+  releaseAt: string; // public LIVE flip
+  endAt: string; // drop window closes
 };
 
 export type { LocalizedText } from './i18n';
 ```
 
 ### `lib/domain/cart.ts`
+
 ```ts
 import type { Money } from './money';
 
@@ -264,13 +269,14 @@ export type CartItem = {
 /** Authoritative cart shape returned by every cart Server Action. */
 export type Cart = {
   items: CartItem[];
-  itemCount: number;     // sum of quantities (derived, server-authoritative)
-  subtotal: Money;       // sum of unitPrice * qty
-  updatedAt: string;     // ISO-8601
+  itemCount: number; // sum of quantities (derived, server-authoritative)
+  subtotal: Money; // sum of unitPrice * qty
+  updatedAt: string; // ISO-8601
 };
 ```
 
 ### `lib/domain/order.ts`
+
 ```ts
 import type { Money } from './money';
 import type { LocalizedText } from './i18n';
@@ -285,7 +291,7 @@ export type Address = {
   line2?: string;
   city: string;
   postalCode: string;
-  country: string;       // ISO-3166 alpha-2, e.g. 'TH'
+  country: string; // ISO-3166 alpha-2, e.g. 'TH'
   phone?: string;
 };
 
@@ -293,11 +299,11 @@ export type Address = {
 export type OrderLineItem = {
   variantId: string;
   sku: string;
-  title: LocalizedText;          // snapshot
+  title: LocalizedText; // snapshot
   optionValues: { size: string; color: string };
-  unitPrice: Money;              // snapshot
+  unitPrice: Money; // snapshot
   quantity: number;
-  imageUrl: string;              // snapshot
+  imageUrl: string; // snapshot
 };
 
 export type OrderTotals = {
@@ -307,18 +313,19 @@ export type OrderTotals = {
 };
 
 export type Order = {
-  id: string;                    // e.g. 'ord_seed_demo'
-  userId: string | null;         // null => guest checkout
+  id: string; // e.g. 'ord_seed_demo'
+  userId: string | null; // null => guest checkout
   status: OrderStatus;
   lineItems: OrderLineItem[];
   totals: OrderTotals;
   shippingAddress: Address;
   email: string;
-  placedAt: string;              // ISO-8601
+  placedAt: string; // ISO-8601
 };
 ```
 
 ### `lib/domain/user.ts`
+
 ```ts
 import type { Address } from './order';
 
@@ -334,6 +341,7 @@ export type User = {
 ```
 
 ### `lib/data/repositories/*.ts` — all repository interfaces
+
 ```ts
 // product-repository.ts
 import type { Product, Variant } from '@/lib/domain';
@@ -377,8 +385,8 @@ export interface UserRepository {
 // cart-store.ts — the ONLY request-context-aware repo: it reads/writes the signed cookie.
 import type { Cart } from '@/lib/domain';
 export interface CartStore {
-  read(): Promise<Cart>;                 // empty cart if no cookie
-  write(cart: Cart): Promise<void>;      // signs + sets cookie
+  read(): Promise<Cart>; // empty cart if no cookie
+  write(cart: Cart): Promise<void>; // signs + sets cookie
   clear(): Promise<void>;
 }
 
@@ -398,6 +406,7 @@ export interface Repositories {
 ```
 
 ### `lib/data/index.ts` — THE SWAP POINT (exact shape)
+
 ```ts
 import type { Repositories } from './repositories';
 import { mockRepositories } from './mock';
@@ -410,6 +419,7 @@ export const { products, collections, orders, users, cart } = repositories;
 ```
 
 ### `lib/services/availability.ts` — deriveAvailability (pure)
+
 ```ts
 import type { Variant, Drop, User, Availability } from '@/lib/domain';
 
@@ -434,6 +444,7 @@ export function deriveAvailability(
 ```
 
 ### `lib/services/cart-service.ts`
+
 ```ts
 import type { Cart } from '@/lib/domain';
 export interface CartService {
@@ -447,30 +458,32 @@ export const cartService: CartService;
 ```
 
 ### `lib/services/auth-service.ts`
+
 ```ts
 import type { User } from '@/lib/domain';
 export interface AuthService {
-  login(email: string, password: string): Promise<User>;   // throws on bad creds
+  login(email: string, password: string): Promise<User>; // throws on bad creds
   register(email: string, password: string, name: string): Promise<User>;
   logout(): Promise<void>;
-  getCurrentUser(): Promise<User | null>;                   // reads signed session cookie
+  getCurrentUser(): Promise<User | null>; // reads signed session cookie
 }
 export const authService: AuthService;
 
 // Guards (throw a typed error / redirect at the call site):
-export function requireUser(): Promise<User>;     // any authenticated user
-export function requireMember(): Promise<User>;   // role === 'member' | 'admin'
-export function requireAdmin(): Promise<User>;    // role === 'admin'
+export function requireUser(): Promise<User>; // any authenticated user
+export function requireMember(): Promise<User>; // role === 'member' | 'admin'
+export function requireAdmin(): Promise<User>; // role === 'admin'
 ```
 
 ### `lib/services/checkout-service.ts`
+
 ```ts
 import type { Order, Address, Cart } from '@/lib/domain';
 
 export type PlaceOrderInput = {
   email: string;
   shippingAddress: Address;
-  paymentToken: string;   // opaque token from PaymentService
+  paymentToken: string; // opaque token from PaymentService
 };
 
 export type PlaceOrderResult =
@@ -486,6 +499,7 @@ export const checkoutService: CheckoutService;
 ```
 
 ### `lib/services/drop-service.ts`
+
 ```ts
 import type { Drop, Product } from '@/lib/domain';
 export interface DropService {
@@ -497,11 +511,12 @@ export const dropService: DropService;
 ```
 
 ### `lib/services/payment-service.ts`
+
 ```ts
 export type ChargeInput = {
-  amountMinor: number;   // integer minor units
+  amountMinor: number; // integer minor units
   currency: 'THB';
-  paymentToken: string;  // mock: 'tok_ok' charges, 'tok_decline' declines
+  paymentToken: string; // mock: 'tok_ok' charges, 'tok_decline' declines
 };
 export type ChargeResult =
   | { ok: true; chargeId: string }
@@ -515,6 +530,7 @@ export const mockPaymentService: PaymentService;
 ```
 
 ### `lib/actions/*.ts` — Server Action signatures (all `'use server'`)
+
 ```ts
 // cart-actions.ts — return the AUTHORITATIVE cart; Zustand mirror replaces state from this.
 export async function addToCart(variantId: string, quantity: number): Promise<Cart>;
@@ -526,18 +542,28 @@ export async function getCartAction(): Promise<Cart>;
 export type AuthActionState =
   | { ok: true; user: User }
   | { ok: false; error: 'invalid_credentials' | 'email_taken' };
-export async function login(prevState: AuthActionState, formData: FormData): Promise<AuthActionState>;
-export async function register(prevState: AuthActionState, formData: FormData): Promise<AuthActionState>;
+export async function login(
+  prevState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState>;
+export async function register(
+  prevState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState>;
 export async function logout(): Promise<void>;
 
 // checkout-actions.ts
 export type PlaceOrderActionState =
   | { ok: true; orderId: string }
   | { ok: false; error: 'payment_declined' | 'empty_cart' | 'out_of_stock' };
-export async function placeOrder(prevState: PlaceOrderActionState, formData: FormData): Promise<PlaceOrderActionState>;
+export async function placeOrder(
+  prevState: PlaceOrderActionState,
+  formData: FormData,
+): Promise<PlaceOrderActionState>;
 ```
 
 ### `lib/format/money.ts` and `lib/format/date.ts`
+
 ```ts
 // money.ts — one Intl.NumberFormat helper keyed by locale; THB no decimals => "฿1,990".
 import type { Money } from '@/lib/domain';
@@ -546,51 +572,65 @@ export function formatMoney(money: Money, locale: Locale): string;
 
 // date.ts — forces gregory calendar + Western digits in both locales.
 import type { Locale } from '@/lib/domain';
-export function formatDate(iso: string, locale: Locale): string;   // uses calendar: 'gregory'
+export function formatDate(iso: string, locale: Locale): string; // uses calendar: 'gregory'
 ```
 
 ### `lib/store/cart-store.ts` — Zustand mirror (disciplined)
+
 ```ts
 import type { Cart } from '@/lib/domain';
 export type CartMirrorState = {
   cart: Cart;
-  hydrate: (serverCart: Cart) => void;     // initial RSC-rendered cart
-  replaceFromServer: (cart: Cart) => void;  // ONLY entry point for updates (action return value)
+  hydrate: (serverCart: Cart) => void; // initial RSC-rendered cart
+  replaceFromServer: (cart: Cart) => void; // ONLY entry point for updates (action return value)
 };
-export const useCartStore: import('zustand').UseBoundStore<import('zustand').StoreApi<CartMirrorState>>;
+export const useCartStore: import('zustand').UseBoundStore<
+  import('zustand').StoreApi<CartMirrorState>
+>;
 // INVARIANT: no addItem/removeItem mutators here; Zustand never invents cart state.
 ```
 
 ### Tailwind v4 theme token block — `app/globals.css` (verbatim)
+
 ```css
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
-  --color-ink: #0A0A0A;
-  --color-paper: #F5F4EF;
-  --color-blaze: #FF3B1F;
-  --color-blaze-on-light: #D62E16;  /* AA-safe on paper */
-  --color-lime: #D4FF2E;            /* lime-on-dark ONLY */
+  --color-ink: #0a0a0a;
+  --color-paper: #f5f4ef;
+  --color-blaze: #ff3b1f;
+  --color-blaze-on-light: #d62e16; /* AA-safe on paper */
+  --color-lime: #d4ff2e; /* lime-on-dark ONLY */
   --color-smoke-900: #141414;
-  --color-smoke-700: #2A2A2A;
-  --color-smoke-500: #6B6B6B;
-  --color-smoke-300: #B8B8B8;
+  --color-smoke-700: #2a2a2a;
+  --color-smoke-500: #6b6b6b;
+  --color-smoke-300: #b8b8b8;
 
-  --font-display-en: "Clash Display", system-ui, sans-serif;
-  --font-display-th: "Kanit", system-ui, sans-serif;
-  --font-body: "Geist", "IBM Plex Sans Thai", system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, monospace;
+  --font-display-en: 'Clash Display', system-ui, sans-serif;
+  --font-display-th: 'Kanit', system-ui, sans-serif;
+  --font-body: 'Geist', 'IBM Plex Sans Thai', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
 
-  --spacing: 0.5rem;                /* 8pt grid base */
+  --spacing: 0.5rem; /* 8pt grid base */
   --max-w-shell: 1440px;
 }
 
 /* Per-locale headline tokens */
-:lang(en) .display { font-family: var(--font-display-en); text-transform: uppercase; letter-spacing: -0.02em; }
-:lang(th) .display { font-family: var(--font-display-th); text-transform: none; letter-spacing: 0.01em; line-height: 1.35; }
+:lang(en) .display {
+  font-family: var(--font-display-en);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+:lang(th) .display {
+  font-family: var(--font-display-th);
+  text-transform: none;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
 ```
 
 ### next-intl config shape — `lib/i18n/routing.ts` + `lib/i18n/request.ts`
+
 ```ts
 // routing.ts
 import { defineRouting } from 'next-intl/routing';
@@ -648,27 +688,25 @@ This block is **authoritative**. Where any phase/task body below conflicts with 
 
 ### Type inconsistencies (4)
 
-1. **`lib/domain/product.ts` uses `LocalizedText` but never imports it.** The locked contract block in `## Shared Contracts` uses `LocalizedText` in `ProductImage.alt`, `Product.title`, and `Product.description`, then only `export type { LocalizedText } from './i18n';` at the bottom — so a *verbatim* copy does not compile (the type is unresolved in every value position).
+1. **`lib/domain/product.ts` uses `LocalizedText` but never imports it.** The locked contract block in `## Shared Contracts` uses `LocalizedText` in `ProductImage.alt`, `Product.title`, and `Product.description`, then only `export type { LocalizedText } from './i18n';` at the bottom — so a _verbatim_ copy does not compile (the type is unresolved in every value position).
    **Resolution (canonical contract correction):** `lib/domain/product.ts` MUST begin with an explicit type-only import. Phase 1 Task 1.2's version is canonical; the Shared-Contracts block is corrected to include the import line so any author copying it "verbatim" (Phase 0, Phase 2) produces a compiling file. The corrected file header is:
+
    ```ts
    import type { Money } from './money';
-   import type { LocalizedText } from './i18n';   // ← REQUIRED: used by ProductImage.alt, Product.title/description
+   import type { LocalizedText } from './i18n'; // ← REQUIRED: used by ProductImage.alt, Product.title/description
 
-   export type Availability =
-     | 'coming_soon'
-     | 'early_access'
-     | 'live'
-     | 'low_stock'
-     | 'sold_out';
+   export type Availability = 'coming_soon' | 'early_access' | 'live' | 'low_stock' | 'sold_out';
    // …ProductImage / Variant / Product unchanged…
 
    // Re-export so importing from product.ts is allowed:
    export type { LocalizedText } from './i18n';
    ```
+
    Every phase that references `product.ts` points at this corrected version, never the literal (broken) contract block.
 
-2. **Two different orderings are applied to the same `Availability` union (`deriveAvailability` precedence vs. catalog/search roll-up `BUYABILITY`).** Single-variant precedence is `sold_out > coming_soon > early_access > low_stock > live` (early_access outranks low_stock). The card roll-up treats `low_stock` as *more* buyable than `early_access`. These are silently divergent constants.
-   **Resolution (canonical contract correction — keep BOTH, make divergence impossible):** both orderings are *intentional* and live as named, exported constants in `lib/services/availability.ts`. `deriveAvailability` consumes `AVAILABILITY_PRECEDENCE` (single-variant precedence); catalog/search/collection card builders consume `CARD_ROLLUP_ORDER` ("most buyable across variants"). Neither surface may inline a literal map. Phase 6 `lib/catalog/query.ts`, Phase 6 search `results.ts`, and the Phase 4 / Phase 6 / Phase 7 collection card builders import `CARD_ROLLUP_ORDER` from `@/lib/services/availability`.
+2. **Two different orderings are applied to the same `Availability` union (`deriveAvailability` precedence vs. catalog/search roll-up `BUYABILITY`).** Single-variant precedence is `sold_out > coming_soon > early_access > low_stock > live` (early_access outranks low_stock). The card roll-up treats `low_stock` as _more_ buyable than `early_access`. These are silently divergent constants.
+   **Resolution (canonical contract correction — keep BOTH, make divergence impossible):** both orderings are _intentional_ and live as named, exported constants in `lib/services/availability.ts`. `deriveAvailability` consumes `AVAILABILITY_PRECEDENCE` (single-variant precedence); catalog/search/collection card builders consume `CARD_ROLLUP_ORDER` ("most buyable across variants"). Neither surface may inline a literal map. Phase 6 `lib/catalog/query.ts`, Phase 6 search `results.ts`, and the Phase 4 / Phase 6 / Phase 7 collection card builders import `CARD_ROLLUP_ORDER` from `@/lib/services/availability`.
+
    ```ts
    // lib/services/availability.ts
    import type { Availability } from '@/lib/domain';
@@ -703,10 +741,12 @@ This block is **authoritative**. Where any phase/task body below conflicts with 
      'sold_out',
    ] as const;
    ```
+
    Card builders pick the matching variant whose availability has the lowest `CARD_ROLLUP_ORDER` index. The JSDoc on `deriveAvailability` is updated to add: "single-variant precedence; the multi-variant card roll-up uses `CARD_ROLLUP_ORDER`, intentionally a different order."
 
 3. **`formatMoney` THB test asserts exactly `฿1,990` with a regular space — fragile against real ICU** (ICU commonly emits a non-breaking / narrow-no-break space, or `THB`).
    **Resolution:** the THB assertion in `tests/unit/money.test.ts` normalizes Unicode spaces, then asserts the baht sign is present and the integer-baht grouping is correct — never an exact `฿1,990` with U+0020. Use:
+
    ```ts
    import { describe, it, expect } from 'vitest';
    import { formatMoney } from '@/lib/format/money';
@@ -717,9 +757,9 @@ This block is **authoritative**. Where any phase/task body below conflicts with 
    describe('formatMoney (THB, no decimals)', () => {
      it('groups integer baht and shows the ฿ sign (space-tolerant)', () => {
        const out = norm(formatMoney({ amount: 199000, currency: 'THB' }, 'en'));
-       expect(out).toContain('฿');          // baht sign present
-       expect(out).toMatch(/1[,\s]?990/);   // grouped 1,990 baht (199000 satang / 100)
-       expect(out).not.toMatch(/\.\d/);     // NO decimals for THB
+       expect(out).toContain('฿'); // baht sign present
+       expect(out).toMatch(/1[,\s]?990/); // grouped 1,990 baht (199000 satang / 100)
+       expect(out).not.toMatch(/\.\d/); // NO decimals for THB
      });
 
      it('formats identically (digits) in th locale (gregory/Western digits)', () => {
@@ -732,6 +772,7 @@ This block is **authoritative**. Where any phase/task body below conflicts with 
 
 4. **`lib/services/cart-service.ts` writes a speculative `import type { CartService } from '@/lib/data/repositories'` then deletes it a step later.** `CartService` is owned by `lib/services/cart-service.ts`, not the repositories bundle. The intermediate broken import ships a non-compiling file.
    **Resolution:** Phase 3 Task 3.2 declares/exports `CartService` **locally in one pass** (verbatim from the contract) and the "delete this line later" step is removed entirely. The file's first import block is only:
+
    ```ts
    import type { Cart } from '@/lib/domain';
    import { cart as cartStore, products } from '@/lib/data';
@@ -745,6 +786,7 @@ This block is **authoritative**. Where any phase/task body below conflicts with 
    }
    // …implementation + `export const cartService: CartService = …` …
    ```
+
    No line imports `CartService` from `@/lib/data/repositories` at any point.
 
 ---
@@ -756,6 +798,7 @@ This block is **authoritative**. Where any phase/task body below conflicts with 
 
 6. **`Variant` has no `productId`; checkout/cart/orders/confirmation each re-scan `products.list()` per variant to find the owner (O(N·M), repeated 4+ times, no shared helper).**
    **Resolution (official contract extension):** add `getProductByVariantId(variantId, locale)` to `ProductRepository`; provide the mock impl once and a single shared call site. Phase 8 `checkoutService` (drop `findOwningProduct`'s `products.list()` scan), Phase 7 account orders, Phase 3/7 cart pages, and the confirmation page all call `products.getProductByVariantId(...)` — no more per-item `products.list()` scans. The `locale` parameter lets the mock return the localized title without callers re-reading. Corrected `ProductRepository`:
+
    ```ts
    // lib/data/repositories/product-repository.ts
    import type { Product, Variant } from '@/lib/domain';
@@ -773,19 +816,23 @@ This block is **authoritative**. Where any phase/task body below conflicts with 
      search(query: string): Promise<Product[]>;
    }
    ```
+
    `MockProductRepository.getProductByVariantId` does the seed scan exactly once:
+
    ```ts
    async getProductByVariantId(variantId: string, _locale: Locale): Promise<Product | null> {
      return clone(this.products.find((p) => p.variants.some((v) => v.id === variantId)) ?? null);
    }
    ```
+
    The Phase 1.5 contract stub gains a `getProductByVariantId: async () => null` member (see item 8).
 
 7. **`drops: DropRepository` is added to the `Repositories` bundle mid-stream (Phase 1 Task 1.9), but the locked bundle has no `drops`, and Phase 1 Task 1.5's `repositories.contract.test.ts` stub has no `drops` member — so once 1.9 widens the type, the 1.5 stub fails typecheck (missing required member).**
    **Resolution (official contract extension):** `DropRepository` IS part of the contract. The locked `Repositories` shape gains `drops: DropRepository` (and `DropRepository` is an official interface). **Phase 1 Task 1.5's stub MUST include a `drops` member** so it still satisfies `Repositories` after Task 1.9. Locked corrected bundle:
+
    ```ts
    // lib/data/repositories/index.ts
-   import type { DropRepository } from './drop-repository';   // official member
+   import type { DropRepository } from './drop-repository'; // official member
    export type { DropRepository } from './drop-repository';
    export interface Repositories {
      products: ProductRepository;
@@ -793,7 +840,7 @@ This block is **authoritative**. Where any phase/task body below conflicts with 
      orders: OrderRepository;
      users: UserRepository;
      cart: CartStore;
-     drops: DropRepository;               // ← official contract member
+     drops: DropRepository; // ← official contract member
    }
    // drop-repository.ts
    import type { Drop } from '@/lib/domain';
@@ -803,10 +850,12 @@ This block is **authoritative**. Where any phase/task body below conflicts with 
      getActive(now: Date): Promise<Drop | null>;
    }
    ```
-   The Phase 1 Task 1.5 stub adds (so the test stays green through Task 1.9 *and* item 6):
+
+   The Phase 1 Task 1.5 stub adds (so the test stays green through Task 1.9 _and_ item 6):
+
    ```ts
    const stub: Repositories = {
-     products: { /* …existing… */ getProductByVariantId: async () => null, },
+     products: { /* …existing… */ getProductByVariantId: async () => null },
      // collections / orders / users / cart unchanged …
      drops: {
        list: async () => [],
@@ -833,25 +882,30 @@ This block is **authoritative**. Where any phase/task body below conflicts with 
     **Resolution:** implement a **concrete channel** on the drawer context. `CartDrawerContext` exposes `announcement: string` + `setAnnouncement(msg: string): void` (this is part of the Phase 0.5 Task 0.5.6 context shape; Phase 3 extends the SAME context with the drawer-data members). The Phase 5 `AddToCartButton` calls `const { open, setAnnouncement } = useCartDrawer(); … setAnnouncement(t('addedToCart', { title }))` after the action resolves; `CartDrawer` renders `{announcement}` in its `aria-live="polite"` region. No prose "shared ref/event" — the mechanism is the context method.
 
 12. **Phase 7 Task 7.7 edits `lib/data/mock/seed/orders.ts` to set `userId: 'usr_member'` and claims the file was "created in the checkout phase" (Phase 8), with a conditional "if null, change it" branch — but Phase 1 Task 1.6 already creates `orders.ts` with `ord_seed_demo` and `userId: 'usr_member'`.**
-    **Resolution:** `lib/data/mock/seed/orders.ts` is **created ONCE in Phase 1 Task 1.6** with `userId: 'usr_member'` already set. **Phase 7 drops its "created in the checkout phase" claim and the conditional userId fix** — there is nothing to confirm or change; the seed is already correct from Phase 1. Phase 7 may *read* the seed but does not re-author or "repair" it.
+    **Resolution:** `lib/data/mock/seed/orders.ts` is **created ONCE in Phase 1 Task 1.6** with `userId: 'usr_member'` already set. **Phase 7 drops its "created in the checkout phase" claim and the conditional userId fix** — there is nothing to confirm or change; the seed is already correct from Phase 1. Phase 7 may _read_ the seed but does not re-author or "repair" it.
 
 13. **Phase 4 Task 4.5 calls `<ProductCard product={product} locale={locale} />` (props `product`, `locale`) with a hedging "if its signature differs, call it with that exact shape" note, but Phase 6 Task 6.2 defines `ProductCard` with `{ card: CatalogCard; title; imageUrl; imageAlt; locale; priority }` — there is NO `product` prop, and Phase 4 runs before Phase 6.**
     **Resolution:** `ProductCard`'s **single canonical signature is `{ card: CatalogCard; title; imageUrl; imageAlt; locale; priority }`** and it is **created early in Phase 0.5 Task 0.5.5** (not Phase 6). A `toCatalogCard(product: Product, locale: Locale): CatalogCard` mapper (also Phase 0.5 Task 0.5.5) lets both Phase 4's featured grid and Phase 6's catalog build cards identically. Phase 4 Task 4.5 stops calling `ProductCard` with `product=`; it maps each featured `Product` to a card and passes the canonical props:
     ```tsx
-    {view.featured.map((product, i) => {
-      const card = toCatalogCard(product, locale);
-      return (
-        <ProductCard
-          key={product.id}
-          card={card}
-          title={product.title[locale]}
-          imageUrl={card.imageUrl}
-          imageAlt={product.imagesByColor[card.matchedColors[0]]?.[0]?.alt[locale] ?? product.title[locale]}
-          locale={locale}
-          priority={i < 3}
-        />
-      );
-    })}
+    {
+      view.featured.map((product, i) => {
+        const card = toCatalogCard(product, locale);
+        return (
+          <ProductCard
+            key={product.id}
+            card={card}
+            title={product.title[locale]}
+            imageUrl={card.imageUrl}
+            imageAlt={
+              product.imagesByColor[card.matchedColors[0]]?.[0]?.alt[locale] ??
+              product.title[locale]
+            }
+            locale={locale}
+            priority={i < 3}
+          />
+        );
+      });
+    }
     ```
     The hedging note is removed. Phase 6 Task 6.2 changes verb from `Create` to **`Modify`** (`ProductCard` already exists from Phase 0.5; Phase 6 only adds the `catalog` message namespace and verifies via Playwright). `toCatalogCard` produces `imageUrl` as an explicit field on `CatalogCard` (see Phase 0.5 Task 0.5.5 for the `CatalogCard` field addition).
 
@@ -893,7 +947,7 @@ This block is **authoritative**. Where any phase/task body below conflicts with 
 
 > **Goal of this phase:** stand up the `vanta/` project with the exact pinned stack (Next.js 15 App Router, React 19.2, TypeScript strict, Tailwind CSS v4 + its v4 PostCSS plugin, next-intl, Zustand, GSAP, Vitest, Playwright, Zod), the `@theme` token block, the per-locale headline font system, the `[locale]` root layout + UX-only locale middleware, and the empty folder skeleton. **Deliverable:** `npm run dev` renders a minimal bilingual shell at `/en` and `/th`; `npm run typecheck` and `npm run build` both pass; one Playwright smoke test proves both locales render with the correct `<html lang>` and per-locale display font wired.
 >
-> This is a foundation phase: there is no domain logic yet, so most tasks are *config + UI shell* verified by build/typecheck and Playwright, not Vitest TDD. The one piece of pure logic introduced here (`lib/i18n/routing.ts` is config, not logic) is exercised indirectly by the locale smoke test. Real Vitest TDD begins in Phase 1 (domain/data/services).
+> This is a foundation phase: there is no domain logic yet, so most tasks are _config + UI shell_ verified by build/typecheck and Playwright, not Vitest TDD. The one piece of pure logic introduced here (`lib/i18n/routing.ts` is config, not logic) is exercised indirectly by the locale smoke test. Real Vitest TDD begins in Phase 1 (domain/data/services).
 
 ---
 
@@ -902,6 +956,7 @@ This block is **authoritative**. Where any phase/task body below conflicts with 
 Create the project root by hand (we do **not** run `create-next-app`, because it scaffolds an `app/` we will replace and pulls unpinned versions; this plan pins every version). After this task, `npm install` succeeds and `package.json` exposes every script the rest of the plan invokes.
 
 **Files**
+
 - Create: `vanta/package.json`
 - Create: `vanta/.gitignore`
 - Create: `vanta/.nvmrc`
@@ -909,6 +964,7 @@ Create the project root by hand (we do **not** run `create-next-app`, because it
 - Test: none (verified by a clean install + the presence of every script; first real test arrives in Task 0.4)
 
 **Interfaces**
+
 - Consumes: nothing (greenfield).
 - Produces: the `vanta/` npm package with scripts `dev`, `build`, `start`, `lint`, `typecheck`, `test`, `test:watch`, `test:e2e`, and `format` — every later phase invokes these exact names.
 
@@ -1014,7 +1070,7 @@ next-env.d.ts
 
 - [ ] Create `vanta/README.md` with a placeholder (the full case-study README is authored in a later phase):
 
-```markdown
+````markdown
 # VANTA®
 
 Bangkok-born. Globally worn. Bilingual (EN/TH) streetwear storefront — portfolio showcase.
@@ -1027,7 +1083,9 @@ Backend-ready: the active data adapter is chosen in exactly one place, `lib/data
 npm install
 npm run dev   # http://localhost:3000/en  and  http://localhost:3000/th
 ```
-```
+````
+
+````
 
 - [ ] Install dependencies, generating the npm lockfile: `cd d:/MINE/freelance/system/vanta && npm install`.
   - Expected: install completes with no `ERESOLVE` peer error (next-intl 4.13.0 declares `next: ^15.0.0` and `react: ^19.0.0` as peers — both satisfied), and `vanta/package-lock.json` + `vanta/node_modules/` now exist.
@@ -1037,7 +1095,7 @@ npm run dev   # http://localhost:3000/en  and  http://localhost:3000/th
 
 ```bash
 cd d:/MINE/freelance/system/vanta && git init && git add -A && git commit -m "chore: scaffold vanta project with pinned next 15 / react 19.2 stack"
-```
+````
 
 ---
 
@@ -1046,6 +1104,7 @@ cd d:/MINE/freelance/system/vanta && git init && git add -A && git commit -m "ch
 Wire the compiler in **strict** mode with the `@/*` path alias rooted at the project directory (so `@/lib/domain` resolves to `vanta/lib/domain`, matching the contract's import convention), and register the Tailwind v4 PostCSS plugin. After this task, `npm run typecheck` runs (against an empty source tree) and exits 0.
 
 **Files**
+
 - Create: `vanta/tsconfig.json`
 - Create: `vanta/postcss.config.mjs`
 - Create: `vanta/.prettierrc.json`
@@ -1055,6 +1114,7 @@ Wire the compiler in **strict** mode with the `@/*` path alias rooted at the pro
 - Test: none (verified by `npm run typecheck` exit 0).
 
 **Interfaces**
+
 - Consumes: `package.json` from Task 0.1.
 - Produces: the `@/*` → `./` path alias (the single alias every later import relies on), strict-mode compilation, and the Tailwind v4 PostCSS pipeline that `globals.css` (Task 0.3) requires.
 
@@ -1087,12 +1147,7 @@ Wire the compiler in **strict** mode with the `@/*` path alias rooted at the pro
       "@/*": ["./*"]
     }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
 ```
@@ -1175,11 +1230,13 @@ cd d:/MINE/freelance/system/vanta && git add -A && git commit -m "chore(config):
 Wire the next-intl plugin into the Next config (pointing at the request config we author in Task 0.5), enable the experimental View Transitions flag the hero slice needs, and author `globals.css` with the **verbatim** `@theme` token block and per-locale headline rules. After this task, the global stylesheet compiles through the Tailwind v4 pipeline.
 
 **Files**
+
 - Create: `vanta/next.config.ts`
 - Create: `vanta/app/globals.css`
 - Test: none yet (CSS is validated by the build in Task 0.6 and visually by the smoke test in Task 0.7).
 
 **Interfaces**
+
 - Consumes: `postcss.config.mjs` (Task 0.2); references `./lib/i18n/request.ts` (authored in Task 0.5 — the path is declared here, the file lands next).
 - Produces: the `@theme` design tokens (`--color-ink`, `--color-paper`, `--color-blaze`, `--color-blaze-on-light`, `--color-lime`, the smoke greys, the four font tokens, `--spacing`, `--max-w-shell`) and the `:lang(en)/:lang(th) .display` headline rules that every later UI task consumes.
 
@@ -1205,31 +1262,40 @@ export default withNextIntl(nextConfig);
 - [ ] Create `vanta/app/globals.css` with the **verbatim** token block from the contract, plus a minimal base resetting body to the void palette so the shell renders dark out of the box:
 
 ```css
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
-  --color-ink: #0A0A0A;
-  --color-paper: #F5F4EF;
-  --color-blaze: #FF3B1F;
-  --color-blaze-on-light: #D62E16;  /* AA-safe on paper */
-  --color-lime: #D4FF2E;            /* lime-on-dark ONLY */
+  --color-ink: #0a0a0a;
+  --color-paper: #f5f4ef;
+  --color-blaze: #ff3b1f;
+  --color-blaze-on-light: #d62e16; /* AA-safe on paper */
+  --color-lime: #d4ff2e; /* lime-on-dark ONLY */
   --color-smoke-900: #141414;
-  --color-smoke-700: #2A2A2A;
-  --color-smoke-500: #6B6B6B;
-  --color-smoke-300: #B8B8B8;
+  --color-smoke-700: #2a2a2a;
+  --color-smoke-500: #6b6b6b;
+  --color-smoke-300: #b8b8b8;
 
-  --font-display-en: "Clash Display", system-ui, sans-serif;
-  --font-display-th: "Kanit", system-ui, sans-serif;
-  --font-body: "Geist", "IBM Plex Sans Thai", system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, monospace;
+  --font-display-en: 'Clash Display', system-ui, sans-serif;
+  --font-display-th: 'Kanit', system-ui, sans-serif;
+  --font-body: 'Geist', 'IBM Plex Sans Thai', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
 
-  --spacing: 0.5rem;                /* 8pt grid base */
+  --spacing: 0.5rem; /* 8pt grid base */
   --max-w-shell: 1440px;
 }
 
 /* Per-locale headline tokens */
-:lang(en) .display { font-family: var(--font-display-en); text-transform: uppercase; letter-spacing: -0.02em; }
-:lang(th) .display { font-family: var(--font-display-th); text-transform: none; letter-spacing: 0.01em; line-height: 1.35; }
+:lang(en) .display {
+  font-family: var(--font-display-en);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+:lang(th) .display {
+  font-family: var(--font-display-th);
+  text-transform: none;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
 
 /* Base: the void renders dark by default; reduced-motion safe (no opacity:0 anywhere). */
 html {
@@ -1245,7 +1311,7 @@ body {
 }
 ```
 
-> The `--font-display-en/th/body/mono` token *names* match the `next/font` CSS variables we assign in Task 0.4 (`--font-display-en` etc.), so the font files actually back these tokens. The literal family names (`"Clash Display"`, `"Kanit"`, `"Geist"`, `"IBM Plex Sans Thai"`, `"Geist Mono"`) are the `next/font` `variable`-bound families wired there.
+> The `--font-display-en/th/body/mono` token _names_ match the `next/font` CSS variables we assign in Task 0.4 (`--font-display-en` etc.), so the font files actually back these tokens. The literal family names (`"Clash Display"`, `"Kanit"`, `"Geist"`, `"IBM Plex Sans Thai"`, `"Geist Mono"`) are the `next/font` `variable`-bound families wired there.
 
 - [ ] Commit:
 
@@ -1260,11 +1326,13 @@ cd d:/MINE/freelance/system/vanta && git add -A && git commit -m "feat(config): 
 Load the five typefaces via `next/font` so the `@theme` font tokens resolve to real font files: **Clash Display** (Latin display, self-hosted via `next/font/local`), **Kanit** (Thai display, Google), **Geist** + **Geist Mono** (the `geist` package), and **IBM Plex Sans Thai** (Thai body, Google). Each is bound to the CSS variable the token block references (`--font-display-en`, `--font-display-th`, `--font-body`, `--font-mono`, and the Thai body family folded into `--font-body`). After this task, a unit-style assertion confirms the font module exports the exact variable class names.
 
 **Files**
+
 - Create: `vanta/lib/fonts.ts`
 - Create: `vanta/public/fonts/ClashDisplay-Variable.woff2` (placeholder binary; see step note)
 - Test: `vanta/tests/unit/fonts.test.ts`
 
 **Interfaces**
+
 - Consumes: the `geist` package (Task 0.1); `next/font/google` and `next/font/local`.
 - Produces: `export const fontClassNames: string` — a space-joined string of every font's `.variable` class, applied to `<html>` in Task 0.6 so the `--font-*` CSS variables are in scope for the `@theme` tokens.
 
@@ -1307,7 +1375,7 @@ curl -L -o public/fonts/ClashDisplay-Variable.woff2 \
   "https://api.fontshare.com/v2/fonts/download/clash-display" 2>/dev/null || true
 ```
 
-  - Expected: a `public/fonts/ClashDisplay-Variable.woff2` file exists. If the Fontshare endpoint returns a zip rather than a raw woff2, unzip it and copy the `ClashDisplay-Variable.woff2` (the variable-weight file) into `public/fonts/`. The font file must be a valid woff2 or `next/font/local` will throw at build time — verify with `file public/fonts/ClashDisplay-Variable.woff2` reporting `Web Open Font Format (Version 2)`.
+- Expected: a `public/fonts/ClashDisplay-Variable.woff2` file exists. If the Fontshare endpoint returns a zip rather than a raw woff2, unzip it and copy the `ClashDisplay-Variable.woff2` (the variable-weight file) into `public/fonts/`. The font file must be a valid woff2 or `next/font/local` will throw at build time — verify with `file public/fonts/ClashDisplay-Variable.woff2` reporting `Web Open Font Format (Version 2)`.
 
 - [ ] Create `vanta/lib/fonts.ts` with this exact content:
 
@@ -1354,32 +1422,32 @@ export const fontClassNames: string = [
 ].join(' ');
 ```
 
-> The `geist` package binds `GeistSans` to `--font-geist-sans` and `GeistMono` to `--font-geist-mono` by default, NOT to `--font-body`/`--font-mono`. The test asserts the literal substrings `--font-body` and `--font-mono`; to satisfy that and to make the `@theme` tokens resolve, alias the geist variables in `globals.css` (next step) — the className string contains the geist-generated classes, but the *test* must assert on names we control. **Correct the test and the variable wiring as follows** so they agree.
+> The `geist` package binds `GeistSans` to `--font-geist-sans` and `GeistMono` to `--font-geist-mono` by default, NOT to `--font-body`/`--font-mono`. The test asserts the literal substrings `--font-body` and `--font-mono`; to satisfy that and to make the `@theme` tokens resolve, alias the geist variables in `globals.css` (next step) — the className string contains the geist-generated classes, but the _test_ must assert on names we control. **Correct the test and the variable wiring as follows** so they agree.
 
 - [ ] Re-bind the geist variables to the contract's token names so `globals.css` resolves cleanly. Append these alias lines to `vanta/app/globals.css` (right after the `:lang(th) .display` rule), mapping geist's default variables to the families the `@theme` block names, and folding the Thai body in:
 
 ```css
 /* Bind next/font variables to the @theme family names. */
 :root {
-  --font-display-en: var(--font-display-en, "Clash Display");
-  --font-display-th: var(--font-display-th, "Kanit");
+  --font-display-en: var(--font-display-en, 'Clash Display');
+  --font-display-th: var(--font-display-th, 'Kanit');
   --font-body: var(--font-geist-sans), var(--font-body-th), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 ```
 
-> Because the geist package emits `--font-geist-sans` / `--font-geist-mono`, the `fontClassNames` string will contain those, not `--font-body`/`--font-mono`. Update the test's third/fifth assertions accordingly so the test reflects reality (TDD: the test asserts the *true* contract of `fontClassNames`).
+> Because the geist package emits `--font-geist-sans` / `--font-geist-mono`, the `fontClassNames` string will contain those, not `--font-body`/`--font-mono`. Update the test's third/fifth assertions accordingly so the test reflects reality (TDD: the test asserts the _true_ contract of `fontClassNames`).
 
 - [ ] Update `vanta/tests/unit/fonts.test.ts` — replace the second `it(...)` block with the accurate assertion set:
 
 ```ts
-  it('binds all five font CSS variables', () => {
-    expect(fontClassNames).toContain('--font-display-en');
-    expect(fontClassNames).toContain('--font-display-th');
-    expect(fontClassNames).toContain('--font-geist-sans'); // -> aliased to --font-body in globals.css
-    expect(fontClassNames).toContain('--font-body-th');
-    expect(fontClassNames).toContain('--font-geist-mono'); // -> aliased to --font-mono in globals.css
-  });
+it('binds all five font CSS variables', () => {
+  expect(fontClassNames).toContain('--font-display-en');
+  expect(fontClassNames).toContain('--font-display-th');
+  expect(fontClassNames).toContain('--font-geist-sans'); // -> aliased to --font-body in globals.css
+  expect(fontClassNames).toContain('--font-body-th');
+  expect(fontClassNames).toContain('--font-geist-mono'); // -> aliased to --font-mono in globals.css
+});
 ```
 
 - [ ] Run it and **show it pass**: `cd d:/MINE/freelance/system/vanta && npm run test -- fonts`.
@@ -1397,6 +1465,7 @@ cd d:/MINE/freelance/system/vanta && git add -A && git commit -m "feat(fonts): l
 Author the next-intl config trio **verbatim** from the contract (`routing.ts`, `navigation.ts`, `request.ts`), the UX-only locale middleware (locale matching + redirect ONLY — never authorization, per CVE-2025-29927), and the two message files (`en.json` + a mirror-keyed `th.json`) with the minimal namespace the shell needs.
 
 **Files**
+
 - Create: `vanta/lib/i18n/routing.ts`
 - Create: `vanta/lib/i18n/navigation.ts`
 - Create: `vanta/lib/i18n/request.ts`
@@ -1406,6 +1475,7 @@ Author the next-intl config trio **verbatim** from the contract (`routing.ts`, `
 - Test: `vanta/tests/unit/i18n-messages.test.ts`
 
 **Interfaces**
+
 - Consumes: nothing from earlier tasks at runtime; the `next.config.ts` plugin (Task 0.3) points at `request.ts`.
 - Produces (verbatim per contract): `routing` (locales `['en','th']`, defaultLocale `'en'`, localePrefix `'always'`); the `Link`/`redirect`/`usePathname`/`useRouter`/`getPathname` localized navigation helpers; the default `getRequestConfig`. Produces the `messages` key tree consumed by every later UI string.
 
@@ -1548,9 +1618,10 @@ cd d:/MINE/freelance/system/vanta && git add -A && git commit -m "feat(i18n): ad
 
 Author the two-level layout: the locale-agnostic root `app/layout.tsx` (sets `<html>` with the font class names so the `--font-*` variables are in scope) and the `app/[locale]/layout.tsx` that validates the locale param, sets `<html lang>` to the active locale, and wraps children in `NextIntlClientProvider`. Add a minimal `(shop)/page.tsx` so `/en` and `/th` render something. Author `vitest.config.ts` so the unit tests in Tasks 0.4/0.5 run.
 
-> **Note on `<html>` nesting:** Next 15's App Router renders exactly one `<html>`. Per the contract file structure, the root `layout.tsx` is "no locale; passes through" and `[locale]/layout.tsx` owns "html lang/dir". To avoid a double-`<html>`, the **root** layout renders `<html>` with the font classes and a neutral `lang`, and the **`[locale]`** layout sets the *runtime* `lang`/`dir` via the `setRequestLocale` + a `lang`-syncing inline approach. We implement the simplest correct shape: root renders `<html lang>` and the locale layout updates it through Next's metadata + the provider; the smoke test asserts the final `lang` attribute.
+> **Note on `<html>` nesting:** Next 15's App Router renders exactly one `<html>`. Per the contract file structure, the root `layout.tsx` is "no locale; passes through" and `[locale]/layout.tsx` owns "html lang/dir". To avoid a double-`<html>`, the **root** layout renders `<html>` with the font classes and a neutral `lang`, and the **`[locale]`** layout sets the _runtime_ `lang`/`dir` via the `setRequestLocale` + a `lang`-syncing inline approach. We implement the simplest correct shape: root renders `<html lang>` and the locale layout updates it through Next's metadata + the provider; the smoke test asserts the final `lang` attribute.
 
 **Files**
+
 - Create: `vanta/app/layout.tsx`
 - Create: `vanta/app/[locale]/layout.tsx`
 - Create: `vanta/app/[locale]/(shop)/page.tsx`
@@ -1559,6 +1630,7 @@ Author the two-level layout: the locale-agnostic root `app/layout.tsx` (sets `<h
 - Test: re-runs the existing unit suites (Tasks 0.4, 0.5) — this is where `vitest.config.ts` first makes them runnable end-to-end.
 
 **Interfaces**
+
 - Consumes: `fontClassNames` (Task 0.4), `routing` (Task 0.5), the `Shell` message namespace (Task 0.5).
 - Produces: the rendered bilingual shell at `/en` and `/th`; the Vitest runner config (`node`/`jsdom` env, `@/*` alias mirrored from tsconfig, React plugin) that every later Vitest task relies on.
 
@@ -1615,11 +1687,19 @@ vi.mock('next/font/google', () => {
 });
 
 vi.mock('geist/font/sans', () => ({
-  GeistSans: { className: 'mock-geist-sans', variable: '--font-geist-sans', style: { fontFamily: 'mock' } },
+  GeistSans: {
+    className: 'mock-geist-sans',
+    variable: '--font-geist-sans',
+    style: { fontFamily: 'mock' },
+  },
 }));
 
 vi.mock('geist/font/mono', () => ({
-  GeistMono: { className: 'mock-geist-mono', variable: '--font-geist-mono', style: { fontFamily: 'mock' } },
+  GeistMono: {
+    className: 'mock-geist-mono',
+    variable: '--font-geist-mono',
+    style: { fontFamily: 'mock' },
+  },
 }));
 ```
 
@@ -1706,11 +1786,7 @@ export type LocalizedText = {
 import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server';
 
-export default async function HomePage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('Shell');
@@ -1767,12 +1843,14 @@ cd d:/MINE/freelance/system/vanta && git add -A && git commit -m "feat(shell): a
 Create the empty folder skeleton (with `.gitkeep`s) for every directory the later phases fill, author `playwright.config.ts` (boots `npm run dev`, Chromium project + a reduced-motion project), and write the smoke spec proving `/en` and `/th` both render, carry the correct `<html lang>`, and apply the correct per-locale display font. Then verify the full deliverable: `dev` renders the shell, `typecheck` and `build` pass.
 
 **Files**
+
 - Create: `vanta/playwright.config.ts`
 - Create: `vanta/tests/e2e/shell.spec.ts`
 - Create (skeleton, each with a `.gitkeep`): `vanta/lib/domain/`, `vanta/lib/data/repositories/`, `vanta/lib/data/mock/seed/`, `vanta/lib/services/`, `vanta/lib/actions/`, `vanta/lib/format/`, `vanta/lib/motion/`, `vanta/lib/store/`, `vanta/components/drop/`, `vanta/components/pdp/`, `vanta/components/cart/`, `vanta/components/product/`, `vanta/components/checkout/`, `vanta/components/layout/`, `vanta/components/ui/`, `vanta/app/api/products/`, and the route-group page folders under `app/[locale]/` listed in the contract tree.
 - Test: `vanta/tests/e2e/shell.spec.ts` (Playwright — the phase deliverable check).
 
 **Interfaces**
+
 - Consumes: the running dev server (the shell from Task 0.6), `routing` locales.
 - Produces: the directory skeleton every later phase writes into; the Playwright runner config + the bilingual + reduced-motion smoke spec.
 
@@ -1804,7 +1882,7 @@ for d in lib/data/repositories lib/data/mock/seed lib/services lib/actions lib/f
 done
 ```
 
-  - Expected: the directory tree under `lib/`, `components/`, and `app/[locale]/` now matches the contract FILE STRUCTURE, with `.gitkeep` placeholders in every leaf that has no source file yet.
+- Expected: the directory tree under `lib/`, `components/`, and `app/[locale]/` now matches the contract FILE STRUCTURE, with `.gitkeep` placeholders in every leaf that has no source file yet.
 
 - [ ] Create `vanta/playwright.config.ts` (boots the dev server, one desktop Chromium project plus a dedicated reduced-motion project so the contract's "one reduced-motion run" is a first-class project):
 
@@ -1860,19 +1938,21 @@ test.describe('bilingual shell renders at /en and /th', () => {
     await expect(page.getByTestId('locale-stamp')).toHaveText('/en');
 
     // :lang(en) .display -> --font-display-en (Clash Display). Assert the resolved family contains it.
-    const family = await page.getByTestId('brand').evaluate(
-      (el) => getComputedStyle(el).fontFamily,
-    );
+    const family = await page
+      .getByTestId('brand')
+      .evaluate((el) => getComputedStyle(el).fontFamily);
     expect(family).toContain('Clash Display');
 
     // :lang(en) .display uppercases.
-    const transform = await page.getByTestId('brand').evaluate(
-      (el) => getComputedStyle(el).textTransform,
-    );
+    const transform = await page
+      .getByTestId('brand')
+      .evaluate((el) => getComputedStyle(el).textTransform);
     expect(transform).toBe('uppercase');
   });
 
-  test('/th renders the shell with lang="th" and the Thai display font (no all-caps)', async ({ page }) => {
+  test('/th renders the shell with lang="th" and the Thai display font (no all-caps)', async ({
+    page,
+  }) => {
     await page.goto('/th');
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'th');
@@ -1880,15 +1960,15 @@ test.describe('bilingual shell renders at /en and /th', () => {
     await expect(page.getByTestId('tagline')).toHaveText('เกิดที่กรุงเทพฯ ใส่ได้ทั่วโลก');
     await expect(page.getByTestId('locale-stamp')).toHaveText('/th');
 
-    const family = await page.getByTestId('brand').evaluate(
-      (el) => getComputedStyle(el).fontFamily,
-    );
+    const family = await page
+      .getByTestId('brand')
+      .evaluate((el) => getComputedStyle(el).fontFamily);
     expect(family).toContain('Kanit');
 
     // :lang(th) .display does NOT uppercase.
-    const transform = await page.getByTestId('brand').evaluate(
-      (el) => getComputedStyle(el).textTransform,
-    );
+    const transform = await page
+      .getByTestId('brand')
+      .evaluate((el) => getComputedStyle(el).textTransform);
     expect(transform).toBe('none');
   });
 
@@ -1910,7 +1990,7 @@ test.describe('bilingual shell renders at /en and /th', () => {
 cd d:/MINE/freelance/system/vanta && npm run typecheck && npm run build
 ```
 
-  - Expected: `tsc --noEmit` exits 0; then `next build` completes with `✓ Compiled successfully` and the route list shows `/[locale]` (and the `/_not-found`), confirming the App Router compiled the bilingual shell. No type errors, no missing-module errors.
+- Expected: `tsc --noEmit` exits 0; then `next build` completes with `✓ Compiled successfully` and the route list shows `/[locale]` (and the `/_not-found`), confirming the App Router compiled the bilingual shell. No type errors, no missing-module errors.
 - [ ] Commit:
 
 ```bash
@@ -1920,6 +2000,7 @@ cd d:/MINE/freelance/system/vanta && git add -A && git commit -m "test(shell): a
 ---
 
 **Phase 0 exit criteria (all met by Task 0.7):**
+
 - `npm run dev` serves a minimal bilingual shell at `/en` and `/th`; bare `/` redirects to `/en` via the UX-only locale middleware.
 - `<html lang>` flips per locale; the `.display` headline resolves to Clash Display (uppercase, tight tracking) on EN and Kanit (no caps, looser tracking) on TH — the per-locale headline tokens are wired and proven by Playwright.
 - The `@theme` token block is verbatim and live (void `--ink` canvas, `--paper` text, single lime stamp on dark).
@@ -1943,6 +2024,7 @@ Here is Phase 1, ready to paste into the plan document.
 > **This phase is the TDD showcase.** Every task below is LOGIC, so each follows `superpowers:test-driven-development` strictly: write the failing Vitest test, run it and SHOW it fail with the exact command + expected output, implement the minimal code, run it and SHOW it pass, then commit with a clean Conventional Commit (NO Claude attribution). Domain types are copied **verbatim** from the LOCKED CONTRACTS — they are law and must not be widened or renamed. All app/component code reaches data through `@/lib/data` and types through `@/lib/domain`; nothing outside this phase imports `@/lib/data/mock` directly.
 
 This phase delivers, in order:
+
 1. The project skeleton + tooling so Vitest can run against `lib/**` (node env, `@/*` paths, strict TS).
 2. `lib/domain/**` — pure types, verbatim, with a barrel.
 3. `lib/format/money.ts` + `lib/format/date.ts` (TDD).
@@ -2294,7 +2376,7 @@ The deliverable is the complete `lib/domain/**` type surface plus the `@/lib/dom
 
   /** Integer MINOR units (satang). ฿1,990 === { amount: 199000, currency: 'THB' }. */
   export type Money = {
-    amount: number;   // integer minor units, never a float
+    amount: number; // integer minor units, never a float
     currency: Currency;
   };
   ```
@@ -2317,12 +2399,7 @@ The deliverable is the complete `lib/domain/**` type surface plus the `@/lib/dom
   import type { Money } from './money';
   import type { LocalizedText } from './i18n';
 
-  export type Availability =
-    | 'coming_soon'
-    | 'early_access'
-    | 'live'
-    | 'low_stock'
-    | 'sold_out';
+  export type Availability = 'coming_soon' | 'early_access' | 'live' | 'low_stock' | 'sold_out';
 
   export type ProductImage = {
     id: string;
@@ -2338,9 +2415,9 @@ The deliverable is the complete `lib/domain/**` type surface plus the `@/lib/dom
     sku: string;
     optionValues: { size: string; color: string };
     price: Money;
-    compareAtPrice?: Money;          // present => sale UI
-    stock: number;                   // current in-session stock
-    availability: Availability;      // baseline; UI re-derives via deriveAvailability
+    compareAtPrice?: Money; // present => sale UI
+    stock: number; // current in-session stock
+    availability: Availability; // baseline; UI re-derives via deriveAvailability
   };
 
   export type Product = {
@@ -2350,7 +2427,7 @@ The deliverable is the complete `lib/domain/**` type surface plus the `@/lib/dom
     description: LocalizedText;
     optionAxes: { size: string[]; color: string[] };
     variants: Variant[];
-    imagesByColor: Record<string, ProductImage[]>;  // keyed by optionValues.color
+    imagesByColor: Record<string, ProductImage[]>; // keyed by optionValues.color
     collectionIds: string[];
     dropId?: string;
   };
@@ -2383,9 +2460,9 @@ The deliverable is the complete `lib/domain/**` type surface plus the `@/lib/dom
   export type Drop = {
     id: string;
     name: LocalizedText;
-    earlyAccessAt: string;  // members unlock here
-    releaseAt: string;      // public LIVE flip
-    endAt: string;          // drop window closes
+    earlyAccessAt: string; // members unlock here
+    releaseAt: string; // public LIVE flip
+    endAt: string; // drop window closes
   };
 
   export type { LocalizedText } from './i18n';
@@ -2405,9 +2482,9 @@ The deliverable is the complete `lib/domain/**` type surface plus the `@/lib/dom
   /** Authoritative cart shape returned by every cart Server Action. */
   export type Cart = {
     items: CartItem[];
-    itemCount: number;     // sum of quantities (derived, server-authoritative)
-    subtotal: Money;       // sum of unitPrice * qty
-    updatedAt: string;     // ISO-8601
+    itemCount: number; // sum of quantities (derived, server-authoritative)
+    subtotal: Money; // sum of unitPrice * qty
+    updatedAt: string; // ISO-8601
   };
   ```
 
@@ -2427,7 +2504,7 @@ The deliverable is the complete `lib/domain/**` type surface plus the `@/lib/dom
     line2?: string;
     city: string;
     postalCode: string;
-    country: string;       // ISO-3166 alpha-2, e.g. 'TH'
+    country: string; // ISO-3166 alpha-2, e.g. 'TH'
     phone?: string;
   };
 
@@ -2435,11 +2512,11 @@ The deliverable is the complete `lib/domain/**` type surface plus the `@/lib/dom
   export type OrderLineItem = {
     variantId: string;
     sku: string;
-    title: LocalizedText;          // snapshot
+    title: LocalizedText; // snapshot
     optionValues: { size: string; color: string };
-    unitPrice: Money;              // snapshot
+    unitPrice: Money; // snapshot
     quantity: number;
-    imageUrl: string;              // snapshot
+    imageUrl: string; // snapshot
   };
 
   export type OrderTotals = {
@@ -2449,14 +2526,14 @@ The deliverable is the complete `lib/domain/**` type surface plus the `@/lib/dom
   };
 
   export type Order = {
-    id: string;                    // e.g. 'ord_seed_demo'
-    userId: string | null;         // null => guest checkout
+    id: string; // e.g. 'ord_seed_demo'
+    userId: string | null; // null => guest checkout
     status: OrderStatus;
     lineItems: OrderLineItem[];
     totals: OrderTotals;
     shippingAddress: Address;
     email: string;
-    placedAt: string;              // ISO-8601
+    placedAt: string; // ISO-8601
   };
   ```
 
@@ -2481,22 +2558,11 @@ The deliverable is the complete `lib/domain/**` type surface plus the `@/lib/dom
   ```ts
   export type { Currency, Money } from './money';
   export type { Locale, LocalizedText } from './i18n';
-  export type {
-    Availability,
-    ProductImage,
-    Variant,
-    Product,
-  } from './product';
+  export type { Availability, ProductImage, Variant, Product } from './product';
   export type { Collection } from './collection';
   export type { Drop } from './drop';
   export type { CartItem, Cart } from './cart';
-  export type {
-    OrderStatus,
-    Address,
-    OrderLineItem,
-    OrderTotals,
-    Order,
-  } from './order';
+  export type { OrderStatus, Address, OrderLineItem, OrderTotals, Order } from './order';
   export type { Role, User } from './user';
   ```
 
@@ -2857,8 +2923,8 @@ The deliverable is `lib/data/repositories/**`: the five interfaces plus the `Rep
 
   // The ONLY request-context-aware repo: it reads/writes the signed cookie.
   export interface CartStore {
-    read(): Promise<Cart>;                 // empty cart if no cookie
-    write(cart: Cart): Promise<void>;      // signs + sets cookie
+    read(): Promise<Cart>; // empty cart if no cookie
+    write(cart: Cart): Promise<void>; // signs + sets cookie
     clear(): Promise<void>;
   }
   ```
@@ -3081,12 +3147,7 @@ The deliverable is the typed seed under `lib/data/mock/seed/**`, proven by a Vit
         th: 'ชิ้นงานที่ก่อตัวขึ้นจากความมืดสนิท',
       },
       heroImageUrl: '/images/collections/void-hero.jpg',
-      productIds: [
-        'prd_void_tee',
-        'prd_void_hoodie',
-        'prd_void_cargo',
-        'prd_void_cap',
-      ],
+      productIds: ['prd_void_tee', 'prd_void_hoodie', 'prd_void_cargo', 'prd_void_cap'],
     },
     {
       id: 'col_bangkok',
@@ -3097,12 +3158,7 @@ The deliverable is the typed seed under `lib/data/mock/seed/**`, proven by a Vit
         th: 'สตรีทแวร์จากเมืองที่ไม่เคยเย็นลง',
       },
       heroImageUrl: '/images/collections/bangkok-hero.jpg',
-      productIds: [
-        'prd_bkk_jacket',
-        'prd_bkk_tee',
-        'prd_bkk_shorts',
-        'prd_bkk_socks',
-      ],
+      productIds: ['prd_bkk_jacket', 'prd_bkk_tee', 'prd_bkk_shorts', 'prd_bkk_socks'],
     },
     {
       id: 'col_mono',
@@ -3113,12 +3169,7 @@ The deliverable is the typed seed under `lib/data/mock/seed/**`, proven by a Vit
         th: 'เบสิกโทนเดียว ออกแบบมาเพื่อการเลเยอร์',
       },
       heroImageUrl: '/images/collections/mono-hero.jpg',
-      productIds: [
-        'prd_mono_longsleeve',
-        'prd_mono_pants',
-        'prd_mono_beanie',
-        'prd_mono_tote',
-      ],
+      productIds: ['prd_mono_longsleeve', 'prd_mono_pants', 'prd_mono_beanie', 'prd_mono_tote'],
     },
   ];
   ```
@@ -3150,12 +3201,47 @@ The deliverable is the typed seed under `lib/data/mock/seed/**`, proven by a Vit
       },
       optionAxes: { size: ['S', 'M', 'L'], color: ['Black', 'Paper'] },
       variants: [
-        { id: 'var_void_tee_s_black', sku: 'VNT-TEE-S-BLK', optionValues: { size: 'S', color: 'Black' }, price: thb(129000), stock: 22, availability: 'live' },
-        { id: 'var_void_tee_m_black', sku: 'VNT-TEE-M-BLK', optionValues: { size: 'M', color: 'Black' }, price: thb(129000), stock: 18, availability: 'live' },
+        {
+          id: 'var_void_tee_s_black',
+          sku: 'VNT-TEE-S-BLK',
+          optionValues: { size: 'S', color: 'Black' },
+          price: thb(129000),
+          stock: 22,
+          availability: 'live',
+        },
+        {
+          id: 'var_void_tee_m_black',
+          sku: 'VNT-TEE-M-BLK',
+          optionValues: { size: 'M', color: 'Black' },
+          price: thb(129000),
+          stock: 18,
+          availability: 'live',
+        },
         // SOLD OUT (1/3): one size dead, product still buyable in others.
-        { id: 'var_void_tee_l_black', sku: 'VNT-TEE-L-BLK', optionValues: { size: 'L', color: 'Black' }, price: thb(129000), stock: 0, availability: 'sold_out' },
-        { id: 'var_void_tee_s_paper', sku: 'VNT-TEE-S-PPR', optionValues: { size: 'S', color: 'Paper' }, price: thb(129000), stock: 30, availability: 'live' },
-        { id: 'var_void_tee_m_paper', sku: 'VNT-TEE-M-PPR', optionValues: { size: 'M', color: 'Paper' }, price: thb(129000), stock: 25, availability: 'live' },
+        {
+          id: 'var_void_tee_l_black',
+          sku: 'VNT-TEE-L-BLK',
+          optionValues: { size: 'L', color: 'Black' },
+          price: thb(129000),
+          stock: 0,
+          availability: 'sold_out',
+        },
+        {
+          id: 'var_void_tee_s_paper',
+          sku: 'VNT-TEE-S-PPR',
+          optionValues: { size: 'S', color: 'Paper' },
+          price: thb(129000),
+          stock: 30,
+          availability: 'live',
+        },
+        {
+          id: 'var_void_tee_m_paper',
+          sku: 'VNT-TEE-M-PPR',
+          optionValues: { size: 'M', color: 'Paper' },
+          price: thb(129000),
+          stock: 25,
+          availability: 'live',
+        },
       ],
       imagesByColor: {
         Black: [img('void-tee-black', 'Black')],
@@ -3175,10 +3261,34 @@ The deliverable is the typed seed under `lib/data/mock/seed/**`, proven by a Vit
       },
       optionAxes: { size: ['S', 'M', 'L'], color: ['Black'] },
       variants: [
-        { id: 'var_void_hoodie_s_black', sku: 'VNT-HOD-S-BLK', optionValues: { size: 'S', color: 'Black' }, price: thb(249000), compareAtPrice: thb(299000), stock: 14, availability: 'live' },
+        {
+          id: 'var_void_hoodie_s_black',
+          sku: 'VNT-HOD-S-BLK',
+          optionValues: { size: 'S', color: 'Black' },
+          price: thb(249000),
+          compareAtPrice: thb(299000),
+          stock: 14,
+          availability: 'live',
+        },
         // LOW STOCK (1/4): 3 left.
-        { id: 'var_void_hoodie_m_black', sku: 'VNT-HOD-M-BLK', optionValues: { size: 'M', color: 'Black' }, price: thb(249000), compareAtPrice: thb(299000), stock: 3, availability: 'low_stock' },
-        { id: 'var_void_hoodie_l_black', sku: 'VNT-HOD-L-BLK', optionValues: { size: 'L', color: 'Black' }, price: thb(249000), compareAtPrice: thb(299000), stock: 11, availability: 'live' },
+        {
+          id: 'var_void_hoodie_m_black',
+          sku: 'VNT-HOD-M-BLK',
+          optionValues: { size: 'M', color: 'Black' },
+          price: thb(249000),
+          compareAtPrice: thb(299000),
+          stock: 3,
+          availability: 'low_stock',
+        },
+        {
+          id: 'var_void_hoodie_l_black',
+          sku: 'VNT-HOD-L-BLK',
+          optionValues: { size: 'L', color: 'Black' },
+          price: thb(249000),
+          compareAtPrice: thb(299000),
+          stock: 11,
+          availability: 'live',
+        },
       ],
       imagesByColor: { Black: [img('void-hoodie-black', 'Black')] },
       collectionIds: ['col_void'],
@@ -3194,10 +3304,31 @@ The deliverable is the typed seed under `lib/data/mock/seed/**`, proven by a Vit
       },
       optionAxes: { size: ['M', 'L', 'XL'], color: ['Smoke'] },
       variants: [
-        { id: 'var_void_cargo_m_smoke', sku: 'VNT-CRG-M-SMK', optionValues: { size: 'M', color: 'Smoke' }, price: thb(289000), stock: 9, availability: 'live' },
+        {
+          id: 'var_void_cargo_m_smoke',
+          sku: 'VNT-CRG-M-SMK',
+          optionValues: { size: 'M', color: 'Smoke' },
+          price: thb(289000),
+          stock: 9,
+          availability: 'live',
+        },
         // LOW STOCK (2/4): 2 left.
-        { id: 'var_void_cargo_l_smoke', sku: 'VNT-CRG-L-SMK', optionValues: { size: 'L', color: 'Smoke' }, price: thb(289000), stock: 2, availability: 'low_stock' },
-        { id: 'var_void_cargo_xl_smoke', sku: 'VNT-CRG-XL-SMK', optionValues: { size: 'XL', color: 'Smoke' }, price: thb(289000), stock: 7, availability: 'live' },
+        {
+          id: 'var_void_cargo_l_smoke',
+          sku: 'VNT-CRG-L-SMK',
+          optionValues: { size: 'L', color: 'Smoke' },
+          price: thb(289000),
+          stock: 2,
+          availability: 'low_stock',
+        },
+        {
+          id: 'var_void_cargo_xl_smoke',
+          sku: 'VNT-CRG-XL-SMK',
+          optionValues: { size: 'XL', color: 'Smoke' },
+          price: thb(289000),
+          stock: 7,
+          availability: 'live',
+        },
       ],
       imagesByColor: { Smoke: [img('void-cargo-smoke', 'Smoke')] },
       collectionIds: ['col_void'],
@@ -3213,8 +3344,22 @@ The deliverable is the typed seed under `lib/data/mock/seed/**`, proven by a Vit
       },
       optionAxes: { size: ['OS'], color: ['Black', 'Blaze'] },
       variants: [
-        { id: 'var_void_cap_os_black', sku: 'VNT-CAP-OS-BLK', optionValues: { size: 'OS', color: 'Black' }, price: thb(89000), stock: 40, availability: 'live' },
-        { id: 'var_void_cap_os_blaze', sku: 'VNT-CAP-OS-BLZ', optionValues: { size: 'OS', color: 'Blaze' }, price: thb(89000), stock: 35, availability: 'live' },
+        {
+          id: 'var_void_cap_os_black',
+          sku: 'VNT-CAP-OS-BLK',
+          optionValues: { size: 'OS', color: 'Black' },
+          price: thb(89000),
+          stock: 40,
+          availability: 'live',
+        },
+        {
+          id: 'var_void_cap_os_blaze',
+          sku: 'VNT-CAP-OS-BLZ',
+          optionValues: { size: 'OS', color: 'Blaze' },
+          price: thb(89000),
+          stock: 35,
+          availability: 'live',
+        },
       ],
       imagesByColor: {
         Black: [img('void-cap-black', 'Black')],
@@ -3233,12 +3378,47 @@ The deliverable is the typed seed under `lib/data/mock/seed/**`, proven by a Vit
       },
       optionAxes: { size: ['S', 'M', 'L'], color: ['Ink', 'Blaze'] },
       variants: [
-        { id: 'var_bkk_jacket_s_ink', sku: 'VNT-JKT-S-INK', optionValues: { size: 'S', color: 'Ink' }, price: thb(359000), stock: 8, availability: 'live' },
-        { id: 'var_bkk_jacket_m_ink', sku: 'VNT-JKT-M-INK', optionValues: { size: 'M', color: 'Ink' }, price: thb(359000), stock: 12, availability: 'live' },
-        { id: 'var_bkk_jacket_l_ink', sku: 'VNT-JKT-L-INK', optionValues: { size: 'L', color: 'Ink' }, price: thb(359000), stock: 6, availability: 'live' },
+        {
+          id: 'var_bkk_jacket_s_ink',
+          sku: 'VNT-JKT-S-INK',
+          optionValues: { size: 'S', color: 'Ink' },
+          price: thb(359000),
+          stock: 8,
+          availability: 'live',
+        },
+        {
+          id: 'var_bkk_jacket_m_ink',
+          sku: 'VNT-JKT-M-INK',
+          optionValues: { size: 'M', color: 'Ink' },
+          price: thb(359000),
+          stock: 12,
+          availability: 'live',
+        },
+        {
+          id: 'var_bkk_jacket_l_ink',
+          sku: 'VNT-JKT-L-INK',
+          optionValues: { size: 'L', color: 'Ink' },
+          price: thb(359000),
+          stock: 6,
+          availability: 'live',
+        },
         // SOLD OUT (2/3).
-        { id: 'var_bkk_jacket_m_blaze', sku: 'VNT-JKT-M-BLZ', optionValues: { size: 'M', color: 'Blaze' }, price: thb(359000), stock: 0, availability: 'sold_out' },
-        { id: 'var_bkk_jacket_l_blaze', sku: 'VNT-JKT-L-BLZ', optionValues: { size: 'L', color: 'Blaze' }, price: thb(359000), stock: 10, availability: 'live' },
+        {
+          id: 'var_bkk_jacket_m_blaze',
+          sku: 'VNT-JKT-M-BLZ',
+          optionValues: { size: 'M', color: 'Blaze' },
+          price: thb(359000),
+          stock: 0,
+          availability: 'sold_out',
+        },
+        {
+          id: 'var_bkk_jacket_l_blaze',
+          sku: 'VNT-JKT-L-BLZ',
+          optionValues: { size: 'L', color: 'Blaze' },
+          price: thb(359000),
+          stock: 10,
+          availability: 'live',
+        },
       ],
       imagesByColor: {
         Ink: [img('bkk-jacket-ink', 'Ink')],
@@ -3258,10 +3438,38 @@ The deliverable is the typed seed under `lib/data/mock/seed/**`, proven by a Vit
       optionAxes: { size: ['S', 'M', 'L'], color: ['Paper', 'Ink'] },
       variants: [
         // LOW STOCK (3/4): 5 left (boundary of LOW_STOCK_THRESHOLD).
-        { id: 'var_bkk_tee_s_paper', sku: 'VNT-BTE-S-PPR', optionValues: { size: 'S', color: 'Paper' }, price: thb(119000), stock: 5, availability: 'low_stock' },
-        { id: 'var_bkk_tee_m_paper', sku: 'VNT-BTE-M-PPR', optionValues: { size: 'M', color: 'Paper' }, price: thb(119000), stock: 20, availability: 'live' },
-        { id: 'var_bkk_tee_l_paper', sku: 'VNT-BTE-L-PPR', optionValues: { size: 'L', color: 'Paper' }, price: thb(119000), stock: 16, availability: 'live' },
-        { id: 'var_bkk_tee_m_ink', sku: 'VNT-BTE-M-INK', optionValues: { size: 'M', color: 'Ink' }, price: thb(119000), stock: 24, availability: 'live' },
+        {
+          id: 'var_bkk_tee_s_paper',
+          sku: 'VNT-BTE-S-PPR',
+          optionValues: { size: 'S', color: 'Paper' },
+          price: thb(119000),
+          stock: 5,
+          availability: 'low_stock',
+        },
+        {
+          id: 'var_bkk_tee_m_paper',
+          sku: 'VNT-BTE-M-PPR',
+          optionValues: { size: 'M', color: 'Paper' },
+          price: thb(119000),
+          stock: 20,
+          availability: 'live',
+        },
+        {
+          id: 'var_bkk_tee_l_paper',
+          sku: 'VNT-BTE-L-PPR',
+          optionValues: { size: 'L', color: 'Paper' },
+          price: thb(119000),
+          stock: 16,
+          availability: 'live',
+        },
+        {
+          id: 'var_bkk_tee_m_ink',
+          sku: 'VNT-BTE-M-INK',
+          optionValues: { size: 'M', color: 'Ink' },
+          price: thb(119000),
+          stock: 24,
+          availability: 'live',
+        },
       ],
       imagesByColor: {
         Paper: [img('bkk-tee-paper', 'Paper')],
@@ -3280,9 +3488,30 @@ The deliverable is the typed seed under `lib/data/mock/seed/**`, proven by a Vit
       },
       optionAxes: { size: ['S', 'M', 'L'], color: ['Smoke'] },
       variants: [
-        { id: 'var_bkk_shorts_s_smoke', sku: 'VNT-SHT-S-SMK', optionValues: { size: 'S', color: 'Smoke' }, price: thb(149000), stock: 15, availability: 'live' },
-        { id: 'var_bkk_shorts_m_smoke', sku: 'VNT-SHT-M-SMK', optionValues: { size: 'M', color: 'Smoke' }, price: thb(149000), stock: 19, availability: 'live' },
-        { id: 'var_bkk_shorts_l_smoke', sku: 'VNT-SHT-L-SMK', optionValues: { size: 'L', color: 'Smoke' }, price: thb(149000), stock: 13, availability: 'live' },
+        {
+          id: 'var_bkk_shorts_s_smoke',
+          sku: 'VNT-SHT-S-SMK',
+          optionValues: { size: 'S', color: 'Smoke' },
+          price: thb(149000),
+          stock: 15,
+          availability: 'live',
+        },
+        {
+          id: 'var_bkk_shorts_m_smoke',
+          sku: 'VNT-SHT-M-SMK',
+          optionValues: { size: 'M', color: 'Smoke' },
+          price: thb(149000),
+          stock: 19,
+          availability: 'live',
+        },
+        {
+          id: 'var_bkk_shorts_l_smoke',
+          sku: 'VNT-SHT-L-SMK',
+          optionValues: { size: 'L', color: 'Smoke' },
+          price: thb(149000),
+          stock: 13,
+          availability: 'live',
+        },
       ],
       imagesByColor: { Smoke: [img('bkk-shorts-smoke', 'Smoke')] },
       collectionIds: ['col_bangkok'],
@@ -3298,7 +3527,14 @@ The deliverable is the typed seed under `lib/data/mock/seed/**`, proven by a Vit
       },
       optionAxes: { size: ['OS'], color: ['Ink'] },
       variants: [
-        { id: 'var_bkk_socks_os_ink', sku: 'VNT-SOK-OS-INK', optionValues: { size: 'OS', color: 'Ink' }, price: thb(49000), stock: 60, availability: 'live' },
+        {
+          id: 'var_bkk_socks_os_ink',
+          sku: 'VNT-SOK-OS-INK',
+          optionValues: { size: 'OS', color: 'Ink' },
+          price: thb(49000),
+          stock: 60,
+          availability: 'live',
+        },
       ],
       imagesByColor: { Ink: [img('bkk-socks-ink', 'Ink')] },
       collectionIds: ['col_bangkok'],
@@ -3314,11 +3550,39 @@ The deliverable is the typed seed under `lib/data/mock/seed/**`, proven by a Vit
       },
       optionAxes: { size: ['S', 'M', 'L'], color: ['Ink', 'Paper'] },
       variants: [
-        { id: 'var_mono_longsleeve_s_ink', sku: 'VNT-MLS-S-INK', optionValues: { size: 'S', color: 'Ink' }, price: thb(159000), stock: 17, availability: 'live' },
+        {
+          id: 'var_mono_longsleeve_s_ink',
+          sku: 'VNT-MLS-S-INK',
+          optionValues: { size: 'S', color: 'Ink' },
+          price: thb(159000),
+          stock: 17,
+          availability: 'live',
+        },
         // LOW STOCK (4/4): 1 left.
-        { id: 'var_mono_longsleeve_m_ink', sku: 'VNT-MLS-M-INK', optionValues: { size: 'M', color: 'Ink' }, price: thb(159000), stock: 1, availability: 'low_stock' },
-        { id: 'var_mono_longsleeve_l_ink', sku: 'VNT-MLS-L-INK', optionValues: { size: 'L', color: 'Ink' }, price: thb(159000), stock: 12, availability: 'live' },
-        { id: 'var_mono_longsleeve_m_paper', sku: 'VNT-MLS-M-PPR', optionValues: { size: 'M', color: 'Paper' }, price: thb(159000), stock: 21, availability: 'live' },
+        {
+          id: 'var_mono_longsleeve_m_ink',
+          sku: 'VNT-MLS-M-INK',
+          optionValues: { size: 'M', color: 'Ink' },
+          price: thb(159000),
+          stock: 1,
+          availability: 'low_stock',
+        },
+        {
+          id: 'var_mono_longsleeve_l_ink',
+          sku: 'VNT-MLS-L-INK',
+          optionValues: { size: 'L', color: 'Ink' },
+          price: thb(159000),
+          stock: 12,
+          availability: 'live',
+        },
+        {
+          id: 'var_mono_longsleeve_m_paper',
+          sku: 'VNT-MLS-M-PPR',
+          optionValues: { size: 'M', color: 'Paper' },
+          price: thb(159000),
+          stock: 21,
+          availability: 'live',
+        },
       ],
       imagesByColor: {
         Ink: [img('mono-longsleeve-ink', 'Ink')],
@@ -3337,11 +3601,39 @@ The deliverable is the typed seed under `lib/data/mock/seed/**`, proven by a Vit
       },
       optionAxes: { size: ['30', '32', '34'], color: ['Smoke', 'Ink'] },
       variants: [
-        { id: 'var_mono_pants_30_smoke', sku: 'VNT-MPT-30-SMK', optionValues: { size: '30', color: 'Smoke' }, price: thb(269000), stock: 9, availability: 'live' },
+        {
+          id: 'var_mono_pants_30_smoke',
+          sku: 'VNT-MPT-30-SMK',
+          optionValues: { size: '30', color: 'Smoke' },
+          price: thb(269000),
+          stock: 9,
+          availability: 'live',
+        },
         // SOLD OUT (3/3).
-        { id: 'var_mono_pants_32_smoke', sku: 'VNT-MPT-32-SMK', optionValues: { size: '32', color: 'Smoke' }, price: thb(269000), stock: 0, availability: 'sold_out' },
-        { id: 'var_mono_pants_34_smoke', sku: 'VNT-MPT-34-SMK', optionValues: { size: '34', color: 'Smoke' }, price: thb(269000), stock: 7, availability: 'live' },
-        { id: 'var_mono_pants_32_ink', sku: 'VNT-MPT-32-INK', optionValues: { size: '32', color: 'Ink' }, price: thb(269000), stock: 11, availability: 'live' },
+        {
+          id: 'var_mono_pants_32_smoke',
+          sku: 'VNT-MPT-32-SMK',
+          optionValues: { size: '32', color: 'Smoke' },
+          price: thb(269000),
+          stock: 0,
+          availability: 'sold_out',
+        },
+        {
+          id: 'var_mono_pants_34_smoke',
+          sku: 'VNT-MPT-34-SMK',
+          optionValues: { size: '34', color: 'Smoke' },
+          price: thb(269000),
+          stock: 7,
+          availability: 'live',
+        },
+        {
+          id: 'var_mono_pants_32_ink',
+          sku: 'VNT-MPT-32-INK',
+          optionValues: { size: '32', color: 'Ink' },
+          price: thb(269000),
+          stock: 11,
+          availability: 'live',
+        },
       ],
       imagesByColor: {
         Smoke: [img('mono-pants-smoke', 'Smoke')],
@@ -3360,8 +3652,22 @@ The deliverable is the typed seed under `lib/data/mock/seed/**`, proven by a Vit
       },
       optionAxes: { size: ['OS'], color: ['Ink', 'Smoke'] },
       variants: [
-        { id: 'var_mono_beanie_os_ink', sku: 'VNT-BNE-OS-INK', optionValues: { size: 'OS', color: 'Ink' }, price: thb(79000), stock: 28, availability: 'live' },
-        { id: 'var_mono_beanie_os_smoke', sku: 'VNT-BNE-OS-SMK', optionValues: { size: 'OS', color: 'Smoke' }, price: thb(79000), stock: 22, availability: 'live' },
+        {
+          id: 'var_mono_beanie_os_ink',
+          sku: 'VNT-BNE-OS-INK',
+          optionValues: { size: 'OS', color: 'Ink' },
+          price: thb(79000),
+          stock: 28,
+          availability: 'live',
+        },
+        {
+          id: 'var_mono_beanie_os_smoke',
+          sku: 'VNT-BNE-OS-SMK',
+          optionValues: { size: 'OS', color: 'Smoke' },
+          price: thb(79000),
+          stock: 22,
+          availability: 'live',
+        },
       ],
       imagesByColor: {
         Ink: [img('mono-beanie-ink', 'Ink')],
@@ -3380,7 +3686,14 @@ The deliverable is the typed seed under `lib/data/mock/seed/**`, proven by a Vit
       },
       optionAxes: { size: ['OS'], color: ['Paper'] },
       variants: [
-        { id: 'var_mono_tote_os_paper', sku: 'VNT-TOT-OS-PPR', optionValues: { size: 'OS', color: 'Paper' }, price: thb(99000), stock: 45, availability: 'live' },
+        {
+          id: 'var_mono_tote_os_paper',
+          sku: 'VNT-TOT-OS-PPR',
+          optionValues: { size: 'OS', color: 'Paper' },
+          price: thb(99000),
+          stock: 45,
+          availability: 'live',
+        },
       ],
       imagesByColor: { Paper: [img('mono-tote-paper', 'Paper')] },
       collectionIds: ['col_mono'],
@@ -3929,7 +4242,7 @@ The deliverable is `lib/services/availability.ts` exporting `LOW_STOCK_THRESHOLD
   const guest: User = { ...member, id: 'usr_guest', role: 'guest' };
 
   const BEFORE_EARLY = new Date('2026-07-01T09:00:00.000Z'); // < earlyAccessAt
-  const IN_EARLY = new Date('2026-07-01T11:00:00.000Z');     // earlyAccessAt <= now < releaseAt
+  const IN_EARLY = new Date('2026-07-01T11:00:00.000Z'); // earlyAccessAt <= now < releaseAt
   const AFTER_RELEASE = new Date('2026-07-02T00:00:00.000Z'); // >= releaseAt
 
   describe('LOW_STOCK_THRESHOLD', () => {
@@ -3991,10 +4304,14 @@ The deliverable is `lib/services/availability.ts` exporting `LOW_STOCK_THRESHOLD
       expect(deriveAvailability(variantWith(50), null, AFTER_RELEASE, null)).toBe('live');
     });
     it('no drop, stock == threshold (5) => low_stock', () => {
-      expect(deriveAvailability(variantWith(LOW_STOCK_THRESHOLD), null, AFTER_RELEASE, null)).toBe('low_stock');
+      expect(deriveAvailability(variantWith(LOW_STOCK_THRESHOLD), null, AFTER_RELEASE, null)).toBe(
+        'low_stock',
+      );
     });
     it('no drop, stock == threshold + 1 (6) => live', () => {
-      expect(deriveAvailability(variantWith(LOW_STOCK_THRESHOLD + 1), null, AFTER_RELEASE, null)).toBe('live');
+      expect(
+        deriveAvailability(variantWith(LOW_STOCK_THRESHOLD + 1), null, AFTER_RELEASE, null),
+      ).toBe('live');
     });
     it('no drop, stock == 1 => low_stock', () => {
       expect(deriveAvailability(variantWith(1), null, AFTER_RELEASE, null)).toBe('low_stock');
@@ -4288,9 +4605,10 @@ The deliverable is `lib/services/drop-service.ts` implementing the `DropService`
 **Phase 1 exit criteria (all green):** `npm test` runs 9 unit specs to pass; `npm run typecheck` is clean; `lib/domain/**`, `lib/data/**` (incl. the single swap point and `drops`), `lib/format/{money,date}.ts`, `lib/services/{availability,drop-service}.ts` exist; the seed enforces exactly 3 sold-out and 4 low-stock variants across ≥12 products with size×color variants and a future-dated active drop; and the demo member (`member@vanta.shop` / `vanta-demo`) plus the seeded `ord_seed_demo` confirmation order are queryable through `@/lib/data`. The "change one import to go live" seam is real and tested.
 
 Key file paths produced by this phase:
+
 - `d:/MINE/freelance/system/vanta/lib/domain/` (money.ts, i18n.ts, product.ts, collection.ts, drop.ts, cart.ts, order.ts, user.ts, index.ts)
 - `d:/MINE/freelance/system/vanta/lib/data/repositories/` (product-, collection-, order-, user-, drop-repository.ts, cart-store.ts, index.ts)
-- `d:/MINE/freelance/system/vanta/lib/data/mock/` (seed/*, *.mock.ts, index.ts) and `d:/MINE/freelance/system/vanta/lib/data/index.ts` (THE SWAP POINT)
+- `d:/MINE/freelance/system/vanta/lib/data/mock/` (seed/_, _.mock.ts, index.ts) and `d:/MINE/freelance/system/vanta/lib/data/index.ts` (THE SWAP POINT)
 - `d:/MINE/freelance/system/vanta/lib/services/` (availability.ts, drop-service.ts)
 - `d:/MINE/freelance/system/vanta/lib/format/` (money.ts, date.ts)
 - `d:/MINE/freelance/system/vanta/tests/unit/` (harness, domain, money, date, repositories.contract, seed, repo-swap, availability, drop-service .test.ts)
@@ -4312,6 +4630,7 @@ I have everything I need. The contracts already specify the exact next-intl conf
 Establish the locale source of truth: `routing` (locales `['en','th']`, default `'en'`, prefix `'always'`), the request-config loader that imports the right messages file, and the localized navigation helpers. This task ends in a typecheck-clean i18n core that later tasks import.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/i18n/routing.ts`
 - Create: `d:/MINE/freelance/system/vanta/lib/i18n/navigation.ts`
 - Create: `d:/MINE/freelance/system/vanta/lib/i18n/request.ts`
@@ -4321,18 +4640,22 @@ Establish the locale source of truth: `routing` (locales `['en','th']`, default 
 - Test: typecheck only (`npm run typecheck`) — no logic to TDD here; pure config.
 
 **Interfaces**
+
 - Produces: `routing` (`import('next-intl/routing').Routing`), `{ Link, redirect, usePathname, useRouter, getPathname }` from `createNavigation(routing)`, and the default `getRequestConfig` export.
 - Consumes: `next-intl/routing` `defineRouting`, `next-intl/navigation` `createNavigation`, `next-intl/server` `getRequestConfig`, and the message JSON files via `import('@/messages/${locale}.json')`.
 
 **Steps**
 
 - [ ] Confirm `next-intl` is installed (Phase 0/1 dependency). If absent, install it:
+
   ```bash
   cd d:/MINE/freelance/system/vanta && npm install next-intl
   ```
+
   Expected: `package-lock.json` updated, `next-intl` appears under `dependencies`.
 
 - [ ] Create `lib/i18n/routing.ts` (verbatim from contract):
+
   ```ts
   import { defineRouting } from 'next-intl/routing';
 
@@ -4344,39 +4667,41 @@ Establish the locale source of truth: `routing` (locales `['en','th']`, default 
   ```
 
 - [ ] Create `lib/i18n/navigation.ts` (verbatim from contract):
+
   ```ts
   import { createNavigation } from 'next-intl/navigation';
   import { routing } from './routing';
 
-  export const { Link, redirect, usePathname, useRouter, getPathname } =
-    createNavigation(routing);
+  export const { Link, redirect, usePathname, useRouter, getPathname } = createNavigation(routing);
   ```
 
 - [ ] Create `lib/i18n/request.ts` (verbatim from contract):
+
   ```ts
   import { getRequestConfig } from 'next-intl/server';
   import { routing } from './routing';
 
   export default getRequestConfig(async ({ requestLocale }) => {
     const requested = await requestLocale;
-    const locale = routing.locales.includes(requested as any)
-      ? requested!
-      : routing.defaultLocale;
+    const locale = routing.locales.includes(requested as any) ? requested! : routing.defaultLocale;
     return { locale, messages: (await import(`@/messages/${locale}.json`)).default };
   });
   ```
 
 - [ ] Create stub `messages/en.json` so the dynamic import in `request.ts` resolves before Task 2.4 fills it:
+
   ```json
   {}
   ```
 
 - [ ] Create stub `messages/th.json`:
+
   ```json
   {}
   ```
 
 - [ ] Wire the next-intl plugin in `next.config.ts`, pointing at `lib/i18n/request.ts`, and keep the View Transitions experimental flag the architecture requires:
+
   ```ts
   import type { NextConfig } from 'next';
   import createNextIntlPlugin from 'next-intl/plugin';
@@ -4393,9 +4718,11 @@ Establish the locale source of truth: `routing` (locales `['en','th']`, default 
   ```
 
 - [ ] Run typecheck and confirm the i18n core compiles:
+
   ```bash
   cd d:/MINE/freelance/system/vanta && npm run typecheck
   ```
+
   Expected: exits `0`, no errors referencing `lib/i18n/**` or `next.config.ts`.
 
 - [ ] Commit:
@@ -4410,16 +4737,19 @@ Establish the locale source of truth: `routing` (locales `['en','th']`, default 
 The split-text safety primitive. TDD: a failing test that asserts Thai combining-mark survival AND demonstrates that naive `.split('')` would break the same string, then the minimal `Intl.Segmenter` implementation. This is the contract that all per-grapheme animation later depends on.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/motion/segment.ts`
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/segment.test.ts`
 
 **Interfaces**
+
 - Produces: `export function splitGraphemes(text: string, locale?: Locale): string[];`
 - Consumes: `Locale` from `@/lib/domain`; the platform `Intl.Segmenter` (`granularity: 'grapheme'`).
 
 **Steps**
 
 - [ ] Write the failing test `tests/unit/segment.test.ts`. It pins three behaviors: (1) the Thai word `"กิน"` (consonant ก" + vowel sign ิ + consonant น — where ิ is a combining mark on ก) is segmented into graphemes that keep the combining mark attached, (2) every returned segment recombines exactly to the input via `join('')`, and (3) a control assertion proving naive `.split('')` would shatter the combining mark into its own code-point element (the bug we forbid):
+
   ```ts
   import { describe, expect, it } from 'vitest';
   import { splitGraphemes } from '@/lib/motion/segment';
@@ -4459,12 +4789,15 @@ The split-text safety primitive. TDD: a failing test that asserts Thai combining
   ```
 
 - [ ] Run the test and SHOW it fail (module does not exist yet):
+
   ```bash
   cd d:/MINE/freelance/system/vanta && npx vitest run tests/unit/segment.test.ts
   ```
+
   Expected: failure — `Error: Failed to resolve import "@/lib/motion/segment"` (cannot find module), 0 passing.
 
 - [ ] Implement the minimal util in `lib/motion/segment.ts`:
+
   ```ts
   import type { Locale } from '@/lib/domain';
 
@@ -4485,9 +4818,11 @@ The split-text safety primitive. TDD: a failing test that asserts Thai combining
   ```
 
 - [ ] Run the test and SHOW it pass:
+
   ```bash
   cd d:/MINE/freelance/system/vanta && npx vitest run tests/unit/segment.test.ts
   ```
+
   Expected: `4 passed`, exit `0`.
 
 - [ ] Commit:
@@ -4502,16 +4837,19 @@ The split-text safety primitive. TDD: a failing test that asserts Thai combining
 Every domain object carries `LocalizedText` (`{ en, th }`). Components must resolve it to the active locale through one helper (never `text[locale]` ad hoc, which loses the `Locale` type guarantee). TDD: failing test → minimal implementation.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/i18n/localized-text.ts`
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/localized-text.test.ts`
 
 **Interfaces**
+
 - Produces: `export function getLocalizedText(text: LocalizedText, locale: Locale): string;`
 - Consumes: `LocalizedText`, `Locale` from `@/lib/domain`.
 
 **Steps**
 
 - [ ] Write the failing test `tests/unit/localized-text.test.ts`:
+
   ```ts
   import { describe, expect, it } from 'vitest';
   import type { LocalizedText } from '@/lib/domain';
@@ -4531,12 +4869,15 @@ Every domain object carries `LocalizedText` (`{ en, th }`). Components must reso
   ```
 
 - [ ] Run the test and SHOW it fail:
+
   ```bash
   cd d:/MINE/freelance/system/vanta && npx vitest run tests/unit/localized-text.test.ts
   ```
+
   Expected: failure — `Failed to resolve import "@/lib/i18n/localized-text"`, 0 passing.
 
 - [ ] Implement `lib/i18n/localized-text.ts`:
+
   ```ts
   import type { LocalizedText, Locale } from '@/lib/domain';
 
@@ -4551,9 +4892,11 @@ Every domain object carries `LocalizedText` (`{ en, th }`). Components must reso
   ```
 
 - [ ] Run the test and SHOW it pass:
+
   ```bash
   cd d:/MINE/freelance/system/vanta && npx vitest run tests/unit/localized-text.test.ts
   ```
+
   Expected: `2 passed`, exit `0`.
 
 - [ ] Commit:
@@ -4568,17 +4911,20 @@ Every domain object carries `LocalizedText` (`{ en, th }`). Components must reso
 Replace the stub JSON with real, mirrored copy keyed by namespace for nav / home / pdp / cart / checkout / account. TH is a complete mirror of the EN keyset (same keys, Thai values). Marquee strings stay **English `DROP` / `SOLD OUT`** in both locales (a literal Thai `DROP` reads as "a droplet"). A Vitest test enforces keyset parity so the two files can never drift.
 
 **Files**
+
 - Modify: `d:/MINE/freelance/system/vanta/messages/en.json`
 - Modify: `d:/MINE/freelance/system/vanta/messages/th.json`
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/messages.test.ts`
 
 **Interfaces**
+
 - Produces: namespace tree consumed by `useTranslations('Nav' | 'Home' | 'Pdp' | 'Cart' | 'Checkout' | 'Account' | 'Drop' | 'Common')`.
 - Consumes: nothing at runtime; the parity test consumes both JSON files directly.
 
 **Steps**
 
 - [ ] Write the failing keyset-parity test `tests/unit/messages.test.ts`. It flattens both message trees to dotted key paths and asserts the sets are identical, and pins the marquee invariant (English `DROP` / `SOLD OUT` in BOTH locales):
+
   ```ts
   import { describe, expect, it } from 'vitest';
   import en from '@/messages/en.json';
@@ -4622,12 +4968,15 @@ Replace the stub JSON with real, mirrored copy keyed by namespace for nav / home
   ```
 
 - [ ] Run the test and SHOW it fail (stubs are empty `{}`, so keyset parity passes trivially but `Drop.marqueeDrop` is undefined):
+
   ```bash
   cd d:/MINE/freelance/system/vanta && npx vitest run tests/unit/messages.test.ts
   ```
+
   Expected: failure — `expected undefined to be 'DROP'` in the marquee test, plus a TS/JSON access on `en.Drop`. 0–1 passing.
 
 - [ ] Write the real `messages/en.json`:
+
   ```json
   {
     "Common": {
@@ -4737,6 +5086,7 @@ Replace the stub JSON with real, mirrored copy keyed by namespace for nav / home
   ```
 
 - [ ] Write the mirrored `messages/th.json` (same keyset; Thai values; marquee words stay English; `{count}` / `{name}` placeholders preserved):
+
   ```json
   {
     "Common": {
@@ -4846,9 +5196,11 @@ Replace the stub JSON with real, mirrored copy keyed by namespace for nav / home
   ```
 
 - [ ] Run the parity test and SHOW it pass:
+
   ```bash
   cd d:/MINE/freelance/system/vanta && npx vitest run tests/unit/messages.test.ts
   ```
+
   Expected: `3 passed`, exit `0`.
 
 - [ ] Commit:
@@ -4863,6 +5215,7 @@ Replace the stub JSON with real, mirrored copy keyed by namespace for nav / home
 Render the locale-aware HTML document: root `layout.tsx` is a pass-through, `[locale]/layout.tsx` validates the locale, enables static rendering, sets `<html lang={locale}>`, mounts `NextIntlClientProvider`, and loads the four font families. `globals.css` carries the verbatim Tailwind v4 theme tokens and the per-locale `.display` headline rules. Middleware is the next-intl locale middleware (UX-only — never authz). This task ends with both unstyled locales reachable at `/en` and `/th` with `<html lang>` correct, verified in a real browser.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/middleware.ts`
 - Create: `d:/MINE/freelance/system/vanta/app/layout.tsx`
 - Create: `d:/MINE/freelance/system/vanta/app/[locale]/layout.tsx`
@@ -4871,12 +5224,14 @@ Render the locale-aware HTML document: root `layout.tsx` is a pass-through, `[lo
 - Test: visual verification via Playwright against `npm run dev` (UI task — no Vitest).
 
 **Interfaces**
+
 - Consumes: `routing` (`@/lib/i18n/routing`), `hasLocale` (`next-intl`), `setRequestLocale`/`getMessages` (`next-intl/server`), `NextIntlClientProvider` (`next-intl`), `useTranslations`/`useLocale` (next-intl, in the home page), `getLocalizedText` (`@/lib/i18n/localized-text`), `products` (`@/lib/data`), `createMiddleware` (`next-intl/middleware`).
 - Produces: the `/[locale]` route shell + middleware matcher; an unstyled but real-copy `/[locale]` home page.
 
 **Steps**
 
 - [ ] Create `middleware.ts` — next-intl locale middleware, UX-only, with a matcher that excludes API/static assets (so it never sits in the authorization path, avoiding the CVE-2025-29927 shape):
+
   ```ts
   import createMiddleware from 'next-intl/middleware';
   import { routing } from '@/lib/i18n/routing';
@@ -4891,6 +5246,7 @@ Render the locale-aware HTML document: root `layout.tsx` is a pass-through, `[lo
   ```
 
 - [ ] Create the root `app/layout.tsx` — a pass-through that does NOT set `<html>` (the locale layout owns `<html lang>`):
+
   ```tsx
   import type { ReactNode } from 'react';
 
@@ -4902,35 +5258,46 @@ Render the locale-aware HTML document: root `layout.tsx` is a pass-through, `[lo
   ```
 
 - [ ] Write `app/globals.css` with the verbatim Tailwind v4 theme token block and the per-locale headline rules:
+
   ```css
-  @import "tailwindcss";
+  @import 'tailwindcss';
 
   @theme {
-    --color-ink: #0A0A0A;
-    --color-paper: #F5F4EF;
-    --color-blaze: #FF3B1F;
-    --color-blaze-on-light: #D62E16;  /* AA-safe on paper */
-    --color-lime: #D4FF2E;            /* lime-on-dark ONLY */
+    --color-ink: #0a0a0a;
+    --color-paper: #f5f4ef;
+    --color-blaze: #ff3b1f;
+    --color-blaze-on-light: #d62e16; /* AA-safe on paper */
+    --color-lime: #d4ff2e; /* lime-on-dark ONLY */
     --color-smoke-900: #141414;
-    --color-smoke-700: #2A2A2A;
-    --color-smoke-500: #6B6B6B;
-    --color-smoke-300: #B8B8B8;
+    --color-smoke-700: #2a2a2a;
+    --color-smoke-500: #6b6b6b;
+    --color-smoke-300: #b8b8b8;
 
-    --font-display-en: "Clash Display", system-ui, sans-serif;
-    --font-display-th: "Kanit", system-ui, sans-serif;
-    --font-body: "Geist", "IBM Plex Sans Thai", system-ui, sans-serif;
-    --font-mono: "Geist Mono", ui-monospace, monospace;
+    --font-display-en: 'Clash Display', system-ui, sans-serif;
+    --font-display-th: 'Kanit', system-ui, sans-serif;
+    --font-body: 'Geist', 'IBM Plex Sans Thai', system-ui, sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, monospace;
 
-    --spacing: 0.5rem;                /* 8pt grid base */
+    --spacing: 0.5rem; /* 8pt grid base */
     --max-w-shell: 1440px;
   }
 
   /* Per-locale headline tokens */
-  :lang(en) .display { font-family: var(--font-display-en); text-transform: uppercase; letter-spacing: -0.02em; }
-  :lang(th) .display { font-family: var(--font-display-th); text-transform: none; letter-spacing: 0.01em; line-height: 1.35; }
+  :lang(en) .display {
+    font-family: var(--font-display-en);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+  }
+  :lang(th) .display {
+    font-family: var(--font-display-th);
+    text-transform: none;
+    letter-spacing: 0.01em;
+    line-height: 1.35;
+  }
   ```
 
 - [ ] Create `app/[locale]/layout.tsx` — validate locale, enable static rendering, set `<html lang>`, load fonts, mount the provider, link `globals.css`:
+
   ```tsx
   import type { ReactNode } from 'react';
   import { notFound } from 'next/navigation';
@@ -4988,6 +5355,7 @@ Render the locale-aware HTML document: root `layout.tsx` is a pass-through, `[lo
   ```
 
 - [ ] Create a minimal but real-copy home page `app/[locale]/(shop)/page.tsx` so this phase's deliverable (real content on real screens, both locales) is demonstrable. It uses both the `useTranslations` pattern AND the `getLocalizedText` + `splitGraphemes` helpers, and reads featured products through the repository seam (`@/lib/data`). Unstyled — `.display` proves the per-locale headline token:
+
   ```tsx
   import { setRequestLocale } from 'next-intl/server';
   import { getTranslations } from 'next-intl/server';
@@ -5013,7 +5381,9 @@ Render the locale-aware HTML document: root `layout.tsx` is a pass-through, `[lo
 
     return (
       <main>
-        <p>{tCommon('brandName')} — {tCommon('tagline')}</p>
+        <p>
+          {tCommon('brandName')} — {tCommon('tagline')}
+        </p>
 
         <h1 className="display" aria-label={headline}>
           {splitGraphemes(headline, locale).map((g, i) => (
@@ -5044,19 +5414,21 @@ Render the locale-aware HTML document: root `layout.tsx` is a pass-through, `[lo
   ```
 
 - [ ] Start the dev server in the background:
+
   ```bash
   cd d:/MINE/freelance/system/vanta && npm run dev
   ```
+
   Expected: Next.js logs `Ready` and serves on `http://localhost:3000`.
 
 - [ ] Visual verification with Playwright MCP — navigate to the EN home, snapshot the DOM, and assert the `<html lang>` and English headline render. Use `mcp__plugin_playwright_playwright__browser_navigate` to `http://localhost:3000/en`, then `mcp__plugin_playwright_playwright__browser_evaluate` running `() => document.documentElement.lang` and assert it returns `"en"`; then `mcp__plugin_playwright_playwright__browser_snapshot` and confirm the `h1.display` contains `MATERIALIZE FROM THE VOID` (uppercase via the `:lang(en) .display` token) and the brand line `VANTA® — Bangkok-born. Globally worn.` is present. Capture `mcp__plugin_playwright_playwright__browser_take_screenshot` → save as evidence.
-  Expected: `document.documentElement.lang === 'en'`; English copy visible; featured product titles render in English (proving the repository seam + `getLocalizedText`).
+      Expected: `document.documentElement.lang === 'en'`; English copy visible; featured product titles render in English (proving the repository seam + `getLocalizedText`).
 
 - [ ] Visual verification, Thai locale — navigate to `http://localhost:3000/th`, run the same `() => document.documentElement.lang` check and assert `"th"`, then snapshot and confirm the headline shows the Thai copy `ปรากฏกายจากความว่างเปล่า` (NOT uppercased — proving the `:lang(th) .display` token drops `text-transform`), the brand tagline is `เกิดที่กรุงเทพฯ ใส่ได้ทั่วโลก`, and featured product titles render in Thai. Take a screenshot.
-  Expected: `document.documentElement.lang === 'th'`; Thai copy visible and not uppercased; Thai combining marks render intact within the per-grapheme `<span>`s (visual: no orphaned vowel/tone marks).
+      Expected: `document.documentElement.lang === 'th'`; Thai copy visible and not uppercased; Thai combining marks render intact within the per-grapheme `<span>`s (visual: no orphaned vowel/tone marks).
 
 - [ ] Confirm the unknown-locale guard works — navigate to `http://localhost:3000/fr` and assert it 404s (the `hasLocale` guard + `notFound()`).
-  Expected: Next.js 404 page (no crash).
+      Expected: Next.js 404 page (no crash).
 
 - [ ] Stop the dev server (terminate the background process).
 
@@ -5072,17 +5444,20 @@ Render the locale-aware HTML document: root `layout.tsx` is a pass-through, `[lo
 Add the in-UI `LocaleSwitcher` (uses the localized `usePathname`/`useRouter` so a switch preserves the current route) and emit `alternates.languages` (`hreflang`) plus `<html lang>`-consistent metadata via `generateMetadata`. This closes the i18n "one-line wins": correct `hreflang` so search engines see both locales. Verified by Playwright assertion on the rendered `<link rel="alternate" hreflang>` tags and a working switch.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/components/layout/LocaleSwitcher.tsx`
 - Modify: `d:/MINE/freelance/system/vanta/app/[locale]/layout.tsx` (add `generateMetadata` with `alternates.languages`; mount `LocaleSwitcher`)
 - Test: Playwright visual + DOM assertion against `npm run dev` (UI task).
 
 **Interfaces**
+
 - Consumes: `useLocale`/`useTranslations` (next-intl), `usePathname`/`useRouter` (`@/lib/i18n/navigation`), `routing` (`@/lib/i18n/routing`).
 - Produces: `<LocaleSwitcher />`; `generateMetadata({ params })` returning `Metadata` with `alternates: { languages: { en, th } }`.
 
 **Steps**
 
 - [ ] Create the client component `components/layout/LocaleSwitcher.tsx` — switches locale while staying on the current path (the localized `usePathname` returns the path WITHOUT the locale prefix, and `router.replace(pathname, { locale })` re-prefixes it):
+
   ```tsx
   'use client';
 
@@ -5118,6 +5493,7 @@ Add the in-UI `LocaleSwitcher` (uses the localized `usePathname`/`useRouter` so 
   ```
 
 - [ ] Add `generateMetadata` and mount `LocaleSwitcher` in `app/[locale]/layout.tsx`. Insert the import and the metadata function above the layout, and render `<LocaleSwitcher />` inside the provider. The new pieces:
+
   ```tsx
   import type { Metadata } from 'next';
   import { getTranslations } from 'next-intl/server';
@@ -5142,29 +5518,37 @@ Add the in-UI `LocaleSwitcher` (uses the localized `usePathname`/`useRouter` so 
     };
   }
   ```
+
   And inside the provider, render the switcher above `{children}`:
+
   ```tsx
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <LocaleSwitcher />
-          {children}
-        </NextIntlClientProvider>
+  <NextIntlClientProvider locale={locale} messages={messages}>
+    <LocaleSwitcher />
+    {children}
+  </NextIntlClientProvider>
   ```
 
 - [ ] Start the dev server in the background:
+
   ```bash
   cd d:/MINE/freelance/system/vanta && npm run dev
   ```
+
   Expected: serves on `http://localhost:3000`.
 
 - [ ] Playwright verification of `hreflang` — navigate to `http://localhost:3000/en`, then `mcp__plugin_playwright_playwright__browser_evaluate` running:
+
   ```js
-  () => Array.from(document.querySelectorAll('link[rel="alternate"][hreflang]'))
-    .map((l) => `${l.getAttribute('hreflang')}:${l.getAttribute('href')}`)
+  () =>
+    Array.from(document.querySelectorAll('link[rel="alternate"][hreflang]')).map(
+      (l) => `${l.getAttribute('hreflang')}:${l.getAttribute('href')}`,
+    );
   ```
+
   Expected: the returned array contains entries for both `en` and `th` (e.g. `en:...`, `th:...`), confirming `alternates.languages` emitted `hreflang` tags.
 
 - [ ] Playwright verification of the switch — on `http://localhost:3000/en/shop` (navigate there first), click the "ไทย" button (`mcp__plugin_playwright_playwright__browser_click` on the switcher button), then `mcp__plugin_playwright_playwright__browser_evaluate` `() => location.pathname`.
-  Expected: pathname becomes `/th/shop` (route preserved, locale swapped) — proving the localized `usePathname`/`useRouter` round-trip. Take a screenshot of the Thai page as evidence.
+      Expected: pathname becomes `/th/shop` (route preserved, locale swapped) — proving the localized `usePathname`/`useRouter` round-trip. Take a screenshot of the Thai page as evidence.
 
 - [ ] Stop the dev server.
 
@@ -5186,6 +5570,7 @@ Add the in-UI `LocaleSwitcher` (uses the localized `usePathname`/`useRouter` so 
 ---
 
 Phase 2 written above as paste-ready plan markdown. Key file paths produced/modified in this phase (all absolute):
+
 - `d:/MINE/freelance/system/vanta/lib/i18n/routing.ts`, `navigation.ts`, `request.ts`, `localized-text.ts`
 - `d:/MINE/freelance/system/vanta/lib/motion/segment.ts`
 - `d:/MINE/freelance/system/vanta/messages/en.json`, `messages/th.json`
@@ -5202,7 +5587,7 @@ I'll verify a couple of implementation details against the locked contracts befo
 
 The phase covers: cartService, signed-cookie CartStore mock, cart Server Actions, Zustand mirror, useOptimistic in the drawer, the a11y dialog drawer, and the /cart page. Let me write it.
 
-```markdown
+````markdown
 ## Phase 0.5 — Shared UI primitives, layout shell & motion capability
 
 **Execute AFTER Phase 2, BEFORE Phase 3** (it consumes Phase 1 format helpers + availability constants and Phase 2 i18n/LocaleSwitcher). Creates the load-bearing shared components every later phase (3–10) assumes. These are **pure/presentational** except the cart-drawer **OPEN-STATE** context (cart DATA + drawer contents come in Phase 3). It depends only on Phase 0 artifacts: the domain `Locale`/`LocalizedText` types (`lib/domain/i18n.ts`), `lib/fonts.ts` (`fontClassNames`), `app/globals.css` (`@theme` tokens + `.display` rules), the i18n stack (`@/lib/i18n/*`, `messages/*.json`), and the Phase-0 `app/[locale]/layout.tsx`. `lib/format/money.ts` / `lib/format/date.ts` and `lib/catalog/query.ts` (the `CatalogCard` type) are authored later (Phases 1/6) — so this phase declares the **minimal local types it needs and re-points them** per the Errata: `Money`/`formatMoney`/`formatDate` are consumed from `@/lib/format/*` (created in Phase 1 right after this phase), and `CatalogCard` is defined here in `components/product/ProductCard.tsx`'s own contract until Phase 6's `lib/catalog/query.ts` re-exports the identical shape.
@@ -5218,25 +5603,29 @@ The phase covers: cartService, signed-cookie CartStore mock, cart Server Actions
 The single gate every heavy effect consults, **defined here** (Phase 9 only enhances it with the explicit user-preference store). Heavy wow is enabled ONLY when `(prefers-reduced-motion: no-preference)` AND `(pointer: fine)` AND NOT Save-Data — **no `deviceMemory`/`hardwareConcurrency` arithmetic** (coarse, Safari-absent, would wrongly downgrade premium iOS). SSR-safe: returns `false` on the server and on the first client paint (so content is visible-by-default, never stranded at `opacity:0`), flipping to `true` after mount if signals allow. The pure decision function is extracted so it is unit-testable without a DOM. **Returns a bare `boolean`** (Errata item 15).
 
 ### Files
+
 - **Create:** `vanta/lib/motion/capability.ts`
 - **Test:** `vanta/tests/unit/motion-capability.test.ts`
 
 ### Interfaces
+
 - **Consumes:** `import { useSyncExternalStore } from 'react'` (DOM/`navigator` read at runtime only).
 - **Produces:**
   ```ts
   export type MotionSignals = {
-    prefersNoPreference: boolean;  // (prefers-reduced-motion: no-preference)
-    pointerFine: boolean;          // (pointer: fine)
-    saveData: boolean;             // navigator.connection?.saveData === true
+    prefersNoPreference: boolean; // (prefers-reduced-motion: no-preference)
+    pointerFine: boolean; // (pointer: fine)
+    saveData: boolean; // navigator.connection?.saveData === true
   };
   export function resolveMotionEnabled(signals: MotionSignals): boolean;
   export function useMotionCapability(): boolean;
   ```
+````
 
 ### Steps
 
 1. - [ ] **Write the failing test** at `vanta/tests/unit/motion-capability.test.ts` (covers the PURE decision function — no DOM needed):
+
    ```ts
    import { describe, it, expect } from 'vitest';
    import { resolveMotionEnabled, type MotionSignals } from '@/lib/motion/capability';
@@ -5257,14 +5646,18 @@ The single gate every heavy effect consults, **defined here** (Phase 9 only enha
        expect(resolveMotionEnabled({ ...ideal, saveData: true })).toBe(false);
      });
      it('requires ALL three (AND, not OR)', () => {
-       expect(resolveMotionEnabled({ prefersNoPreference: true, pointerFine: false, saveData: false })).toBe(false);
+       expect(
+         resolveMotionEnabled({ prefersNoPreference: true, pointerFine: false, saveData: false }),
+       ).toBe(false);
      });
    });
    ```
+
 2. - [ ] **Run it and SHOW it fail:**
    - Command: `npm run test -- tests/unit/motion-capability.test.ts`
    - Expected output contains: `Failed to resolve import "@/lib/motion/capability"` and `Test Files  1 failed (1)`.
 3. - [ ] **Implement** `vanta/lib/motion/capability.ts` (pure function + SSR-safe hook; server snapshot returns the static experience so nothing is stranded pre-hydration):
+
    ```ts
    'use client';
 
@@ -5328,6 +5721,7 @@ The single gate every heavy effect consults, **defined here** (Phase 9 only enha
      return resolveMotionEnabled(signals);
    }
    ```
+
 4. - [ ] **Run it and SHOW it pass:**
    - Command: `npm run test -- tests/unit/motion-capability.test.ts`
    - Expected: `Test Files  1 passed (1)` · `Tests  5 passed (5)`.
@@ -5345,16 +5739,18 @@ The single gate every heavy effect consults, **defined here** (Phase 9 only enha
 The shared button. Three variants: `default`, `ghost`, and `magnetic` (the only "fancy pointer" effect in VANTA). `asChild` renders the styling onto a single child element (e.g. a `Link`) instead of a `<button>`. The magnetic pull is **rAF-throttled** and **gated on `useMotionCapability()`** — when the gate is false it degrades to exactly the `default` button (no listeners attached). Focus ring uses the `:focus-visible` token (`outline-lime`).
 
 ### Files
+
 - **Create:** `vanta/components/ui/Button.tsx`
 
 ### Interfaces
+
 - **Consumes:** `import { useMotionCapability } from '@/lib/motion/capability'`; `import { cloneElement, isValidElement } from 'react'`.
 - **Produces:**
   ```ts
   export type ButtonVariant = 'default' | 'ghost' | 'magnetic';
   export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-    variant?: ButtonVariant;   // default 'default'
-    asChild?: boolean;         // render styles onto the single child instead of <button>
+    variant?: ButtonVariant; // default 'default'
+    asChild?: boolean; // render styles onto the single child instead of <button>
   };
   export function Button(props: ButtonProps): React.JSX.Element;
   ```
@@ -5362,6 +5758,7 @@ The shared button. Three variants: `default`, `ghost`, and `magnetic` (the only 
 ### Steps
 
 1. - [ ] **Implement** `vanta/components/ui/Button.tsx` (complete code; client component for the magnetic pointer math). When `variant !== 'magnetic'` or the motion gate is false, no pointer listeners are attached and the element is a plain styled button (or the cloned child):
+
    ```tsx
    'use client';
 
@@ -5441,17 +5838,13 @@ The shared button. Three variants: `default`, `ghost`, and `magnetic` (the only 
      }
 
      return (
-       <button
-         {...rest}
-         {...motionProps}
-         ref={ref as React.Ref<HTMLButtonElement>}
-         className={cls}
-       >
+       <button {...rest} {...motionProps} ref={ref as React.Ref<HTMLButtonElement>} className={cls}>
          {children}
        </button>
      );
    }
    ```
+
 2. - [ ] **Typecheck:** `npm run typecheck` → exit 0.
 3. - [ ] **Visual + a11y check (Playwright/Chrome DevTools MCP against `npm run dev`):** render the three variants on a scratch route or the home shell; confirm (a) `default`/`ghost` show the token focus ring on Tab, (b) on a desktop pointer the `magnetic` button translates toward the cursor and snaps back on leave, (c) under `--emulate-reduced-motion` / forced `reducedMotion: 'reduce'` the magnetic button does NOT translate (no `transform` style attached) and behaves as `default`. Capture one screenshot each `en`/`th` is not required here (no copy); capture one reduced-motion screenshot.
 4. - [ ] **Commit:**
@@ -5467,10 +5860,12 @@ The shared button. Three variants: `default`, `ghost`, and `magnetic` (the only 
 Two tiny presentational wrappers so app code NEVER hand-builds price/date strings. `Money` calls `formatMoney`; `FormattedDate` calls `formatDate` (gregory calendar, Western digits both locales).
 
 ### Files
+
 - **Create:** `vanta/components/ui/Money.tsx`
 - **Create:** `vanta/components/ui/FormattedDate.tsx`
 
 ### Interfaces
+
 - **Consumes:**
   - `import { formatMoney } from '@/lib/format/money'` — `formatMoney(money: Money, locale: Locale): string`
   - `import { formatDate } from '@/lib/format/date'` — `formatDate(iso: string, locale: Locale): string`
@@ -5486,24 +5881,44 @@ Two tiny presentational wrappers so app code NEVER hand-builds price/date string
 ### Steps
 
 1. - [ ] **Implement** `vanta/components/ui/Money.tsx` (server-safe; no `'use client'` — pure formatting):
+
    ```tsx
    import type { Money as MoneyValue } from '@/lib/domain';
    import type { Locale } from '@/lib/domain';
    import { formatMoney } from '@/lib/format/money';
 
-   export function Money({ value, locale }: { value: MoneyValue; locale: Locale }): React.JSX.Element {
-     return <span className="font-[family-name:var(--font-mono)] tabular-nums">{formatMoney(value, locale)}</span>;
+   export function Money({
+     value,
+     locale,
+   }: {
+     value: MoneyValue;
+     locale: Locale;
+   }): React.JSX.Element {
+     return (
+       <span className="font-[family-name:var(--font-mono)] tabular-nums">
+         {formatMoney(value, locale)}
+       </span>
+     );
    }
    ```
+
 2. - [ ] **Implement** `vanta/components/ui/FormattedDate.tsx`:
+
    ```tsx
    import type { Locale } from '@/lib/domain';
    import { formatDate } from '@/lib/format/date';
 
-   export function FormattedDate({ value, locale }: { value: string; locale: Locale }): React.JSX.Element {
+   export function FormattedDate({
+     value,
+     locale,
+   }: {
+     value: string;
+     locale: Locale;
+   }): React.JSX.Element {
      return <time dateTime={value}>{formatDate(value, locale)}</time>;
    }
    ```
+
 3. - [ ] **Typecheck:** `npm run typecheck` → exit 0.
 4. - [ ] **Commit:**
    ```
@@ -5518,16 +5933,18 @@ Two tiny presentational wrappers so app code NEVER hand-builds price/date string
 The accessible modal primitive reused by the cart drawer (Phase 3 `CartDrawer`) and the Size & Fit drawer (Phase 5 `SizeFitDrawer`). `role="dialog"`, `aria-modal="true"`, focus trap (Tab/Shift-Tab cycle within), focus **return** to the previously-focused element on close, `Escape` to close, and body scroll lock while open. Visible-by-default content; reduced motion = instant show/hide (no animated transition required).
 
 ### Files
+
 - **Create:** `vanta/components/ui/Dialog.tsx`
 
 ### Interfaces
+
 - **Consumes:** `import { useEffect, useRef } from 'react'`.
 - **Produces:**
   ```ts
   export function Dialog(props: {
     open: boolean;
     onClose: () => void;
-    labelledById?: string;     // id of the heading that labels the dialog
+    labelledById?: string; // id of the heading that labels the dialog
     children: React.ReactNode;
   }): React.JSX.Element | null;
   ```
@@ -5535,6 +5952,7 @@ The accessible modal primitive reused by the cart drawer (Phase 3 `CartDrawer`) 
 ### Steps
 
 1. - [ ] **Implement** `vanta/components/ui/Dialog.tsx` (complete code; client component — DOM focus/scroll management):
+
    ```tsx
    'use client';
 
@@ -5628,6 +6046,7 @@ The accessible modal primitive reused by the cart drawer (Phase 3 `CartDrawer`) 
      );
    }
    ```
+
 2. - [ ] **Typecheck:** `npm run typecheck` → exit 0.
 3. - [ ] **Visual + a11y check (Playwright against `npm run dev`):** mount on a scratch trigger; assert (a) opening moves focus into the panel, (b) Tab cycles within the panel and never escapes, (c) `Escape` closes and focus RETURNS to the trigger, (d) body scroll is locked while open, (e) the dialog exposes `role="dialog"` + `aria-modal="true"`. Capture one reduced-motion run (instant show, no animation).
 4. - [ ] **Commit:**
@@ -5643,10 +6062,12 @@ The accessible modal primitive reused by the cart drawer (Phase 3 `CartDrawer`) 
 The canonical `ProductCard` with the **only** legal prop shape `{ card: CatalogCard; title; imageUrl; imageAlt; locale; priority }` (Errata item 13). CSS `clip-path`/`mask` reveal driven by an `IntersectionObserver` (paused offscreen), gated by `useMotionCapability()` (bare boolean — Errata item 15); reduced motion / coarse pointer / Save-Data = **visible-by-default** (no `opacity:0` trap). `view-transition-name` is `product-${card.productId}` — **locale-stable**, keyed on product id (Conventions). A `toCatalogCard(product, locale)` mapper builds a `CatalogCard` identically for Phase 4's featured grid and Phase 6's catalog. `CatalogCard` gains an explicit `imageUrl` field so the mapper fully resolves the card.
 
 ### Files
+
 - **Create:** `vanta/components/product/ProductCard.tsx` (the `ProductCard` component, the `CatalogCard` type, and `toCatalogCard`)
 - **Test:** `vanta/tests/unit/to-catalog-card.test.ts` (the pure mapper is LOGIC → TDD)
 
 ### Interfaces
+
 - **Consumes:**
   - `import type { Product, Locale, Availability, Money } from '@/lib/domain'`
   - `import { formatMoney } from '@/lib/format/money'`
@@ -5655,33 +6076,36 @@ The canonical `ProductCard` with the **only** legal prop shape `{ card: CatalogC
   - `import { useMotionCapability } from '@/lib/motion/capability'` — `(): boolean`
   - `import { useEffect, useRef, useState } from 'react'`
 - **Produces:**
+
   ```ts
   export type CatalogCard = {
-    productId: string;                 // stable id (View Transition key origin)
+    productId: string; // stable id (View Transition key origin)
     slug: string;
-    fromPrice: Money;                  // lowest variant price among matching variants
-    compareAtFromPrice: Money | null;  // present => on sale
-    availability: Availability;        // most-buyable across matching variants (CARD_ROLLUP_ORDER)
-    matchedColors: string[];           // colors that survived the filter (swatch dots)
-    imageUrl: string;                  // first image for the first matchedColor
+    fromPrice: Money; // lowest variant price among matching variants
+    compareAtFromPrice: Money | null; // present => on sale
+    availability: Availability; // most-buyable across matching variants (CARD_ROLLUP_ORDER)
+    matchedColors: string[]; // colors that survived the filter (swatch dots)
+    imageUrl: string; // first image for the first matchedColor
   };
   export function toCatalogCard(product: Product, locale: Locale): CatalogCard;
 
   export type ProductCardProps = {
     card: CatalogCard;
-    title: string;        // already-localized title.{locale}
-    imageUrl: string;     // first image for the first matchedColor
-    imageAlt: string;     // already-localized alt
+    title: string; // already-localized title.{locale}
+    imageUrl: string; // first image for the first matchedColor
+    imageAlt: string; // already-localized alt
     locale: Locale;
-    priority?: boolean;   // first row eager-loads
+    priority?: boolean; // first row eager-loads
   };
   export function ProductCard(props: ProductCardProps): React.JSX.Element;
   ```
+
   > Phase 6 Task 6.2's `lib/catalog/query.ts` MUST re-export this exact `CatalogCard` shape (it adds `imageUrl`), and Phase 6 imports `ProductCard`/`toCatalogCard` from here rather than re-defining them. Phase 6's `Create` verb for `ProductCard.tsx` becomes `Modify` (add the `catalog` message namespace + Playwright page verification only).
 
 ### Steps
 
 1. - [ ] **Write the failing test** at `vanta/tests/unit/to-catalog-card.test.ts` (pins lowest-price roll-up, sale detection, most-buyable availability via `CARD_ROLLUP_ORDER`, and image resolution):
+
    ```ts
    import { describe, it, expect } from 'vitest';
    import { toCatalogCard } from '@/components/product/ProductCard';
@@ -5702,7 +6126,15 @@ The canonical `ProductCard` with the **only** legal prop shape `{ card: CatalogC
      optionAxes: { size: ['M'], color: ['Black'] },
      variants: [variant({ id: `${over.id}-v1` })],
      imagesByColor: {
-       Black: [{ id: 'img1', url: '/img/black.webp', alt: { en: 'Black tee', th: 'เสื้อดำ' }, width: 800, height: 1000 }],
+       Black: [
+         {
+           id: 'img1',
+           url: '/img/black.webp',
+           alt: { en: 'Black tee', th: 'เสื้อดำ' },
+           width: 800,
+           height: 1000,
+         },
+       ],
      },
      collectionIds: ['col_core'],
      ...over,
@@ -5742,10 +6174,12 @@ The canonical `ProductCard` with the **only** legal prop shape `{ card: CatalogC
      });
    });
    ```
+
 2. - [ ] **Run it and SHOW it fail:**
    - Command: `npm run test -- tests/unit/to-catalog-card.test.ts`
    - Expected output contains: `Failed to resolve import "@/components/product/ProductCard"` and `Test Files  1 failed (1)`.
 3. - [ ] **Implement** `vanta/components/product/ProductCard.tsx` (the `CatalogCard` type, the pure `toCatalogCard`, and the client `ProductCard`):
+
    ```tsx
    'use client';
 
@@ -5769,10 +6203,15 @@ The canonical `ProductCard` with the **only** legal prop shape `{ card: CatalogC
    /** PURE. Build a card from a product: lowest price, sale flag, most-buyable availability. */
    export function toCatalogCard(product: Product, _locale: Locale): CatalogCard {
      const variants = product.variants;
-     const cheapest = variants.reduce((lo, v) => (v.price.amount < lo.price.amount ? v : lo), variants[0]);
+     const cheapest = variants.reduce(
+       (lo, v) => (v.price.amount < lo.price.amount ? v : lo),
+       variants[0],
+     );
      const onSaleVariant = variants.find((v) => v.compareAtPrice);
      const availability = variants.reduce<Availability>((best, v) => {
-       return CARD_ROLLUP_ORDER.indexOf(v.availability) < CARD_ROLLUP_ORDER.indexOf(best) ? v.availability : best;
+       return CARD_ROLLUP_ORDER.indexOf(v.availability) < CARD_ROLLUP_ORDER.indexOf(best)
+         ? v.availability
+         : best;
      }, variants[0].availability);
      const matchedColors = [...new Set(variants.map((v) => v.optionValues.color))];
      const firstColor = matchedColors[0];
@@ -5896,7 +6335,9 @@ The canonical `ProductCard` with the **only** legal prop shape `{ card: CatalogC
      );
    }
    ```
+
    > The `AvailabilityBadge` (Phase 4) is layered in by Phase 4/6 when that component exists; the card here is complete without it. Phase 6 Task 6.2 adds the badge overlay + `catalog` message keys as a `Modify`.
+
 4. - [ ] **Run it and SHOW it pass:**
    - Command: `npm run test -- tests/unit/to-catalog-card.test.ts`
    - Expected: `Test Files  1 passed (1)` · `Tests  3 passed (3)`.
@@ -5915,9 +6356,11 @@ The canonical `ProductCard` with the **only** legal prop shape `{ card: CatalogC
 The cart drawer **OPEN-STATE** context plus the **concrete announcement channel** (Errata item 11). Exposes `isOpen`/`open`/`close` and `announcement`/`setAnnouncement(msg)`. The `AddToCartButton` (Phase 5) calls `setAnnouncement(...)`; the `CartDrawer` (Phase 3) reads `announcement` into its `aria-live` region. **No drawer contents/data here** — those (`lineViews`, the `CartDrawer` body) are added by Phase 3, which extends this SAME context.
 
 ### Files
+
 - **Create:** `vanta/components/cart/CartDrawerContext.tsx`
 
 ### Interfaces
+
 - **Consumes:** `import { createContext, useCallback, useContext, useMemo, useState } from 'react'`.
 - **Produces:**
   ```ts
@@ -5935,6 +6378,7 @@ The cart drawer **OPEN-STATE** context plus the **concrete announcement channel*
 ### Steps
 
 1. - [ ] **Implement** `vanta/components/cart/CartDrawerContext.tsx`:
+
    ```tsx
    'use client';
 
@@ -5950,7 +6394,11 @@ The cart drawer **OPEN-STATE** context plus the **concrete announcement channel*
 
    const CartDrawerContext = createContext<CartDrawerContextValue | null>(null);
 
-   export function CartDrawerProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+   export function CartDrawerProvider({
+     children,
+   }: {
+     children: React.ReactNode;
+   }): React.JSX.Element {
      const [isOpen, setIsOpen] = useState(false);
      const [announcement, setAnnouncementState] = useState('');
 
@@ -5972,6 +6420,7 @@ The cart drawer **OPEN-STATE** context plus the **concrete announcement channel*
      return ctx;
    }
    ```
+
 2. - [ ] **Typecheck:** `npm run typecheck` → exit 0.
 3. - [ ] **Commit:**
    ```
@@ -5986,10 +6435,12 @@ The cart drawer **OPEN-STATE** context plus the **concrete announcement channel*
 The shell `Header` (brand lockup, nav, a `LocaleSwitcher` mount-point, and the cart-count trigger button `data-testid="cart-count"` that calls `useCartDrawer().open()`) and a `Footer`. The cart-count badge number stays at `0` until Phase 3's `useCartCount` selector is wired (Phase 3 `Modify`s the trigger to read the live count); the **trigger + `data-testid` exist now** so Phases 3/9/10 can rely on them (Errata item 18a).
 
 ### Files
+
 - **Create:** `vanta/components/layout/Header.tsx`
 - **Create:** `vanta/components/layout/Footer.tsx`
 
 ### Interfaces
+
 - **Consumes:**
   - `import { useCartDrawer } from '@/components/cart/CartDrawerContext'`
   - `import { Link } from '@/lib/i18n/navigation'`
@@ -6006,6 +6457,7 @@ The shell `Header` (brand lockup, nav, a `LocaleSwitcher` mount-point, and the c
 ### Steps
 
 1. - [ ] **Implement** `vanta/components/layout/Header.tsx` (client component — uses the drawer context):
+
    ```tsx
    'use client';
 
@@ -6019,15 +6471,24 @@ The shell `Header` (brand lockup, nav, a `LocaleSwitcher` mount-point, and the c
 
      return (
        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-smoke-700 bg-ink px-6 py-4 text-paper">
-         <Link href="/" className="display text-2xl tracking-tight focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime">
+         <Link
+           href="/"
+           className="display text-2xl tracking-tight focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime"
+         >
            <span data-testid="brand">VANTA</span>
          </Link>
 
          <nav className="flex items-center gap-6 text-sm uppercase tracking-wide">
-           <Link href="/shop" className="hover:text-blaze focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime">
+           <Link
+             href="/shop"
+             className="hover:text-blaze focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime"
+           >
              {t('nav.shop')}
            </Link>
-           <Link href="/collections" className="hover:text-blaze focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime">
+           <Link
+             href="/collections"
+             className="hover:text-blaze focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime"
+           >
              {t('nav.collections')}
            </Link>
 
@@ -6048,8 +6509,11 @@ The shell `Header` (brand lockup, nav, a `LocaleSwitcher` mount-point, and the c
      );
    }
    ```
+
    > Phase 3 `Modify`s this button to render the live `useCartCount()` value in `data-testid="cart-count-value"`; the `data-testid="cart-count"` selector and `onClick={open}` are stable from now. If `shell.nav.shop` / `shell.nav.collections` keys are absent, add them to both message files in this step.
+
 2. - [ ] **Implement** `vanta/components/layout/Footer.tsx`:
+
    ```tsx
    import { Link } from '@/lib/i18n/navigation';
 
@@ -6059,15 +6523,22 @@ The shell `Header` (brand lockup, nav, a `LocaleSwitcher` mount-point, and the c
          <div className="mx-auto flex max-w-[1440px] flex-col gap-2">
            <span className="display text-lg text-paper">VANTA</span>
            <nav className="flex gap-6 text-xs uppercase tracking-wide">
-             <Link href="/shop" className="hover:text-paper">Shop</Link>
-             <Link href="/collections" className="hover:text-paper">Collections</Link>
+             <Link href="/shop" className="hover:text-paper">
+               Shop
+             </Link>
+             <Link href="/collections" className="hover:text-paper">
+               Collections
+             </Link>
            </nav>
-           <span className="text-xs">© {new Date().getFullYear()} VANTA — portfolio showcase.</span>
+           <span className="text-xs">
+             © {new Date().getFullYear()} VANTA — portfolio showcase.
+           </span>
          </div>
        </footer>
      );
    }
    ```
+
 3. - [ ] **Typecheck:** `npm run typecheck` → exit 0.
 4. - [ ] **Visual check (Playwright against `npm run dev`):** assert `data-testid="cart-count"` is present and clicking it sets the drawer open-state (drawer body is empty until Phase 3 — assert the context flips, e.g. via a temporary probe or the Phase 3 e2e once the body exists). Capture one `en` and one `th` header screenshot (brand lockup + nav switch copy).
 5. - [ ] **Commit:**
@@ -6083,9 +6554,11 @@ The shell `Header` (brand lockup, nav, a `LocaleSwitcher` mount-point, and the c
 Wrap the locale layout's children in `<CartDrawerProvider>` and render `<Header/> {children} <Footer/>`. This is the **open-state** provider only — `<CartHydrator>` and the `<CartDrawer>` contents are mounted by **Phase 3 Task 3.x**, which MODIFIES this layout again (reading the server cart via `cartService.getCart()` per Errata items 16 & 18b).
 
 ### Files
+
 - **Modify:** `vanta/app/[locale]/layout.tsx`
 
 ### Interfaces
+
 - **Consumes:**
   - `import { CartDrawerProvider } from '@/components/cart/CartDrawerContext'`
   - `import { Header } from '@/components/layout/Header'`
@@ -6095,6 +6568,7 @@ Wrap the locale layout's children in `<CartDrawerProvider>` and render `<Header/
 ### Steps
 
 1. - [ ] **Edit** `vanta/app/[locale]/layout.tsx`. Add the three imports, then wrap the rendered tree so `Header`/children/`Footer` sit inside both the `NextIntlClientProvider` and the new `CartDrawerProvider`. The body becomes (keeping the Phase-0 locale validation, `setRequestLocale`, and the `<html lang>` sync script intact):
+
    ```tsx
    import type { ReactNode } from 'react';
    import { notFound } from 'next/navigation';
@@ -6145,6 +6619,7 @@ Wrap the locale layout's children in `<CartDrawerProvider>` and render `<Header/
      );
    }
    ```
+
 2. - [ ] **Typecheck:** `npm run typecheck` → exit 0.
 3. - [ ] **Visual check (Playwright against `npm run dev`):** load `/en` and `/th`; confirm the `Header` (with `data-testid="cart-count"`) and `Footer` render around the existing Phase-0 home content, the locale-stamp/brand `data-testid`s from Phase 0 still resolve (no regression — they are unchanged here), and the page is content-visible-by-default. Capture one `en` and one `th` full-page screenshot.
 4. - [ ] **Commit:**
@@ -6170,20 +6645,22 @@ Wrap the locale layout's children in `<CartDrawerProvider>` and render `<Header/
 The `CartStore` is the only request-context-aware repository: it reads/writes a signed cookie. We implement HMAC signing (constant-time verify, tamper → empty cart), and store **only** the line items + `updatedAt` in the cookie payload (counts/subtotal are derived server-side by the service in Task 3.2, never trusted from the cookie).
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/data/mock/cart-cookie.ts` (pure sign/verify + serialize/deserialize — request-context-free, unit-testable)
 - Create: `d:/MINE/freelance/system/vanta/lib/data/mock/cart-store.mock.ts` (`MockCartStore`, the `cookies()`-backed `CartStore`)
 - Modify: `d:/MINE/freelance/system/vanta/lib/data/mock/index.ts` (wire `cart: new MockCartStore()` into `mockRepositories`)
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/cart-cookie.test.ts`
 
 **Interfaces**
+
 - Consumes: `Cart`, `CartItem` from `@/lib/domain`; `CartStore` from `@/lib/data/repositories/cart-store`; `cookies` from `next/headers`.
 - Produces:
   ```ts
   // cart-cookie.ts (pure, no next/headers import)
   export const CART_COOKIE_NAME = 'vanta_cart';
   export const EMPTY_CART: Cart;
-  export function signPayload(payload: string, secret: string): string;        // returns "payload.signature" (base64url)
-  export function serializeCart(cart: Cart, secret: string): string;           // -> signed cookie value
+  export function signPayload(payload: string, secret: string): string; // returns "payload.signature" (base64url)
+  export function serializeCart(cart: Cart, secret: string): string; // -> signed cookie value
   export function deserializeCart(value: string | undefined, secret: string): Cart; // tamper/empty -> EMPTY_CART
   ```
 - Produces: `export class MockCartStore implements CartStore` with `read()/write(cart)/clear()`.
@@ -6191,6 +6668,7 @@ The `CartStore` is the only request-context-aware repository: it reads/writes a 
 **Steps**
 
 - [ ] **Write the failing test.** Create `d:/MINE/freelance/system/vanta/tests/unit/cart-cookie.test.ts`:
+
   ```ts
   import { describe, it, expect } from 'vitest';
   import {
@@ -6246,7 +6724,9 @@ The `CartStore` is the only request-context-aware repository: it reads/writes a 
     it('returns EMPTY_CART when the payload is mutated but signature kept', () => {
       const value = serializeCart(sampleCart, SECRET);
       const [, sig] = value.split('.');
-      const mutated = Buffer.from(JSON.stringify({ items: [], updatedAt: 'x' })).toString('base64url');
+      const mutated = Buffer.from(JSON.stringify({ items: [], updatedAt: 'x' })).toString(
+        'base64url',
+      );
       expect(deserializeCart(`${mutated}.${sig}`, SECRET)).toEqual(EMPTY_CART);
     });
 
@@ -6260,15 +6740,19 @@ The `CartStore` is the only request-context-aware repository: it reads/writes a 
   ```
 
 - [ ] **Run it — watch it fail (module does not exist yet).**
+
   ```
   npm run test -- tests/unit/cart-cookie.test.ts
   ```
+
   Expected: Vitest fails to resolve the import —
+
   ```
   Error: Failed to load url @/lib/data/mock/cart-cookie (resolved id: .../lib/data/mock/cart-cookie). Does the file exist?
   ```
 
 - [ ] **Implement the pure cookie codec.** Create `d:/MINE/freelance/system/vanta/lib/data/mock/cart-cookie.ts`:
+
   ```ts
   import { createHmac, timingSafeEqual } from 'node:crypto';
   import type { Cart, CartItem } from '@/lib/domain';
@@ -6349,22 +6833,20 @@ The `CartStore` is the only request-context-aware repository: it reads/writes a 
   ```
 
 - [ ] **Run it — watch it pass.**
+
   ```
   npm run test -- tests/unit/cart-cookie.test.ts
   ```
+
   Expected: `Test Files  1 passed (1)` · `Tests  7 passed (7)`.
 
 - [ ] **Implement the `cookies()`-backed store.** Create `d:/MINE/freelance/system/vanta/lib/data/mock/cart-store.mock.ts`:
+
   ```ts
   import { cookies } from 'next/headers';
   import type { Cart } from '@/lib/domain';
   import type { CartStore } from '@/lib/data/repositories/cart-store';
-  import {
-    CART_COOKIE_NAME,
-    EMPTY_CART,
-    deserializeCart,
-    serializeCart,
-  } from './cart-cookie';
+  import { CART_COOKIE_NAME, EMPTY_CART, deserializeCart, serializeCart } from './cart-cookie';
 
   const SECRET = process.env.CART_COOKIE_SECRET ?? 'vanta-dev-cart-secret';
   const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
@@ -6401,15 +6883,19 @@ The `CartStore` is the only request-context-aware repository: it reads/writes a 
   ```
 
 - [ ] **Wire it into the mock bundle.** In `d:/MINE/freelance/system/vanta/lib/data/mock/index.ts`, add the import and set `cart`:
+
   ```ts
   import { MockCartStore } from './cart-store.mock';
   // ...inside the mockRepositories object literal:
   //   cart: new MockCartStore(),
   ```
+
   Confirm the bundle still type-checks:
+
   ```
   npm run typecheck
   ```
+
   Expected: exit code 0, no output.
 
 - [ ] **Commit.**
@@ -6425,11 +6911,13 @@ The `CartStore` is the only request-context-aware repository: it reads/writes a 
 The service is the single reconciliation path. It reads the cookie cart (items only), looks up each variant through `@/lib/data` `products`, drops dead variants, clamps quantity to live stock, sums `unitPrice * qty` in integer satang, derives `itemCount`, writes the reconciled cart back to the cookie, and returns the **authoritative** `Cart`. `addItem` also decrements in-session stock via `products.decrementStock` so the LIVE DROP stock meter ticks down. Pure reconciliation math is extracted so it is unit-testable without `cookies()`.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/services/cart-reconcile.ts` (pure `reconcileCart` + `EMPTY_RECONCILED` — no cookies/repos)
 - Create: `d:/MINE/freelance/system/vanta/lib/services/cart-service.ts` (`cartService: CartService`)
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/cart-reconcile.test.ts`
 
 **Interfaces**
+
 - Consumes: `Cart`, `CartItem`, `Variant`, `Money` from `@/lib/domain`; `CartService` from the locked `lib/services/cart-service.ts` contract; `products`, `cart` from `@/lib/data`.
 - Produces:
   ```ts
@@ -6446,6 +6934,7 @@ The service is the single reconciliation path. It reads the cookie cart (items o
 **Steps**
 
 - [ ] **Write the failing test.** Create `d:/MINE/freelance/system/vanta/tests/unit/cart-reconcile.test.ts`:
+
   ```ts
   import { describe, it, expect } from 'vitest';
   import { reconcileCart } from '@/lib/services/cart-reconcile';
@@ -6466,8 +6955,8 @@ The service is the single reconciliation path. It reads the cookie cart (items o
 
   const variants = new Map<string, Variant>([
     ['var_a', variant('var_a', 199000, 10)], // ฿1,990
-    ['var_b', variant('var_b', 129000, 3)],  // ฿1,290, only 3 left
-    ['var_c', variant('var_c', 50000, 0)],   // sold out
+    ['var_b', variant('var_b', 129000, 3)], // ฿1,290, only 3 left
+    ['var_c', variant('var_c', 50000, 0)], // sold out
   ]);
 
   describe('reconcileCart', () => {
@@ -6534,12 +7023,15 @@ The service is the single reconciliation path. It reads the cookie cart (items o
   ```
 
 - [ ] **Run it — watch it fail.**
+
   ```
   npm run test -- tests/unit/cart-reconcile.test.ts
   ```
+
   Expected: `Error: Failed to load url @/lib/services/cart-reconcile ... Does the file exist?`
 
 - [ ] **Implement the pure reconciler.** Create `d:/MINE/freelance/system/vanta/lib/services/cart-reconcile.ts`:
+
   ```ts
   import type { Cart, CartItem, Variant } from '@/lib/domain';
 
@@ -6582,12 +7074,15 @@ The service is the single reconciliation path. It reads the cookie cart (items o
   ```
 
 - [ ] **Run it — watch it pass.**
+
   ```
   npm run test -- tests/unit/cart-reconcile.test.ts
   ```
+
   Expected: `Test Files  1 passed (1)` · `Tests  6 passed (6)`.
 
 - [ ] **Implement `cartService`.** Create `d:/MINE/freelance/system/vanta/lib/services/cart-service.ts`:
+
   ```ts
   import type { Cart, CartItem, Variant } from '@/lib/domain';
   import type { CartService } from '@/lib/data/repositories'; // type re-exported below if needed
@@ -6652,9 +7147,7 @@ The service is the single reconciliation path. It reads the cookie cart (items o
       const nextItems =
         quantity <= 0
           ? current.items.filter((i) => i.variantId !== variantId)
-          : current.items.map((i) =>
-              i.variantId === variantId ? { ...i, quantity } : i,
-            );
+          : current.items.map((i) => (i.variantId === variantId ? { ...i, quantity } : i));
       return reconcileAndPersist(nextItems);
     },
 
@@ -6669,12 +7162,15 @@ The service is the single reconciliation path. It reads the cookie cart (items o
     },
   };
   ```
+
   > Note: the `CartService` interface is declared and exported here (matching the locked signature verbatim) because the locked contract places it in this very file. Remove the unused `import type { CartService } from '@/lib/data/repositories'` line if your barrel does not re-export it — the canonical definition is the one in this file.
 
 - [ ] **Fix the import line** (the bundle does not export `CartService`): edit `d:/MINE/freelance/system/vanta/lib/services/cart-service.ts` to delete the line `import type { CartService } from '@/lib/data/repositories';` so only the locally declared interface remains. Then type-check:
+
   ```
   npm run typecheck
   ```
+
   Expected: exit code 0, no output.
 
 - [ ] **Commit.**
@@ -6690,10 +7186,12 @@ The service is the single reconciliation path. It reads the cookie cart (items o
 Thin `'use server'` wrappers over `cartService`. They are the **only** mutation path the client uses, and every one returns the authoritative `Cart` that the Zustand mirror reconciles from. They `revalidatePath` the cart/home/PDP surfaces so RSC stock badges refresh after a stock decrement.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/actions/cart-actions.ts`
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/cart-actions.test.ts`
 
 **Interfaces**
+
 - Consumes: `Cart` from `@/lib/domain`; `cartService` from `@/lib/services/cart-service`; `revalidatePath` from `next/cache`.
 - Produces (verbatim locked signatures):
   ```ts
@@ -6706,6 +7204,7 @@ Thin `'use server'` wrappers over `cartService`. They are the **only** mutation 
 **Steps**
 
 - [ ] **Write the failing test** (mocks `cartService` + `next/cache` so it runs in node env and proves each action delegates and returns the service's authoritative cart). Create `d:/MINE/freelance/system/vanta/tests/unit/cart-actions.test.ts`:
+
   ```ts
   import { describe, it, expect, vi, beforeEach } from 'vitest';
   import type { Cart } from '@/lib/domain';
@@ -6764,12 +7263,15 @@ Thin `'use server'` wrappers over `cartService`. They are the **only** mutation 
   ```
 
 - [ ] **Run it — watch it fail.**
+
   ```
   npm run test -- tests/unit/cart-actions.test.ts
   ```
+
   Expected: `Error: Failed to load url @/lib/actions/cart-actions ... Does the file exist?`
 
 - [ ] **Implement the actions.** Create `d:/MINE/freelance/system/vanta/lib/actions/cart-actions.ts`:
+
   ```ts
   'use server';
 
@@ -6806,9 +7308,11 @@ Thin `'use server'` wrappers over `cartService`. They are the **only** mutation 
   ```
 
 - [ ] **Run it — watch it pass.**
+
   ```
   npm run test -- tests/unit/cart-actions.test.ts
   ```
+
   Expected: `Test Files  1 passed (1)` · `Tests  4 passed (4)`.
 
 - [ ] **Commit.**
@@ -6824,11 +7328,13 @@ Thin `'use server'` wrappers over `cartService`. They are the **only** mutation 
 The Zustand store is a durable client mirror with no inventing mutators — exactly two entry points: `hydrate` (initial RSC cart) and `replaceFromServer` (every action return value). A `CartHydrator` client component seeds the store from the server-rendered cart on mount, and a `useCartCount` selector feeds the header badge.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/store/cart-store.ts` (`useCartStore`, `useCartCount` selector)
 - Create: `d:/MINE/freelance/system/vanta/components/cart/CartHydrator.tsx`
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/cart-store.test.ts`
 
 **Interfaces**
+
 - Consumes: `Cart` from `@/lib/domain`; `create` from `zustand`.
 - Produces (verbatim locked shape):
   ```ts
@@ -6837,14 +7343,17 @@ The Zustand store is a durable client mirror with no inventing mutators — exac
     hydrate: (serverCart: Cart) => void;
     replaceFromServer: (cart: Cart) => void;
   };
-  export const useCartStore: import('zustand').UseBoundStore<import('zustand').StoreApi<CartMirrorState>>;
-  export function useCartCount(): number;   // selector: state.cart.itemCount
+  export const useCartStore: import('zustand').UseBoundStore<
+    import('zustand').StoreApi<CartMirrorState>
+  >;
+  export function useCartCount(): number; // selector: state.cart.itemCount
   ```
 - Produces: `export function CartHydrator({ serverCart }: { serverCart: Cart }): null`.
 
 **Steps**
 
 - [ ] **Write the failing test** (asserts the INVARIANT: only `hydrate`/`replaceFromServer` exist, no `addItem`/`removeItem` mutators). Create `d:/MINE/freelance/system/vanta/tests/unit/cart-store.test.ts`:
+
   ```ts
   import { describe, it, expect, beforeEach } from 'vitest';
   import { useCartStore } from '@/lib/store/cart-store';
@@ -6886,19 +7395,24 @@ The Zustand store is a durable client mirror with no inventing mutators — exac
 
     it('exposes ONLY hydrate + replaceFromServer mutators (no invented state)', () => {
       const state = useCartStore.getState();
-      const fnKeys = Object.keys(state).filter((k) => typeof (state as Record<string, unknown>)[k] === 'function');
+      const fnKeys = Object.keys(state).filter(
+        (k) => typeof (state as Record<string, unknown>)[k] === 'function',
+      );
       expect(fnKeys.sort()).toEqual(['hydrate', 'replaceFromServer']);
     });
   });
   ```
 
 - [ ] **Run it — watch it fail.**
+
   ```
   npm run test -- tests/unit/cart-store.test.ts
   ```
+
   Expected: `Error: Failed to load url @/lib/store/cart-store ... Does the file exist?`
 
 - [ ] **Implement the store.** Create `d:/MINE/freelance/system/vanta/lib/store/cart-store.ts`:
+
   ```ts
   import { create } from 'zustand';
   import type { Cart } from '@/lib/domain';
@@ -6929,12 +7443,15 @@ The Zustand store is a durable client mirror with no inventing mutators — exac
   ```
 
 - [ ] **Run it — watch it pass.**
+
   ```
   npm run test -- tests/unit/cart-store.test.ts
   ```
+
   Expected: `Test Files  1 passed (1)` · `Tests  4 passed (4)`.
 
 - [ ] **Implement `CartHydrator`.** Create `d:/MINE/freelance/system/vanta/components/cart/CartHydrator.tsx`:
+
   ```tsx
   'use client';
 
@@ -6958,9 +7475,11 @@ The Zustand store is a durable client mirror with no inventing mutators — exac
   ```
 
 - [ ] **Type-check** (CartHydrator is consumed by the Phase-2 layout; this verifies the export shape).
+
   ```
   npm run typecheck
   ```
+
   Expected: exit code 0, no output.
 
 - [ ] **Commit.**
@@ -6976,11 +7495,13 @@ The Zustand store is a durable client mirror with no inventing mutators — exac
 A presentational line item rendering the variant snapshot from the authoritative cart, with quantity controls wired to the actions through a shared mutation callback (supplied by the drawer / cart page so optimistic vs. non-optimistic callers reuse the same row). Prices come **only** from `formatMoney`.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/components/cart/CartLineItem.tsx`
 - Modify: `d:/MINE/freelance/system/vanta/messages/en.json` (add `cart` namespace keys)
 - Modify: `d:/MINE/freelance/system/vanta/messages/th.json` (mirror keyset)
 
 **Interfaces**
+
 - Consumes: `Money`, `Locale`, `LocalizedText` from `@/lib/domain`; `formatMoney` from `@/lib/format/money`; `useTranslations`, `useLocale` from `next-intl`.
 - Produces:
   ```tsx
@@ -7005,6 +7526,7 @@ A presentational line item rendering the variant snapshot from the authoritative
 **Steps**
 
 - [ ] **Add the `cart` copy namespace.** In `d:/MINE/freelance/system/vanta/messages/en.json`, add (merge into the root object):
+
   ```json
   "cart": {
     "title": "Cart",
@@ -7021,7 +7543,9 @@ A presentational line item rendering the variant snapshot from the authoritative
     "openCart": "Open cart, {count} items"
   }
   ```
+
   In `d:/MINE/freelance/system/vanta/messages/th.json`, add the mirror keyset:
+
   ```json
   "cart": {
     "title": "ตะกร้า",
@@ -7040,6 +7564,7 @@ A presentational line item rendering the variant snapshot from the authoritative
   ```
 
 - [ ] **Implement `CartLineItem`.** Create `d:/MINE/freelance/system/vanta/components/cart/CartLineItem.tsx`:
+
   ```tsx
   'use client';
 
@@ -7140,9 +7665,11 @@ A presentational line item rendering the variant snapshot from the authoritative
   ```
 
 - [ ] **Type-check.**
+
   ```
   npm run typecheck
   ```
+
   Expected: exit code 0, no output.
 
 - [ ] **Commit.**
@@ -7158,16 +7685,22 @@ A presentational line item rendering the variant snapshot from the authoritative
 The drawer is a true modal `dialog`: focus trap, focus return to the trigger, `Escape` to close, `aria-modal`, an `aria-live="polite"` add announcement, and `:focus-visible` tokens. It reads the mirror via `useCartStore`, applies an optimistic add through React 19's `useOptimistic` for the in-flight feel, then reconciles from the action's authoritative return value via `replaceFromServer`. A small `CartDrawerProvider` exposes `openCart()` / a global open-event so the PDP `AddToCartButton` (Phase 4) and the header trigger can both drive it.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/components/cart/CartDrawerContext.tsx` (open/close context + `useCartDrawer` hook)
 - Create: `d:/MINE/freelance/system/vanta/components/cart/CartDrawer.tsx`
 - Test: `d:/MINE/freelance/system/vanta/tests/e2e/cart-drawer.en.spec.ts`
 
 **Interfaces**
+
 - Consumes: `Cart`, `Locale` from `@/lib/domain`; `useCartStore` from `@/lib/store/cart-store`; `addToCart`, `updateCartQuantity`, `removeFromCart` from `@/lib/actions/cart-actions`; `formatMoney` from `@/lib/format/money`; `CartLineItem`, `CartLineItemView` from `./CartLineItem`; `Link` from `@/lib/i18n/navigation`; `useTranslations`, `useLocale` from `next-intl`; `useOptimistic`, `useTransition` from `react`.
 - Produces:
   ```tsx
   // CartDrawerContext.tsx
-  export function CartDrawerProvider({ children }: { children: React.ReactNode }): React.JSX.Element;
+  export function CartDrawerProvider({
+    children,
+  }: {
+    children: React.ReactNode;
+  }): React.JSX.Element;
   export function useCartDrawer(): {
     isOpen: boolean;
     open: () => void;
@@ -7183,6 +7716,7 @@ The drawer is a true modal `dialog`: focus trap, focus return to the trigger, `E
 **Steps**
 
 - [ ] **Implement the drawer context.** Create `d:/MINE/freelance/system/vanta/components/cart/CartDrawerContext.tsx`:
+
   ```tsx
   'use client';
 
@@ -7199,7 +7733,11 @@ The drawer is a true modal `dialog`: focus trap, focus return to the trigger, `E
 
   const CartDrawerContext = createContext<CartDrawerContextValue | null>(null);
 
-  export function CartDrawerProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+  export function CartDrawerProvider({
+    children,
+  }: {
+    children: React.ReactNode;
+  }): React.JSX.Element {
     const [isOpen, setIsOpen] = useState(false);
     const [lineViews, setLineViewsState] = useState<CartLineItemView[]>([]);
 
@@ -7229,6 +7767,7 @@ The drawer is a true modal `dialog`: focus trap, focus return to the trigger, `E
   ```
 
 - [ ] **Implement the drawer.** Create `d:/MINE/freelance/system/vanta/components/cart/CartDrawer.tsx`:
+
   ```tsx
   'use client';
 
@@ -7236,10 +7775,7 @@ The drawer is a true modal `dialog`: focus trap, focus return to the trigger, `E
   import { useLocale, useTranslations } from 'next-intl';
   import type { Cart, Locale, Money } from '@/lib/domain';
   import { useCartStore } from '@/lib/store/cart-store';
-  import {
-    removeFromCart,
-    updateCartQuantity,
-  } from '@/lib/actions/cart-actions';
+  import { removeFromCart, updateCartQuantity } from '@/lib/actions/cart-actions';
   import { formatMoney } from '@/lib/format/money';
   import { Link } from '@/lib/i18n/navigation';
   import { CartLineItem, type CartLineItemView } from './CartLineItem';
@@ -7337,29 +7873,23 @@ The drawer is a true modal `dialog`: focus trap, focus return to the trigger, `E
     const viewById = new Map(lineViews.map((v) => [v.variantId, v]));
     const rows: CartLineItemView[] = optimisticCart.items.map((item) => {
       const snapshot = viewById.get(item.variantId);
-      return (
-        snapshot
-          ? { ...snapshot, quantity: item.quantity }
-          : {
-              variantId: item.variantId,
-              title: { en: item.variantId, th: item.variantId },
-              size: '',
-              color: '',
-              unitPrice: { amount: 0, currency: 'THB' } as Money,
-              quantity: item.quantity,
-              imageUrl: '/placeholder.svg',
-              maxStock: item.quantity,
-            }
-      );
+      return snapshot
+        ? { ...snapshot, quantity: item.quantity }
+        : {
+            variantId: item.variantId,
+            title: { en: item.variantId, th: item.variantId },
+            size: '',
+            color: '',
+            unitPrice: { amount: 0, currency: 'THB' } as Money,
+            quantity: item.quantity,
+            imageUrl: '/placeholder.svg',
+            maxStock: item.quantity,
+          };
     });
 
     return (
       <>
-        <div
-          className="fixed inset-0 z-40 bg-ink/60"
-          onClick={close}
-          data-testid="cart-overlay"
-        />
+        <div className="fixed inset-0 z-40 bg-ink/60" onClick={close} data-testid="cart-overlay" />
         <div
           ref={dialogRef}
           role="dialog"
@@ -7399,7 +7929,9 @@ The drawer is a true modal `dialog`: focus trap, focus return to the trigger, `E
           <div className="border-t border-smoke-700 p-6">
             <div className="mb-4 flex items-center justify-between">
               <span className="display text-sm">{t('subtotal')}</span>
-              <span className="font-mono text-lg">{formatMoney(optimisticCart.subtotal, locale)}</span>
+              <span className="font-mono text-lg">
+                {formatMoney(optimisticCart.subtotal, locale)}
+              </span>
             </div>
             <Link
               href="/cart"
@@ -7418,9 +7950,11 @@ The drawer is a true modal `dialog`: focus trap, focus return to the trigger, `E
     );
   }
   ```
+
   > The PDP `AddToCartButton` (Phase 4) calls `useCartDrawer().open()` and `setLineViews([...])` after `addToCart` returns, and writes the announcement string `t('addedAnnouncement', { title, count })` into the live region via a shared ref/event; the live region element above is the single announcement surface for both states.
 
 - [ ] **Write the E2E spec.** Create `d:/MINE/freelance/system/vanta/tests/e2e/cart-drawer.en.spec.ts`:
+
   ```ts
   import { test, expect } from '@playwright/test';
 
@@ -7465,16 +7999,21 @@ The drawer is a true modal `dialog`: focus trap, focus return to the trigger, `E
     });
   });
   ```
+
   > This spec depends on the PDP `add-to-cart` button (Phase 4). If Phase 4 has not landed when you run Phase 3, mark this spec `test.fixme` and run it as part of the Phase 4 hero-slice verification; the drawer code itself is verified visually in the next step.
 
 - [ ] **Type-check, then visually verify against the dev server.**
+
   ```
   npm run typecheck
   ```
+
   Expected: exit 0. Then start the dev server in the background and verify the drawer renders and traps focus:
+
   ```
   npm run dev
   ```
+
   Using the Playwright MCP (or Chrome DevTools MCP) against `http://localhost:3000/en/cart`, take a snapshot and confirm: (a) opening the drawer (via the header cart trigger added in Phase 2's `Header`, or temporarily via `useCartDrawer().open()` on the cart page) shows `role="dialog"` + `aria-modal="true"`; (b) Tab cycles only within the drawer; (c) `Escape` closes it; (d) the subtotal shows `฿` then a grouped integer with no decimals. Capture `en` and `th` screenshots of the open drawer.
 
 - [ ] **Commit.**
@@ -7490,17 +8029,20 @@ The drawer is a true modal `dialog`: focus trap, focus return to the trigger, `E
 The Tier-1 cart page is a Server Component that reads the authoritative cart via `cartService.getCart()`, resolves each line's variant + product snapshot through `@/lib/data` `products` (so titles/images/sizes/colors and `maxStock` are real), and renders the rows + subtotal + checkout link. A small client island registers the resolved `lineViews` into the drawer context and binds the quantity/remove controls to the actions; money is always via `formatMoney`.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/app/[locale]/(checkout)/cart/page.tsx`
 - Create: `d:/MINE/freelance/system/vanta/components/cart/CartPageClient.tsx`
 - Test: `d:/MINE/freelance/system/vanta/tests/e2e/cart-page.en.spec.ts`
 
 **Interfaces**
+
 - Consumes: `cartService` from `@/lib/services/cart-service`; `products` from `@/lib/data`; `Cart`, `Locale`, `Product`, `Variant` from `@/lib/domain`; `CartLineItemView` from `@/components/cart/CartLineItem`; `getTranslations` from `next-intl/server`; `useTranslations`, `useLocale` from `next-intl`.
 - Produces: `export default async function CartPage(): Promise<React.JSX.Element>` and `export function CartPageClient({ initialCart, lineViews }: { initialCart: Cart; lineViews: CartLineItemView[] }): React.JSX.Element`.
 
 **Steps**
 
 - [ ] **Implement the page (RSC).** Create `d:/MINE/freelance/system/vanta/app/[locale]/(checkout)/cart/page.tsx`:
+
   ```tsx
   import { getTranslations } from 'next-intl/server';
   import type { CartLineItemView } from '@/components/cart/CartLineItem';
@@ -7542,9 +8084,11 @@ The Tier-1 cart page is a Server Component that reads the authoritative cart via
     );
   }
   ```
+
   > `getById` is called with the owning product id discovered via `list()`; this keeps the page reading only through the repository seam (never into `lib/data/mock`). When Phase 1's seed is small this is fine; a backend swap replaces it with a single indexed lookup with no UI change.
 
 - [ ] **Implement the client island.** Create `d:/MINE/freelance/system/vanta/components/cart/CartPageClient.tsx`:
+
   ```tsx
   'use client';
 
@@ -7613,7 +8157,11 @@ The Tier-1 cart page is a Server Component that reads the authoritative cart via
       .filter((row): row is CartLineItemView => row !== null);
 
     if (rows.length === 0) {
-      return <p className="text-smoke-500" data-testid="cart-empty">{t('empty')}</p>;
+      return (
+        <p className="text-smoke-500" data-testid="cart-empty">
+          {t('empty')}
+        </p>
+      );
     }
 
     return (
@@ -7649,6 +8197,7 @@ The Tier-1 cart page is a Server Component that reads the authoritative cart via
   ```
 
 - [ ] **Write the E2E spec.** Create `d:/MINE/freelance/system/vanta/tests/e2e/cart-page.en.spec.ts`:
+
   ```ts
   import { test, expect } from '@playwright/test';
 
@@ -7683,16 +8232,21 @@ The Tier-1 cart page is a Server Component that reads the authoritative cart via
     });
   });
   ```
+
   > The two "add via PDP" cases depend on Phase 4's `add-to-cart` button; mark them `test.fixme` until Phase 4 lands. The empty-state case runs standalone against Phase 3.
 
 - [ ] **Type-check and run the standalone E2E case.**
+
   ```
   npm run typecheck
   ```
+
   Expected: exit 0. Then (dev server running via `npm run dev`):
+
   ```
   npm run test:e2e -- tests/e2e/cart-page.en.spec.ts -g "empty state"
   ```
+
   Expected: `1 passed`. Visually verify `http://localhost:3000/en/cart` and `http://localhost:3000/th/cart` render the heading via the `display` class with correct per-locale font (Clash Display all-caps for en, Kanit non-caps for th), and the empty-state copy in each locale.
 
 - [ ] **Commit.**
@@ -7708,23 +8262,29 @@ The Tier-1 cart page is a Server Component that reads the authoritative cart via
 A final guard that the whole cart logic layer passes together and the project type-checks, so Phase 4 (motion/hero polish) builds on a green base.
 
 **Files**
+
 - Modify: none (verification-only task)
 
 **Interfaces**
+
 - Consumes: all Phase 3 unit specs (`cart-cookie`, `cart-reconcile`, `cart-actions`, `cart-store`).
 
 **Steps**
 
 - [ ] **Run the full unit suite.**
+
   ```
   npm run test -- tests/unit
   ```
+
   Expected: all Phase 1–3 unit files pass, including `cart-cookie.test.ts (7)`, `cart-reconcile.test.ts (6)`, `cart-actions.test.ts (4)`, `cart-store.test.ts (4)` — final line `Tests  ... passed`, no failures.
 
 - [ ] **Run the typecheck + lint gate.**
+
   ```
   npm run typecheck && npm run lint
   ```
+
   Expected: both exit 0; no `any` introduced in `lib/**` (lint clean).
 
 - [ ] **Commit** (only if lint/typecheck produced auto-fixable changes; otherwise skip).
@@ -7732,7 +8292,8 @@ A final guard that the whole cart logic layer passes together and the project ty
   git add -A
   git commit -m "chore(cart): green cart logic suite and typecheck gate"
   ```
-```
+
+````
 
 I've written Phase 3 above as polished, paste-ready markdown.
 
@@ -7799,9 +8360,10 @@ A tiny, testable server helper that turns the active drop + its products into th
     anyEarlyAccessGated: boolean; // true if a drop variant derives to 'early_access'
   };
   export function buildHomeView(now: Date, user: User | null): Promise<HomeView>;
-  ```
+````
 
 **Steps**
+
 - [ ] Add the `home` and `drop` namespaces to `messages/en.json` (merge into the existing tree; do not clobber sibling namespaces):
   ```json
   {
@@ -7863,6 +8425,7 @@ A tiny, testable server helper that turns the active drop + its products into th
   }
   ```
 - [ ] Write the failing test `tests/unit/home-view.test.ts`. It mounts a fixed `now` and a `null`/member user, asserting derivation and shape (it does NOT touch cookies — `buildHomeView` receives `now`/`user` as args, matching the request-context-free rule):
+
   ```ts
   import { describe, it, expect, vi, beforeEach } from 'vitest';
   import type { Drop, Product, User } from '@/lib/domain';
@@ -7913,7 +8476,11 @@ A tiny, testable server helper that turns the active drop + its products into th
   import { buildHomeView } from '@/lib/services/home-view';
 
   const member: User = {
-    id: 'usr_member', email: 'member@vanta.shop', name: 'Member', role: 'member', addresses: [],
+    id: 'usr_member',
+    email: 'member@vanta.shop',
+    name: 'Member',
+    role: 'member',
+    addresses: [],
   };
 
   describe('buildHomeView', () => {
@@ -7947,12 +8514,14 @@ A tiny, testable server helper that turns the active drop + its products into th
     });
   });
   ```
+
 - [ ] Run it and SHOW it fail:
   ```
   npx vitest run tests/unit/home-view.test.ts
   ```
   Expected: `Error: Failed to resolve import "@/lib/services/home-view"` (module not found) — 4 tests error/fail.
 - [ ] Implement `lib/services/home-view.ts` (minimal; pure derivation, no clock/cookie inside):
+
   ```ts
   import { dropService } from '@/lib/services/drop-service';
   import { products } from '@/lib/data';
@@ -7979,7 +8548,12 @@ A tiny, testable server helper that turns the active drop + its products into th
     anyEarlyAccessGated: boolean;
   };
 
-  function toLeadView(product: Product, drop: Drop | null, now: Date, user: User | null): HeroProductView {
+  function toLeadView(
+    product: Product,
+    drop: Drop | null,
+    now: Date,
+    user: User | null,
+  ): HeroProductView {
     const variant: Variant = product.variants[0];
     const availability = deriveAvailability(variant, drop, now, user);
     return {
@@ -8002,11 +8576,14 @@ A tiny, testable server helper that turns the active drop + its products into th
     const all = await products.list();
     const featured = all.slice(0, 6);
 
-    const anyEarlyAccessGated = dropProducts.some((p) => p.leadVariant.availability === 'early_access');
+    const anyEarlyAccessGated = dropProducts.some(
+      (p) => p.leadVariant.availability === 'early_access',
+    );
 
     return { drop, dropProducts, featured, anyEarlyAccessGated };
   }
   ```
+
 - [ ] Run it and SHOW it pass:
   ```
   npx vitest run tests/unit/home-view.test.ts
@@ -8025,41 +8602,53 @@ A tiny, testable server helper that turns the active drop + its products into th
 
 ### Task 4.2 — Countdown clock logic (pure tick math, client-island-ready)
 
-The per-second tick is a client island, but its *math* is pure and unit-testable. This task ships the pure `computeCountdown(deadlineMs, nowMs)` used by the island so the island itself stays a thin `useEffect` wrapper. Deadline is passed in from the server; the function never reads a clock.
+The per-second tick is a client island, but its _math_ is pure and unit-testable. This task ships the pure `computeCountdown(deadlineMs, nowMs)` used by the island so the island itself stays a thin `useEffect` wrapper. Deadline is passed in from the server; the function never reads a clock.
 
 **Files**
+
 - Create: `lib/motion/countdown.ts`
 - Test: `tests/unit/countdown.test.ts`
 
 **Interfaces**
+
 - Consumes: nothing (pure math).
 - Produces:
   ```ts
   export type CountdownParts = {
-    total: number;     // ms remaining, clamped at 0
-    done: boolean;     // total === 0
+    total: number; // ms remaining, clamped at 0
+    done: boolean; // total === 0
     days: number;
-    hours: number;     // 0..23
-    minutes: number;   // 0..59
-    seconds: number;   // 0..59
+    hours: number; // 0..23
+    minutes: number; // 0..59
+    seconds: number; // 0..59
   };
   export function computeCountdown(deadlineMs: number, nowMs: number): CountdownParts;
   ```
 
 **Steps**
+
 - [ ] Write the failing test `tests/unit/countdown.test.ts`:
+
   ```ts
   import { describe, it, expect } from 'vitest';
   import { computeCountdown } from '@/lib/motion/countdown';
 
-  const SEC = 1000, MIN = 60 * SEC, HOUR = 60 * MIN, DAY = 24 * HOUR;
+  const SEC = 1000,
+    MIN = 60 * SEC,
+    HOUR = 60 * MIN,
+    DAY = 24 * HOUR;
 
   describe('computeCountdown', () => {
     it('breaks remaining ms into d/h/m/s', () => {
       const now = 0;
       const deadline = 2 * DAY + 3 * HOUR + 4 * MIN + 5 * SEC;
       expect(computeCountdown(deadline, now)).toEqual({
-        total: deadline, done: false, days: 2, hours: 3, minutes: 4, seconds: 5,
+        total: deadline,
+        done: false,
+        days: 2,
+        hours: 3,
+        minutes: 4,
+        seconds: 5,
       });
     });
 
@@ -8083,12 +8672,14 @@ The per-second tick is a client island, but its *math* is pure and unit-testable
     });
   });
   ```
+
 - [ ] Run it and SHOW it fail:
   ```
   npx vitest run tests/unit/countdown.test.ts
   ```
   Expected: `Error: Failed to resolve import "@/lib/motion/countdown"` — 4 tests error/fail.
 - [ ] Implement `lib/motion/countdown.ts`:
+
   ```ts
   export type CountdownParts = {
     total: number;
@@ -8116,6 +8707,7 @@ The per-second tick is a client island, but its *math* is pure and unit-testable
     };
   }
   ```
+
 - [ ] Run it and SHOW it pass:
   ```
   npx vitest run tests/unit/countdown.test.ts
@@ -8132,22 +8724,26 @@ The per-second tick is a client island, but its *math* is pure and unit-testable
 A `'use client'` island that receives `deadlineIso` + `releaseIso` from the server, ticks once per second using `computeCountdown`, and flips to a LIVE state when done — without ever re-fetching. Reduced-motion shows a static, content-visible value (no `setInterval`, no flashing). Verified with Playwright in 4.6.
 
 **Files**
+
 - Create: `components/drop/CountdownIsland.tsx`
 - Test: covered by E2E in Task 4.6 (UI; the math is already unit-tested in 4.2).
 
 **Interfaces**
+
 - Consumes: `computeCountdown` from `@/lib/motion/countdown`; `useMotionCapability` from `@/lib/motion/capability`; `useTranslations` from `next-intl`; `splitGraphemes` from `@/lib/motion/segment` (for the LIVE flip headline only).
 - Produces:
   ```ts
   export type CountdownIslandProps = {
-    deadlineIso: string;   // ISO-8601 UTC; the LIVE flip target (drop.releaseAt OR drop.earlyAccessAt)
-    onDoneLabel?: string;  // optional override; defaults to t('countdownDone')
+    deadlineIso: string; // ISO-8601 UTC; the LIVE flip target (drop.releaseAt OR drop.earlyAccessAt)
+    onDoneLabel?: string; // optional override; defaults to t('countdownDone')
   };
   export function CountdownIsland(props: CountdownIslandProps): JSX.Element;
   ```
 
 **Steps**
+
 - [ ] Implement `components/drop/CountdownIsland.tsx` (complete code; mono digits per the token rule, `aria-live="off"` on the ticking digits but an `sr-only` summary so screen readers are not spammed every second):
+
   ```tsx
   'use client';
 
@@ -8174,7 +8770,9 @@ A `'use client'` island that receives `deadlineIso` + `releaseIso` from the serv
     // Server render + first client paint use a deterministic snapshot so hydration matches:
     // compute from deadline with now = deadlineMs (worst case) is wrong; instead seed from Date.now()
     // ONLY after mount to avoid SSR/client mismatch. Start with a content-visible static frame.
-    const [parts, setParts] = useState<CountdownParts>(() => computeCountdown(deadlineMs, deadlineMs));
+    const [parts, setParts] = useState<CountdownParts>(() =>
+      computeCountdown(deadlineMs, deadlineMs),
+    );
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -8236,6 +8834,7 @@ A `'use client'` island that receives `deadlineIso` + `releaseIso` from the serv
     );
   }
   ```
+
 - [ ] Typecheck:
   ```
   npm run typecheck
@@ -8249,15 +8848,18 @@ A `'use client'` island that receives `deadlineIso` + `releaseIso` from the serv
 
 ### Task 4.4 — `AvailabilityBadge`, `StockMeter`, and `DropMarquee` presentational components
 
-The three drop-supporting visuals, all reading the *already-derived* `Availability` (never deriving inside a client component). The marquee is demoted and always renders English `DROP`/`SOLD OUT` in both locales. `StockMeter` visibly reflects stock so the "ticks down on add" moment reads.
+The three drop-supporting visuals, all reading the _already-derived_ `Availability` (never deriving inside a client component). The marquee is demoted and always renders English `DROP`/`SOLD OUT` in both locales. `StockMeter` visibly reflects stock so the "ticks down on add" moment reads.
 
 **Files**
+
 - Create: `components/drop/AvailabilityBadge.tsx`, `components/drop/StockMeter.tsx`, `components/drop/DropMarquee.tsx`
 - Test: visual + Playwright in 4.6.
 
 **Interfaces**
+
 - Consumes: `Availability` from `@/lib/domain`; `useTranslations` from `next-intl`; `LOW_STOCK_THRESHOLD` from `@/lib/services/availability`; `splitGraphemes` from `@/lib/motion/segment` (marquee letters); `useMotionCapability`.
 - Produces:
+
   ```ts
   // AvailabilityBadge.tsx
   export type AvailabilityBadgeProps = { availability: Availability; stock: number };
@@ -8273,7 +8875,9 @@ The three drop-supporting visuals, all reading the *already-derived* `Availabili
   ```
 
 **Steps**
+
 - [ ] Implement `components/drop/AvailabilityBadge.tsx` (one switch over the exact union; `low_stock` injects the count; lime is NOT used here — badges sit on dark and use blaze/paper):
+
   ```tsx
   'use client';
 
@@ -8300,13 +8904,19 @@ The three drop-supporting visuals, all reading the *already-derived* `Availabili
         );
       case 'coming_soon':
         return (
-          <span data-testid="badge-coming-soon" className={`${base} border border-smoke-500 text-paper`}>
+          <span
+            data-testid="badge-coming-soon"
+            className={`${base} border border-smoke-500 text-paper`}
+          >
             {t('comingSoon')}
           </span>
         );
       case 'early_access':
         return (
-          <span data-testid="badge-early-access" className={`${base} border border-blaze text-blaze`}>
+          <span
+            data-testid="badge-early-access"
+            className={`${base} border border-blaze text-blaze`}
+          >
             {t('earlyAccessLocked')}
           </span>
         );
@@ -8326,7 +8936,9 @@ The three drop-supporting visuals, all reading the *already-derived* `Availabili
     }
   }
   ```
+
 - [ ] Implement `components/drop/StockMeter.tsx` (lime-on-dark is allowed here — this is the one disciplined `<5%` accent on the ink hero; it fills proportionally and shrinks visibly when stock drops):
+
   ```tsx
   import { LOW_STOCK_THRESHOLD } from '@/lib/services/availability';
 
@@ -8360,7 +8972,9 @@ The three drop-supporting visuals, all reading the *already-derived* `Availabili
     );
   }
   ```
+
 - [ ] Implement `components/drop/DropMarquee.tsx` (demoted texture; English literals in BOTH locales; grapheme-safe per the rule even though Latin — no `.split('')`; reduced motion = static, no scroll animation):
+
   ```tsx
   'use client';
 
@@ -8404,11 +9018,16 @@ The three drop-supporting visuals, all reading the *already-derived* `Availabili
     );
   }
   ```
+
 - [ ] Add the `marquee` keyframe to `app/globals.css` (after the `@theme` block; reduced-motion users never see it since the class is gated in JS):
   ```css
   @keyframes marquee {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
   }
   ```
 - [ ] Typecheck:
@@ -8427,15 +9046,19 @@ The three drop-supporting visuals, all reading the *already-derived* `Availabili
 Assemble the Tier-1 Home page. It is a Server Component: it reads `authService.getCurrentUser()` and a server `now`, calls `buildHomeView`, then composes the hero (products/headline materialize out of black), the LIVE DROP feature block (badge + meter + `CountdownIsland`, with the auth-gated early-access state and unlock hint), the demoted marquee, the featured grid (`ProductCard` keyed for View Transitions), and the lookbook teaser. The deadline is computed once on the server and handed to the island; the page itself never ticks.
 
 **Files**
+
 - Create: `app/[locale]/(shop)/page.tsx`, `components/home/HeroSection.tsx`, `components/home/LiveDropSection.tsx`, `components/home/LookbookTeaser.tsx`
 - Test: Playwright in 4.6.
 
 **Interfaces**
+
 - Consumes: `buildHomeView` from `@/lib/services/home-view`; `authService.getCurrentUser()`; `getTranslations` from `next-intl/server`; `setRequestLocale` from `next-intl/server`; `Link` from `@/lib/i18n/navigation`; `CountdownIsland`, `AvailabilityBadge`, `StockMeter`, `DropMarquee` from `@/components/drop/*`; `ProductCard` from `@/components/product/ProductCard`; `Button` from `@/components/ui/Button`; `Money` from `@/components/ui/Money`; domain `Locale`.
 - Produces: the default-exported `Page` async Server Component for the `(shop)` Home route, plus three section components.
 
 **Steps**
+
 - [ ] Implement `components/home/HeroSection.tsx` (Server Component; content visible-by-default, the "materialize out of black" entrance is layered by a client motion wrapper in a later motion phase — here it renders the static, correct hero):
+
   ```tsx
   import { getTranslations } from 'next-intl/server';
   import { Link } from '@/lib/i18n/navigation';
@@ -8469,8 +9092,11 @@ Assemble the Tier-1 Home page. It is a Server Component: it reads `authService.g
     );
   }
   ```
+
   > If `@/components/ui/Button` does not expose an `asChild` prop or a `'ghost'`/`'magnetic'` variant, render the `Link` as the child the Button's contract specifies — match the Button phase's exact prop API; do not invent variants. The two CTAs are the only magnetic buttons on the page per the motion budget.
+
 - [ ] Implement `components/home/LiveDropSection.tsx` (Server Component; receives the already-built view + the server `now`/deadline; renders states via the derived `availability`; the early-access unlock hint shows only when something is gated; `notify me` is visual-only):
+
   ```tsx
   import { getTranslations } from 'next-intl/server';
   import { Link } from '@/lib/i18n/navigation';
@@ -8502,7 +9128,9 @@ Assemble the Tier-1 Home page. It is a Server Component: it reads `authService.g
         <div className="mx-auto flex max-w-[1440px] flex-col gap-10">
           <header className="flex flex-wrap items-end justify-between gap-6">
             <div>
-              <p className="font-mono text-sm uppercase tracking-[0.3em] text-blaze">{t('label')}</p>
+              <p className="font-mono text-sm uppercase tracking-[0.3em] text-blaze">
+                {t('label')}
+              </p>
               <h2 className="display mt-2 text-5xl text-paper">{drop.name[locale]}</h2>
               <p className="mt-3 text-sm text-smoke-300">
                 {t('releaseAtLabel')}: <FormattedDate iso={drop.releaseAt} />
@@ -8514,7 +9142,10 @@ Assemble the Tier-1 Home page. It is a Server Component: it reads `authService.g
           </header>
 
           {anyEarlyAccessGated && (
-            <p data-testid="early-access-hint" className="font-mono text-xs uppercase tracking-[0.18em] text-smoke-300">
+            <p
+              data-testid="early-access-hint"
+              className="font-mono text-xs uppercase tracking-[0.18em] text-smoke-300"
+            >
               {t('unlockHint')}
             </p>
           )}
@@ -8561,8 +9192,11 @@ Assemble the Tier-1 Home page. It is a Server Component: it reads `authService.g
     );
   }
   ```
-  > `viewTransitionName` keyed on `product-${productId}` is locale-stable per the View Transitions convention. The `Link` href object form matches next-intl's typed-routing API for `/product/[slug]`; if the project's `navigation.ts` uses untyped routes, pass `href={\`/product/${p.slug}\`}` instead — keep it to the exact `Link` contract.
+
+  > `viewTransitionName` keyed on `product-${productId}` is locale-stable per the View Transitions convention. The `Link` href object form matches next-intl's typed-routing API for `/product/[slug]`; if the project's `navigation.ts` uses untyped routes, pass `href={\`/product/${p.slug}\`}`instead — keep it to the exact`Link` contract.
+
 - [ ] Implement `components/home/LookbookTeaser.tsx` (Server Component; light "paper" surface — note lime is forbidden here, only paper/ink/blaze-on-light):
+
   ```tsx
   import { getTranslations } from 'next-intl/server';
   import { Link } from '@/lib/i18n/navigation';
@@ -8584,7 +9218,9 @@ Assemble the Tier-1 Home page. It is a Server Component: it reads `authService.g
     );
   }
   ```
+
 - [ ] Implement `app/[locale]/(shop)/page.tsx` (the Server Component; reads `now` on the server once, gets the current user, builds the view, composes the sections + the demoted marquee + featured grid). The marquee shows `SOLD OUT` only when every drop lead variant is sold out, else `DROP`:
+
   ```tsx
   import { getTranslations, setRequestLocale } from 'next-intl/server';
   import { buildHomeView } from '@/lib/services/home-view';
@@ -8637,7 +9273,9 @@ Assemble the Tier-1 Home page. It is a Server Component: it reads `authService.g
     );
   }
   ```
+
   > `ProductCard`'s props must match its phase contract exactly (it owns its own `view-transition-name` keyed on `product.id`); if its signature differs (e.g. `ProductCard({ product })` without `locale`), call it with that exact shape — do not add props it does not declare.
+
 - [ ] Typecheck the whole page graph:
   ```
   npm run typecheck
@@ -8654,20 +9292,26 @@ Assemble the Tier-1 Home page. It is a Server Component: it reads `authService.g
 Prove the LIVE DROP behaviors with Playwright against `npm run dev`, in both `/en` and `/th`, plus a reduced-motion run, and capture screenshots for the case study. Asserts: countdown ticks (a digit changes within ~2s), countdown→LIVE flip when past the deadline, derived availability states render (sold_out badge + notify-me; low_stock count), marquee shows English `DROP`/`SOLD OUT` in BOTH locales, early-access gating shows the hint for a guest and the seed member sees `live`, and reduced motion never leaves content at `opacity:0`.
 
 **Files**
+
 - Create: `tests/e2e/home-drop.en.spec.ts`, `tests/e2e/home-drop.th.spec.ts`
 - Modify: `tests/e2e/reduced-motion.spec.ts` (add a Home/marquee assertion block)
 
 **Interfaces**
+
 - Consumes: Playwright `test`/`expect`; the running dev server at the configured `baseURL`; seed data (3 sold-out + 4 low-stock variants; seed member `member@vanta.shop` / `vanta-demo`).
 - Produces: passing E2E specs + saved screenshots `home-drop.en.png`, `home-drop.th.png`, `home-drop.reduced.png`.
 
 **Steps**
+
 - [ ] Write `tests/e2e/home-drop.en.spec.ts`:
+
   ```ts
   import { test, expect } from '@playwright/test';
 
   test.describe('Home LIVE DROP — en', () => {
-    test('hero, marquee (English DROP), and a derived availability state render', async ({ page }) => {
+    test('hero, marquee (English DROP), and a derived availability state render', async ({
+      page,
+    }) => {
       await page.goto('/en');
       await expect(page.getByTestId('hero')).toBeVisible();
 
@@ -8705,13 +9349,17 @@ Prove the LIVE DROP behaviors with Playwright against `npm run dev`, in both `/e
 
     test('sold-out drop product shows SOLD OUT badge + visual-only Notify me', async ({ page }) => {
       await page.goto('/en');
-      const soldOut = page.getByTestId('drop-product').filter({ has: page.getByTestId('badge-sold-out') });
+      const soldOut = page
+        .getByTestId('drop-product')
+        .filter({ has: page.getByTestId('badge-sold-out') });
       if (await soldOut.count()) {
         await expect(soldOut.first().getByTestId('notify-me')).toBeVisible();
       }
     });
 
-    test('guest sees the early-access unlock hint; seed member unlocks to live', async ({ page }) => {
+    test('guest sees the early-access unlock hint; seed member unlocks to live', async ({
+      page,
+    }) => {
       await page.goto('/en');
       // Guest path: hint visible only when a drop variant is gated.
       const hint = page.getByTestId('early-access-hint');
@@ -8731,7 +9379,9 @@ Prove the LIVE DROP behaviors with Playwright against `npm run dev`, in both `/e
     });
   });
   ```
+
 - [ ] Write `tests/e2e/home-drop.th.spec.ts` (mirrors EN; asserts the marquee is STILL English and Thai badges render):
+
   ```ts
   import { test, expect } from '@playwright/test';
 
@@ -8756,13 +9406,17 @@ Prove the LIVE DROP behaviors with Playwright against `npm run dev`, in both `/e
     });
   });
   ```
+
 - [ ] Add a Home block to `tests/e2e/reduced-motion.spec.ts` (content visible-by-default; no element stuck at opacity 0; marquee static):
+
   ```ts
   import { test, expect } from '@playwright/test';
 
   // This project runs under the reduced-motion Playwright project (prefers-reduced-motion: reduce).
   test.describe('Home — reduced motion', () => {
-    test('hero content is visible by default (never stuck at opacity:0) and marquee is static', async ({ page }) => {
+    test('hero content is visible by default (never stuck at opacity:0) and marquee is static', async ({
+      page,
+    }) => {
       await page.goto('/en');
       const hero = page.getByTestId('hero');
       await expect(hero).toBeVisible();
@@ -8779,10 +9433,14 @@ Prove the LIVE DROP behaviors with Playwright against `npm run dev`, in both `/e
       const animName = await strip.evaluate((el) => getComputedStyle(el).animationName);
       expect(animName).toBe('none');
 
-      await page.screenshot({ path: 'tests/e2e/__screenshots__/home-drop.reduced.png', fullPage: true });
+      await page.screenshot({
+        path: 'tests/e2e/__screenshots__/home-drop.reduced.png',
+        fullPage: true,
+      });
     });
   });
   ```
+
 - [ ] Start the dev server in the background, then run the specs:
   ```
   npm run dev   # background; serves baseURL from playwright.config.ts
@@ -8823,6 +9481,7 @@ Here is Phase 5, ready to paste into the plan document.
 This phase ships the Product Detail Page as a focused proof that **the variant is the purchasable unit (SKU)** and that availability is derived identically everywhere. It builds the sticky buy panel, the swatch gallery (color selection swaps the gallery), the size grid (greyed/sold-out sizes derived from each variant's availability), the low-stock badge, the add-to-cart button wired to the Phase 3 `addToCart` Server Action, an optional Size & Fit drawer (cm/in), and the View Transition IN keyed on `product-${product.id}` (locale-stable) with a reduced-motion hard cut. It renders both locales via `generateStaticParams`. **CUT:** reviews and cross-sell (per spec §7 PDP scope).
 
 Dependencies consumed from earlier phases (treated as verbatim law — do not redefine):
+
 - Domain barrel `@/lib/domain` (`Product`, `Variant`, `Availability`, `ProductImage`, `Money`, `Locale`, `User`, `Drop`).
 - Data seam `@/lib/data` (`products`, `collections`, `orders`, `users`, `cart`).
 - `deriveAvailability(variant, drop, now, user)` and `LOW_STOCK_THRESHOLD` from `@/lib/services/availability`.
@@ -8843,29 +9502,32 @@ Dependencies consumed from earlier phases (treated as verbatim law — do not re
 A pure module that, given a product + the active drop + current user + the selected `{ size, color }`, computes everything the PDP UI renders: the resolved `Variant | null`, its derived `Availability`, whether each size in `optionAxes.size` is selectable for the chosen color (and its per-size availability), the ordered color list, and the gallery images for the selected color. Keeping this pure makes the sticky panel, size grid, and swatch gallery dumb renderers and lets us unit-test the SOLD-OUT/low-stock derivation without a DOM.
 
 #### Files
+
 - **Create:** `vanta/lib/pdp/selection.ts`
 - **Test:** `vanta/tests/unit/pdp-selection.test.ts`
 
 #### Interfaces
+
 - **Consumes:**
   - `import type { Product, Variant, Availability, ProductImage, Drop, User } from '@/lib/domain'`
   - `import { deriveAvailability } from '@/lib/services/availability'` — `deriveAvailability(variant: Variant, drop: Drop | null, now: Date, user: User | null): Availability`
 - **Produces:**
+
   ```ts
   export type SizeOption = {
     size: string;
-    variantId: string | null;       // null => no SKU exists for (size, selectedColor)
+    variantId: string | null; // null => no SKU exists for (size, selectedColor)
     availability: Availability | null;
-    selectable: boolean;             // false when sold_out OR no variant exists
+    selectable: boolean; // false when sold_out OR no variant exists
   };
 
   export type PdpView = {
-    colors: string[];                          // optionAxes.color order
-    sizes: SizeOption[];                        // optionAxes.size order, scoped to selectedColor
-    selectedVariant: Variant | null;           // resolved from { size, color }
+    colors: string[]; // optionAxes.color order
+    sizes: SizeOption[]; // optionAxes.size order, scoped to selectedColor
+    selectedVariant: Variant | null; // resolved from { size, color }
     selectedAvailability: Availability | null; // deriveAvailability(selectedVariant, ...)
-    gallery: ProductImage[];                    // imagesByColor[selectedColor] ?? []
-    lowStockRemaining: number | null;          // selectedVariant.stock when selectedAvailability === 'low_stock', else null
+    gallery: ProductImage[]; // imagesByColor[selectedColor] ?? []
+    lowStockRemaining: number | null; // selectedVariant.stock when selectedAvailability === 'low_stock', else null
   };
 
   export function buildPdpView(
@@ -8878,7 +9540,9 @@ A pure module that, given a product + the active drop + current user + the selec
   ```
 
 #### Steps
+
 1. - [ ] Write the failing test file `vanta/tests/unit/pdp-selection.test.ts`:
+
    ```ts
    import { describe, it, expect } from 'vitest';
    import { buildPdpView } from '@/lib/pdp/selection';
@@ -8886,12 +9550,7 @@ A pure module that, given a product + the active drop + current user + the selec
 
    const money = (amount: number) => ({ amount, currency: 'THB' as const });
 
-   function variant(
-     id: string,
-     size: string,
-     color: string,
-     stock: number,
-   ): Variant {
+   function variant(id: string, size: string, color: string, stock: number): Variant {
      return {
        id,
        sku: `VANTA-${id}`,
@@ -8912,10 +9571,22 @@ A pure module that, given a product + the active drop + current user + the selec
        variants,
        imagesByColor: {
          Ink: [
-           { id: 'img_ink', url: '/ink.jpg', alt: { en: 'Ink', th: 'อิงค์' }, width: 1200, height: 1500 },
+           {
+             id: 'img_ink',
+             url: '/ink.jpg',
+             alt: { en: 'Ink', th: 'อิงค์' },
+             width: 1200,
+             height: 1500,
+           },
          ],
          Bone: [
-           { id: 'img_bone', url: '/bone.jpg', alt: { en: 'Bone', th: 'โบน' }, width: 1200, height: 1500 },
+           {
+             id: 'img_bone',
+             url: '/bone.jpg',
+             alt: { en: 'Bone', th: 'โบน' },
+             width: 1200,
+             height: 1500,
+           },
          ],
        },
        collectionIds: ['col_drop_001'],
@@ -8943,10 +9614,7 @@ A pure module that, given a product + the active drop + current user + the selec
      });
 
      it('marks a sold-out size (stock 0) as not selectable with sold_out availability', () => {
-       const p = product([
-         variant('v1', 'S', 'Ink', 0),
-         variant('v2', 'M', 'Ink', 10),
-       ]);
+       const p = product([variant('v1', 'S', 'Ink', 0), variant('v2', 'M', 'Ink', 10)]);
        const view = buildPdpView(p, null, NOW, null, { size: null, color: 'Ink' });
        const s = view.sizes.find((x) => x.size === 'S')!;
        expect(s.availability).toBe('sold_out');
@@ -8974,26 +9642,23 @@ A pure module that, given a product + the active drop + current user + the selec
 
      it('returns the gallery for the selected color (empty array when missing)', () => {
        const p = product([variant('v1', 'S', 'Ink', 10)]);
-       expect(buildPdpView(p, null, NOW, null, { size: null, color: 'Ink' }).gallery)
-         .toHaveLength(1);
-       expect(buildPdpView(p, null, NOW, null, { size: null, color: 'Missing' }).gallery)
-         .toEqual([]);
+       expect(buildPdpView(p, null, NOW, null, { size: null, color: 'Ink' }).gallery).toHaveLength(
+         1,
+       );
+       expect(buildPdpView(p, null, NOW, null, { size: null, color: 'Missing' }).gallery).toEqual(
+         [],
+       );
      });
    });
    ```
+
 2. - [ ] Run it and SHOW it fails (module does not exist yet):
    - Command: `npm test -- tests/unit/pdp-selection.test.ts`
    - Expected output contains: `Error: Failed to load url @/lib/pdp/selection` (or `Cannot find module '@/lib/pdp/selection'`) and the run ends with `Test Files  1 failed (1)`.
 3. - [ ] Implement the minimal pure module `vanta/lib/pdp/selection.ts`:
+
    ```ts
-   import type {
-     Product,
-     Variant,
-     Availability,
-     ProductImage,
-     Drop,
-     User,
-   } from '@/lib/domain';
+   import type { Product, Variant, Availability, ProductImage, Drop, User } from '@/lib/domain';
    import { deriveAvailability } from '@/lib/services/availability';
 
    export type SizeOption = {
@@ -9012,11 +9677,7 @@ A pure module that, given a product + the active drop + current user + the selec
      lowStockRemaining: number | null;
    };
 
-   function findVariant(
-     product: Product,
-     size: string,
-     color: string,
-   ): Variant | null {
+   function findVariant(product: Product, size: string, color: string): Variant | null {
      return (
        product.variants.find(
          (v) => v.optionValues.size === size && v.optionValues.color === color,
@@ -9048,18 +9709,14 @@ A pure module that, given a product + the active drop + current user + the selec
      });
 
      const selectedVariant =
-       selected.size !== null
-         ? findVariant(product, selected.size, selected.color)
-         : null;
+       selected.size !== null ? findVariant(product, selected.size, selected.color) : null;
 
      const selectedAvailability = selectedVariant
        ? deriveAvailability(selectedVariant, drop, now, user)
        : null;
 
      const lowStockRemaining =
-       selectedVariant && selectedAvailability === 'low_stock'
-         ? selectedVariant.stock
-         : null;
+       selectedVariant && selectedAvailability === 'low_stock' ? selectedVariant.stock : null;
 
      return {
        colors,
@@ -9071,6 +9728,7 @@ A pure module that, given a product + the active drop + current user + the selec
      };
    }
    ```
+
 4. - [ ] Run it and SHOW it passes:
    - Command: `npm test -- tests/unit/pdp-selection.test.ts`
    - Expected output contains: `Test Files  1 passed (1)` and `Tests  5 passed (5)`.
@@ -9087,14 +9745,17 @@ A pure module that, given a product + the active drop + current user + the selec
 A small client component: a tasteful Size & Fit drawer reusing the Phase 2 a11y `Dialog` primitive, showing a static measurements table with a cm/in unit toggle. The conversion is pure and unit-tested (rounding stable in both locales); the drawer is a thin presenter. This is the "if time allows" PDP extra from spec §7, kept small.
 
 #### Files
+
 - **Create:** `vanta/lib/pdp/measurements.ts`, `vanta/components/pdp/SizeFitDrawer.tsx`
 - **Test:** `vanta/tests/unit/pdp-measurements.test.ts`
 
 #### Interfaces
+
 - **Consumes:**
   - `import { Dialog } from '@/components/ui/Dialog'` (Phase 2 a11y dialog: focus trap/return, Esc, `:focus-visible`).
   - `import { useTranslations } from 'next-intl'`
 - **Produces:**
+
   ```ts
   // lib/pdp/measurements.ts
   export type Unit = 'cm' | 'in';
@@ -9111,7 +9772,9 @@ A small client component: a tasteful Size & Fit drawer reusing the Phase 2 a11y 
   ```
 
 #### Steps
+
 1. - [ ] Write the failing test `vanta/tests/unit/pdp-measurements.test.ts`:
+
    ```ts
    import { describe, it, expect } from 'vitest';
    import { toUnit, formatMeasure } from '@/lib/pdp/measurements';
@@ -9134,10 +9797,12 @@ A small client component: a tasteful Size & Fit drawer reusing the Phase 2 a11y 
      });
    });
    ```
+
 2. - [ ] Run it and SHOW it fails:
    - Command: `npm test -- tests/unit/pdp-measurements.test.ts`
    - Expected output contains: `Cannot find module '@/lib/pdp/measurements'` and `Test Files  1 failed (1)`.
 3. - [ ] Implement `vanta/lib/pdp/measurements.ts`:
+
    ```ts
    export type Unit = 'cm' | 'in';
    export type SizeRow = { size: string; chestCm: number; lengthCm: number };
@@ -9153,10 +9818,12 @@ A small client component: a tasteful Size & Fit drawer reusing the Phase 2 a11y 
      return `${toUnit(valueCm, unit)} ${unit}`;
    }
    ```
+
 4. - [ ] Run it and SHOW it passes:
    - Command: `npm test -- tests/unit/pdp-measurements.test.ts`
    - Expected output contains: `Test Files  1 passed (1)` and `Tests  4 passed (4)`.
 5. - [ ] Implement the drawer `vanta/components/pdp/SizeFitDrawer.tsx` (complete code):
+
    ```tsx
    'use client';
 
@@ -9230,6 +9897,7 @@ A small client component: a tasteful Size & Fit drawer reusing the Phase 2 a11y 
      );
    }
    ```
+
 6. - [ ] Add the `pdp.sizeFit` namespace keys to BOTH message files (mirror keyset). In `vanta/messages/en.json` add under a top-level `pdp` object:
    ```json
    "pdp": {
@@ -9270,10 +9938,12 @@ A small client component: a tasteful Size & Fit drawer reusing the Phase 2 a11y 
 The client interactivity for the PDP, composed into a single island that owns the selected `{ size, color }` state and drives every dumb child from `buildPdpView` (Task 5.1). Swatch selection swaps the gallery; the size grid greys/disables sold-out and missing sizes; the low-stock badge shows "Only N left"; the add-to-cart button is wired to the Phase 3 `addToCart` action with `useOptimistic` and reconciles the Zustand mirror via `replaceFromServer`. SOLD OUT (no buyable size) swaps the CTA for a visual-only "Notify me" button (no backend).
 
 #### Files
+
 - **Create:** `vanta/components/pdp/SwatchGallery.tsx`, `vanta/components/pdp/SizeGrid.tsx`, `vanta/components/pdp/AddToCartButton.tsx`, `vanta/components/pdp/StickyBuyPanel.tsx`, `vanta/components/pdp/PdpClient.tsx`
 - **Test:** `vanta/tests/e2e/pdp.en.spec.ts`, `vanta/tests/e2e/pdp.th.spec.ts`
 
 #### Interfaces
+
 - **Consumes:**
   - `import { buildPdpView, type PdpView } from '@/lib/pdp/selection'`
   - `import type { Product, Variant, Availability, Drop, User, Locale } from '@/lib/domain'`
@@ -9283,6 +9953,7 @@ The client interactivity for the PDP, composed into a single island that owns th
   - `import { SizeFitDrawer } from '@/components/pdp/SizeFitDrawer'`; `import type { SizeRow } from '@/lib/pdp/measurements'`
   - `import { useTranslations } from 'next-intl'`
 - **Produces:**
+
   ```ts
   // SwatchGallery.tsx
   export function SwatchGallery(props: {
@@ -9307,15 +9978,17 @@ The client interactivity for the PDP, composed into a single island that owns th
   }): JSX.Element;
 
   // StickyBuyPanel.tsx
-  export function StickyBuyPanel(props: {
-    title: string;
-    view: PdpView;
-    locale: Locale;
-    onOpenSizeFit: () => void;
-  } & React.ComponentProps<typeof SizeGrid> & {
-    variant: Variant | null;
-    availability: Availability | null;
-  }): JSX.Element;
+  export function StickyBuyPanel(
+    props: {
+      title: string;
+      view: PdpView;
+      locale: Locale;
+      onOpenSizeFit: () => void;
+    } & React.ComponentProps<typeof SizeGrid> & {
+        variant: Variant | null;
+        availability: Availability | null;
+      },
+  ): JSX.Element;
 
   // PdpClient.tsx — the island the RSC page renders
   export function PdpClient(props: {
@@ -9329,7 +10002,9 @@ The client interactivity for the PDP, composed into a single island that owns th
   ```
 
 #### Steps
+
 1. - [ ] Implement `vanta/components/pdp/SwatchGallery.tsx`. The container carries `view-transition-name: product-${productId}` (locale-stable) so the enter transition pairs with the `ProductCard`; the swatch row swaps which color's images render:
+
    ```tsx
    'use client';
 
@@ -9374,10 +10049,7 @@ The client interactivity for the PDP, composed into a single island that owns th
          </div>
          <div className="grid grid-cols-4 gap-3" aria-hidden="true">
            {view.gallery.slice(1).map((img) => (
-             <div
-               key={img.id}
-               className="relative aspect-[4/5] overflow-hidden bg-smoke-900"
-             >
+             <div key={img.id} className="relative aspect-[4/5] overflow-hidden bg-smoke-900">
                <Image
                  src={img.url}
                  alt={img.alt[locale]}
@@ -9388,11 +10060,7 @@ The client interactivity for the PDP, composed into a single island that owns th
              </div>
            ))}
          </div>
-         <div
-           role="radiogroup"
-           aria-label={t('colorLabel')}
-           className="flex gap-2"
-         >
+         <div role="radiogroup" aria-label={t('colorLabel')} className="flex gap-2">
            {view.colors.map((color) => (
              <button
                key={color}
@@ -9427,7 +10095,9 @@ The client interactivity for the PDP, composed into a single island that owns th
      return map[color] ?? '#2A2A2A';
    }
    ```
+
 2. - [ ] Implement `vanta/components/pdp/SizeGrid.tsx`. Each size button is disabled and greyed when not `selectable` (sold-out or no SKU); aria reflects state:
+
    ```tsx
    'use client';
 
@@ -9483,7 +10153,9 @@ The client interactivity for the PDP, composed into a single island that owns th
      );
    }
    ```
+
 3. - [ ] Implement `vanta/components/pdp/AddToCartButton.tsx`. Uses `useOptimistic` for the in-flight add and a `useTransition`-wrapped action call, reconciling the Zustand mirror from the action's authoritative `Cart` return. Disabled until a buyable variant is selected; SOLD OUT renders the visual-only "Notify me":
+
    ```tsx
    'use client';
 
@@ -9552,7 +10224,9 @@ The client interactivity for the PDP, composed into a single island that owns th
      );
    }
    ```
+
 4. - [ ] Implement `vanta/components/pdp/StickyBuyPanel.tsx`. Sticky on desktop; shows title, price (via `formatMoney`), the low-stock badge ("Only N left") in blaze, the size grid, the add-to-cart button, and the Size & Fit trigger:
+
    ```tsx
    'use client';
 
@@ -9584,14 +10258,11 @@ The client interactivity for the PDP, composed into a single island that owns th
    }) {
      const t = useTranslations('pdp');
      // Display price: selected variant, else the first variant of the product view.
-     const priceVariant = variant ?? view.sizes
-       .map((s) => s.variantId)
-       .find((id): id is string => id !== null)
-       ? variant
-       : null;
-     const price =
-       (variant ?? null)?.price ??
-       (view.gallery.length ? undefined : undefined);
+     const priceVariant =
+       (variant ?? view.sizes.map((s) => s.variantId).find((id): id is string => id !== null))
+         ? variant
+         : null;
+     const price = (variant ?? null)?.price ?? (view.gallery.length ? undefined : undefined);
 
      return (
        <aside className="lg:sticky lg:top-24 flex flex-col gap-6 self-start">
@@ -9623,11 +10294,7 @@ The client interactivity for the PDP, composed into a single island that owns th
            </p>
          ) : null}
 
-         <SizeGrid
-           view={view}
-           selectedSize={selectedSize}
-           onSelectSize={onSelectSize}
-         />
+         <SizeGrid view={view} selectedSize={selectedSize} onSelectSize={onSelectSize} />
 
          <AddToCartButton variant={variant} availability={availability} />
 
@@ -9652,7 +10319,9 @@ The client interactivity for the PDP, composed into a single island that owns th
      return { amount: 0, currency: 'THB' as const };
    }
    ```
+
    > Simplify the price display: the PdpClient (next step) always knows the product's representative price. Replace the price block above with the cleaner version below so `StickyBuyPanel` takes an explicit `displayPrice` prop and never guesses. Edit `StickyBuyPanel.tsx` to the final form:
+
    ```tsx
    'use client';
 
@@ -9705,11 +10374,7 @@ The client interactivity for the PDP, composed into a single island that owns th
            </p>
          ) : null}
 
-         <SizeGrid
-           view={view}
-           selectedSize={selectedSize}
-           onSelectSize={onSelectSize}
-         />
+         <SizeGrid view={view} selectedSize={selectedSize} onSelectSize={onSelectSize} />
 
          <AddToCartButton variant={variant} availability={availability} />
 
@@ -9725,7 +10390,9 @@ The client interactivity for the PDP, composed into a single island that owns th
      );
    }
    ```
+
 5. - [ ] Implement the island `vanta/components/pdp/PdpClient.tsx` that owns selection state, recomputes the view with `buildPdpView`, and lays out gallery + sticky panel + drawer. It defaults the color to the first axis value and computes a representative `displayPrice` (the first variant's price) so the panel never guesses:
+
    ```tsx
    'use client';
 
@@ -9752,9 +10419,7 @@ The client interactivity for the PDP, composed into a single island that owns th
      locale: Locale;
      sizeFitRows: SizeRow[];
    }) {
-     const [selectedColor, setSelectedColor] = useState(
-       product.optionAxes.color[0],
-     );
+     const [selectedColor, setSelectedColor] = useState(product.optionAxes.color[0]);
      const [selectedSize, setSelectedSize] = useState<string | null>(null);
      const [sizeFitOpen, setSizeFitOpen] = useState(false);
 
@@ -9769,8 +10434,7 @@ The client interactivity for the PDP, composed into a single island that owns th
        [product, drop, now, user, selectedSize, selectedColor],
      );
 
-     const displayPrice: Money =
-       product.variants[0]?.price ?? { amount: 0, currency: 'THB' };
+     const displayPrice: Money = product.variants[0]?.price ?? { amount: 0, currency: 'THB' };
 
      // Changing color resets the size if the new color lacks that SKU.
      function handleSelectColor(color: string) {
@@ -9778,8 +10442,7 @@ The client interactivity for the PDP, composed into a single island that owns th
        setSelectedSize((prev) =>
          prev &&
          product.variants.some(
-           (v) =>
-             v.optionValues.color === color && v.optionValues.size === prev,
+           (v) => v.optionValues.color === color && v.optionValues.size === prev,
          )
            ? prev
            : null,
@@ -9815,6 +10478,7 @@ The client interactivity for the PDP, composed into a single island that owns th
      );
    }
    ```
+
 6. - [ ] Add the remaining `pdp` namespace keys to BOTH message files (siblings of `sizeFit` added in Task 5.2). Add to the `pdp` object in `vanta/messages/en.json`:
    ```json
    "addToCart": "Add to cart",
@@ -9848,10 +10512,12 @@ The client interactivity for the PDP, composed into a single island that owns th
 The Server Component page that reads the product through the `@/lib/data` seam (never reaching into `@/lib/data/mock`), derives the active drop and current user, renders the `PdpClient` island, sets bilingual metadata, and statically generates one path per `(locale × product slug)`. `now` is computed on the server and passed as an ISO string so the pure derivation stays deterministic and the page is request-context-clean apart from `authService`.
 
 #### Files
+
 - **Create:** `vanta/app/[locale]/(shop)/product/[slug]/page.tsx`
 - **Modify:** `vanta/messages/en.json`, `vanta/messages/th.json` (add `pdp.notFound`)
 
 #### Interfaces
+
 - **Consumes:**
   - `import { products } from '@/lib/data'` — `products.getBySlug(slug): Promise<Product | null>`, `products.list(): Promise<Product[]>`
   - `import { dropService } from '@/lib/services/drop-service'` — `getDropById(dropId): Promise<Drop | null>`
@@ -9873,8 +10539,10 @@ The Server Component page that reads the product through the `@/lib/data` seam (
   ```
 
 #### Steps
+
 1. - [ ] Add the `pdp.notFound` key to BOTH message files. In `vanta/messages/en.json` (`pdp` object): `"notFound": "Product not found"`. In `vanta/messages/th.json` (`pdp` object): `"notFound": "ไม่พบสินค้า"`.
 2. - [ ] Implement `vanta/app/[locale]/(shop)/product/[slug]/page.tsx` (complete code). It statically generates both locales for every product, reads through the seam, and passes a server-computed `now`:
+
    ```tsx
    import type { Metadata } from 'next';
    import { notFound } from 'next/navigation';
@@ -9895,9 +10563,7 @@ The Server Component page that reads the product through the `@/lib/data` seam (
      { size: 'XL', chestCm: 64, lengthCm: 77 },
    ];
 
-   export async function generateStaticParams(): Promise<
-     Array<{ locale: Locale; slug: string }>
-   > {
+   export async function generateStaticParams(): Promise<Array<{ locale: Locale; slug: string }>> {
      const all = await products.list();
      return routing.locales.flatMap((locale) =>
        all.map((product) => ({ locale, slug: product.slug })),
@@ -9955,6 +10621,7 @@ The Server Component page that reads the product through the `@/lib/data` seam (
      );
    }
    ```
+
 3. - [ ] Confirm types clean:
    - Command: `npm run typecheck`
    - Expected output: exits 0.
@@ -9973,22 +10640,24 @@ End-to-end proof against `npm run dev`: in BOTH locales the PDP renders, a sold-
 > This task assumes the Phase 0 seed contains at least one product with a low-stock variant (one of the 4 seeded "Only N left") and a product whose selected color has a fully sold-out size (from the 3 seeded sold-out). Use the actual seeded slugs; the spec below uses `void-tee` as the buyable example and `phantom-hoodie` as the one with a sold-out size — replace with the real seed slugs from Phase 0's `lib/data/mock/seed/products.ts` when writing the test.
 
 #### Files
+
 - **Create:** `vanta/tests/e2e/pdp.en.spec.ts`, `vanta/tests/e2e/pdp.th.spec.ts`
 - **Modify:** `vanta/tests/e2e/reduced-motion.spec.ts` (add a PDP enter-transition assertion)
 
 #### Interfaces
+
 - **Consumes:** Playwright `test`, `expect`; the running dev server (`playwright.config.ts` `webServer` runs `npm run dev`); the `data-testid` hooks added in Task 5.3 (`swatch-<color>`, `size-<S>`, `add-to-cart`, `notify-me`, `low-stock-badge`, `pdp-price`, `open-size-fit`); the cart drawer / header cart-count selector from Phase 3 (`data-testid="cart-count"`).
 - **Produces:** passing E2E specs in both locales plus a reduced-motion assertion; screenshots written under `vanta/test-results/`.
 
 #### Steps
+
 1. - [ ] Write `vanta/tests/e2e/pdp.en.spec.ts` (replace `void-tee` / `phantom-hoodie` / size labels with the real seeded values):
+
    ```ts
    import { test, expect } from '@playwright/test';
 
    test.describe('PDP — English', () => {
-     test('low-stock badge, swatch swaps gallery, size gating, add to cart', async ({
-       page,
-     }) => {
+     test('low-stock badge, swatch swaps gallery, size gating, add to cart', async ({ page }) => {
        await page.goto('/en/product/void-tee');
 
        // Price renders via formatMoney (baht sign, no decimals).
@@ -10002,31 +10671,19 @@ End-to-end proof against `npm run dev`: in BOTH locales the PDP renders, a sold-
        await expect(page.getByTestId('add-to-cart')).toBeEnabled();
 
        // Swatch selection swaps the gallery hero image src.
-       const heroBefore = await page
-         .locator('[style*="product-"] img')
-         .first()
-         .getAttribute('src');
+       const heroBefore = await page.locator('[style*="product-"] img').first().getAttribute('src');
        await page.getByTestId('swatch-Bone').click();
-       const heroAfter = await page
-         .locator('[style*="product-"] img')
-         .first()
-         .getAttribute('src');
+       const heroAfter = await page.locator('[style*="product-"] img').first().getAttribute('src');
        expect(heroAfter).not.toEqual(heroBefore);
 
        // Re-select a size for the new color, then add to cart.
        await page.getByTestId('size-M').click();
-       const countBefore = Number(
-         (await page.getByTestId('cart-count').textContent()) ?? '0',
-       );
+       const countBefore = Number((await page.getByTestId('cart-count').textContent()) ?? '0');
        await page.getByTestId('add-to-cart').click();
-       await expect(page.getByTestId('cart-count')).toHaveText(
-         String(countBefore + 1),
-       );
+       await expect(page.getByTestId('cart-count')).toHaveText(String(countBefore + 1));
      });
 
-     test('sold-out size is disabled and a sold-out product shows Notify me', async ({
-       page,
-     }) => {
+     test('sold-out size is disabled and a sold-out product shows Notify me', async ({ page }) => {
        await page.goto('/en/product/phantom-hoodie');
        // The sold-out size is rendered disabled with strike-through styling.
        const soldOut = page.locator('[data-soldout="true"]').first();
@@ -10048,7 +10705,9 @@ End-to-end proof against `npm run dev`: in BOTH locales the PDP renders, a sold-
      });
    });
    ```
+
 2. - [ ] Write `vanta/tests/e2e/pdp.th.spec.ts` (mirror, asserting Thai copy and that the price still uses the baht sign with Western digits):
+
    ```ts
    import { test, expect } from '@playwright/test';
 
@@ -10065,13 +10724,9 @@ End-to-end proof against `npm run dev`: in BOTH locales the PDP renders, a sold-
        await page.getByTestId('size-M').click();
        await expect(page.getByTestId('add-to-cart')).toContainText('เพิ่มลงตะกร้า');
 
-       const countBefore = Number(
-         (await page.getByTestId('cart-count').textContent()) ?? '0',
-       );
+       const countBefore = Number((await page.getByTestId('cart-count').textContent()) ?? '0');
        await page.getByTestId('add-to-cart').click();
-       await expect(page.getByTestId('cart-count')).toHaveText(
-         String(countBefore + 1),
-       );
+       await expect(page.getByTestId('cart-count')).toHaveText(String(countBefore + 1));
      });
 
      test('low-stock badge uses Thai copy when a low-stock variant is selected', async ({
@@ -10087,12 +10742,12 @@ End-to-end proof against `npm run dev`: in BOTH locales the PDP renders, a sold-
      });
    });
    ```
+
 3. - [ ] Append a PDP enter-transition assertion to `vanta/tests/e2e/reduced-motion.spec.ts`. The `view-transition-name` must equal `product-${id}` and be identical across both locales (locale-stable), and under `prefers-reduced-motion: reduce` the navigation must be an instant hard cut (no transition pseudo-elements lingering). Add:
+
    ```ts
    test.describe('PDP View Transition — locale-stable + reduced-motion hard cut', () => {
-     test('view-transition-name is keyed on product id in both locales', async ({
-       page,
-     }) => {
+     test('view-transition-name is keyed on product id in both locales', async ({ page }) => {
        await page.goto('/en/product/void-tee');
        const enName = await page
          .locator('[style*="view-transition-name"]')
@@ -10115,13 +10770,12 @@ End-to-end proof against `npm run dev`: in BOTH locales the PDP renders, a sold-
        // Content is visible by default; the gallery hero is opaque.
        const hero = page.locator('[style*="product-"] img').first();
        await expect(hero).toBeVisible();
-       const opacity = await hero.evaluate(
-         (el) => getComputedStyle(el).opacity,
-       );
+       const opacity = await hero.evaluate((el) => getComputedStyle(el).opacity);
        expect(Number(opacity)).toBeGreaterThan(0.99);
      });
    });
    ```
+
 4. - [ ] Run the PDP E2E suite and SHOW it passes:
    - Command: `npm run test:e2e -- pdp.en.spec.ts pdp.th.spec.ts reduced-motion.spec.ts`
    - Expected output contains: `passed` for each spec file with no `failed` lines; the run ends with a passing summary (e.g. `X passed`).
@@ -10156,33 +10810,36 @@ This phase is structured so each task ends in an independently testable delivera
 A catalog page must filter products by **variant options** (size, color, category, price range) and sort the result, with availability computed via the locked pure `deriveAvailability`. This is pure logic so it is TDD-first and lives outside React. It operates on `Product[]` (read through the `products` repository in the page) and a `CatalogQuery` parsed from URL search params, producing a stable, locale-independent view model. "Category" maps to `collectionIds` (a product belongs to a category iff it is in that collection); price/size/color/availability are derived from a product's variants.
 
 ### Files
+
 - **Create:** `vanta/lib/catalog/query.ts` (the `CatalogQuery` type + `parseCatalogQuery` + `deriveCatalogView`)
 - **Create:** `vanta/lib/catalog/facets.ts` (`buildFacets` — distinct option values + price bounds for the filter UI)
 - **Test:** `vanta/tests/unit/catalog-query.test.ts`
 
 ### Interfaces
+
 - **Consumes:**
   - `import type { Product, Variant, Drop, User, Availability } from '@/lib/domain'`
   - `import { deriveAvailability } from '@/lib/services/availability'` — `deriveAvailability(variant, drop, now, user): Availability`
 - **Produces:**
+
   ```ts
   // lib/catalog/query.ts
   export type CatalogSort = 'featured' | 'price_asc' | 'price_desc' | 'newest';
   export type CatalogQuery = {
-    sizes: string[];        // optionValues.size to include (OR within axis)
-    colors: string[];       // optionValues.color to include (OR within axis)
-    categories: string[];   // collectionIds to include (OR within axis)
-    minPrice: number | null;  // integer minor units (satang), inclusive
-    maxPrice: number | null;  // integer minor units (satang), inclusive
+    sizes: string[]; // optionValues.size to include (OR within axis)
+    colors: string[]; // optionValues.color to include (OR within axis)
+    categories: string[]; // collectionIds to include (OR within axis)
+    minPrice: number | null; // integer minor units (satang), inclusive
+    maxPrice: number | null; // integer minor units (satang), inclusive
     sort: CatalogSort;
   };
   export type CatalogCard = {
-    productId: string;             // stable id (View Transition key origin)
+    productId: string; // stable id (View Transition key origin)
     slug: string;
-    fromPrice: Money;              // lowest variant price among matching variants
+    fromPrice: Money; // lowest variant price among matching variants
     compareAtFromPrice: Money | null; // present => on sale
-    availability: Availability;    // best (most buyable) availability across matching variants
-    matchedColors: string[];       // colors that survived the filter (drives swatch dots)
+    availability: Availability; // best (most buyable) availability across matching variants
+    matchedColors: string[]; // colors that survived the filter (drives swatch dots)
   };
   export function parseCatalogQuery(params: URLSearchParams): CatalogQuery;
   export function deriveCatalogView(
@@ -10195,8 +10852,8 @@ A catalog page must filter products by **variant options** (size, color, categor
 
   // lib/catalog/facets.ts
   export type CatalogFacets = {
-    sizes: string[];     // distinct, sorted by canonical apparel order then alpha
-    colors: string[];    // distinct, alpha
+    sizes: string[]; // distinct, sorted by canonical apparel order then alpha
+    colors: string[]; // distinct, alpha
     priceBounds: { min: number; max: number }; // minor units across all variants
   };
   export function buildFacets(products: Product[]): CatalogFacets;
@@ -10204,7 +10861,7 @@ A catalog page must filter products by **variant options** (size, color, categor
 
 ### Steps
 
-- [ ] **Write the failing test** at `vanta/tests/unit/catalog-query.test.ts`. It pins parsing, filtering across the variant axes, price-window inclusivity, sort, and the availability roll-up (a product's card availability is the *most buyable* of its matching variants, using the locked precedence `sold_out > coming_soon > early_access > low_stock > live` — so a card is `live` if any matching variant is `live`).
+- [ ] **Write the failing test** at `vanta/tests/unit/catalog-query.test.ts`. It pins parsing, filtering across the variant axes, price-window inclusivity, sort, and the availability roll-up (a product's card availability is the _most buyable_ of its matching variants, using the locked precedence `sold_out > coming_soon > early_access > low_stock > live` — so a card is `live` if any matching variant is `live`).
 
   ```ts
   import { describe, it, expect } from 'vitest';
@@ -10285,7 +10942,13 @@ A catalog page must filter products by **variant options** (size, color, categor
           variant({ id: 'p1-b', price: thb(149000) }),
         ],
       });
-      const view = deriveCatalogView([p], parseCatalogQuery(new URLSearchParams('')), {}, now, null);
+      const view = deriveCatalogView(
+        [p],
+        parseCatalogQuery(new URLSearchParams('')),
+        {},
+        now,
+        null,
+      );
       expect(view).toHaveLength(1);
       expect(view[0]).toMatchObject({ productId: 'p1', slug: 'tee', fromPrice: thb(149000) });
     });
@@ -10362,7 +11025,13 @@ A catalog page must filter products by **variant options** (size, color, categor
           variant({ id: 'p1-b', price: thb(159000) }),
         ],
       });
-      const view = deriveCatalogView([p], parseCatalogQuery(new URLSearchParams('')), {}, now, null);
+      const view = deriveCatalogView(
+        [p],
+        parseCatalogQuery(new URLSearchParams('')),
+        {},
+        now,
+        null,
+      );
       expect(view[0].compareAtFromPrice).toEqual(thb(199000));
     });
 
@@ -10375,16 +11044,42 @@ A catalog page must filter products by **variant options** (size, color, categor
           variant({ id: 'p1-low', stock: 3, availability: 'low_stock' }),
         ],
       });
-      const view = deriveCatalogView([p], parseCatalogQuery(new URLSearchParams('')), {}, now, null);
+      const view = deriveCatalogView(
+        [p],
+        parseCatalogQuery(new URLSearchParams('')),
+        {},
+        now,
+        null,
+      );
       expect(view[0].availability).toBe('low_stock'); // low_stock is more buyable than sold_out
     });
 
     it('sorts price_asc by fromPrice and newest by reverse input order', () => {
-      const cheap = product({ id: 'a', slug: 'a', variants: [variant({ id: 'a-v', price: thb(100000) })] });
-      const dear = product({ id: 'b', slug: 'b', variants: [variant({ id: 'b-v', price: thb(500000) })] });
-      const asc = deriveCatalogView([dear, cheap], parseCatalogQuery(new URLSearchParams('sort=price_asc')), {}, now, null);
+      const cheap = product({
+        id: 'a',
+        slug: 'a',
+        variants: [variant({ id: 'a-v', price: thb(100000) })],
+      });
+      const dear = product({
+        id: 'b',
+        slug: 'b',
+        variants: [variant({ id: 'b-v', price: thb(500000) })],
+      });
+      const asc = deriveCatalogView(
+        [dear, cheap],
+        parseCatalogQuery(new URLSearchParams('sort=price_asc')),
+        {},
+        now,
+        null,
+      );
       expect(asc.map((c) => c.productId)).toEqual(['a', 'b']);
-      const newest = deriveCatalogView([cheap, dear], parseCatalogQuery(new URLSearchParams('sort=newest')), {}, now, null);
+      const newest = deriveCatalogView(
+        [cheap, dear],
+        parseCatalogQuery(new URLSearchParams('sort=newest')),
+        {},
+        now,
+        null,
+      );
       expect(newest.map((c) => c.productId)).toEqual(['b', 'a']);
     });
 
@@ -10402,7 +11097,13 @@ A catalog page must filter products by **variant options** (size, color, categor
         dropId: 'drop_1',
         variants: [variant({ id: 'p1-v', stock: 10, availability: 'live' })],
       });
-      const guestView = deriveCatalogView([p], parseCatalogQuery(new URLSearchParams('')), { drop_1: drop }, now, null);
+      const guestView = deriveCatalogView(
+        [p],
+        parseCatalogQuery(new URLSearchParams('')),
+        { drop_1: drop },
+        now,
+        null,
+      );
       expect(guestView[0].availability).toBe('early_access');
     });
   });
@@ -10420,7 +11121,9 @@ A catalog page must filter products by **variant options** (size, color, categor
       const p2 = product({
         id: 'p2',
         slug: 'b',
-        variants: [variant({ id: 'p2-m', optionValues: { size: 'M', color: 'Black' }, price: thb(90000) })],
+        variants: [
+          variant({ id: 'p2-m', optionValues: { size: 'M', color: 'Black' }, price: thb(90000) }),
+        ],
       });
       const facets = buildFacets([p1, p2]);
       expect(facets.sizes).toEqual(['S', 'M', 'L']);
@@ -10431,10 +11134,13 @@ A catalog page must filter products by **variant options** (size, color, categor
   ```
 
 - [ ] **Run it — confirm it fails** (modules do not exist yet):
+
   ```
   npm run test -- tests/unit/catalog-query.test.ts
   ```
+
   Expected output (abridged):
+
   ```
   FAIL  tests/unit/catalog-query.test.ts
   Error: Failed to load url /lib/catalog/query.ts (resolved id: .../lib/catalog/query.ts). Does the file exist?
@@ -10443,6 +11149,7 @@ A catalog page must filter products by **variant options** (size, color, categor
   ```
 
 - [ ] **Implement `vanta/lib/catalog/facets.ts`** (minimal, pure):
+
   ```ts
   import type { Product } from '@/lib/domain';
 
@@ -10493,6 +11200,7 @@ A catalog page must filter products by **variant options** (size, color, categor
   ```
 
 - [ ] **Implement `vanta/lib/catalog/query.ts`** (minimal, pure; availability via the locked `deriveAvailability`):
+
   ```ts
   import type { Product, Variant, Drop, User, Availability, Money } from '@/lib/domain';
   import { deriveAvailability } from '@/lib/services/availability';
@@ -10580,7 +11288,7 @@ A catalog page must filter products by **variant options** (size, color, categor
       const matched = product.variants.filter((v) => variantMatches(product, v, query));
       if (matched.length === 0) continue;
 
-      const drop = product.dropId ? dropsById[product.dropId] ?? null : null;
+      const drop = product.dropId ? (dropsById[product.dropId] ?? null) : null;
 
       let fromPrice = matched[0].price;
       let compareAtFromPrice: Money | null = null;
@@ -10637,10 +11345,13 @@ A catalog page must filter products by **variant options** (size, color, categor
   ```
 
 - [ ] **Run it — confirm it passes:**
+
   ```
   npm run test -- tests/unit/catalog-query.test.ts
   ```
+
   Expected output (abridged):
+
   ```
   ✓ tests/unit/catalog-query.test.ts (11 tests)
    Test Files  1 passed (1)
@@ -10648,9 +11359,11 @@ A catalog page must filter products by **variant options** (size, color, categor
   ```
 
 - [ ] **Run typecheck** to confirm no `any` and no contract drift:
+
   ```
   npm run typecheck
   ```
+
   Expected: exits 0 with no output.
 
 - [ ] **Commit:**
@@ -10666,11 +11379,13 @@ A catalog page must filter products by **variant options** (size, color, categor
 The catalog grid renders product cards. Per the locked motion contract: **NO WebGL in the grid** — the reveal is a CSS `clip-path`/`mask` animation triggered by an `IntersectionObserver` (paused offscreen), gated by `useMotionCapability`; reduced motion = content visible-by-default (no `opacity:0` trap). Each card sets `view-transition-name: product-${product.id}` (the locale-stable card→PDP origin). Price uses `Money`/`formatMoney`; the availability badge reuses the drop badge component. The wishlist heart is visual-only.
 
 ### Files
+
 - **Create:** `vanta/components/product/ProductCard.tsx`
 - **Modify:** `vanta/messages/en.json`, `vanta/messages/th.json` (add the `catalog` namespace keys this task and 6.3 use)
 - **Test:** (component verified via Playwright in Task 6.3's page; this task adds no standalone Vitest — it is presentational UI)
 
 ### Interfaces
+
 - **Consumes:**
   - `import type { CatalogCard } from '@/lib/catalog/query'`
   - `import type { Locale } from '@/lib/domain'`
@@ -10682,11 +11397,11 @@ The catalog grid renders product cards. Per the locked motion contract: **NO Web
   ```ts
   export type ProductCardProps = {
     card: CatalogCard;
-    title: string;        // already-localized title.{locale}
-    imageUrl: string;     // first image for the first matchedColor
-    imageAlt: string;     // already-localized alt
+    title: string; // already-localized title.{locale}
+    imageUrl: string; // first image for the first matchedColor
+    imageAlt: string; // already-localized alt
     locale: Locale;
-    priority?: boolean;   // first row eager-loads
+    priority?: boolean; // first row eager-loads
   };
   export function ProductCard(props: ProductCardProps): JSX.Element;
   ```
@@ -10694,6 +11409,7 @@ The catalog grid renders product cards. Per the locked motion contract: **NO Web
 ### Steps
 
 - [ ] **Add the `catalog` namespace** to `vanta/messages/en.json` (merge into the existing root object):
+
   ```json
   {
     "catalog": {
@@ -10728,6 +11444,7 @@ The catalog grid renders product cards. Per the locked motion contract: **NO Web
   ```
 
 - [ ] **Add the mirror keyset** to `vanta/messages/th.json` (Thai; identical key structure):
+
   ```json
   {
     "catalog": {
@@ -10762,6 +11479,7 @@ The catalog grid renders product cards. Per the locked motion contract: **NO Web
   ```
 
 - [ ] **Implement `vanta/components/product/ProductCard.tsx`** (complete code; client component for the IO reveal + visual-only heart). The card image wrapper carries the View-Transition name keyed on product id. The reveal uses a CSS class toggled by the observer; reduced motion / coarse pointer / Save-Data short-circuits to the visible state:
+
   ```tsx
   'use client';
 
@@ -10875,9 +11593,7 @@ The catalog grid renders product cards. Per the locked motion contract: **NO Web
               ) : null}
             </div>
             {card.matchedColors.length > 1 ? (
-              <span className="text-xs text-smoke-300">
-                {card.matchedColors.length} colors
-              </span>
+              <span className="text-xs text-smoke-300">{card.matchedColors.length} colors</span>
             ) : null}
           </div>
         </Link>
@@ -10885,12 +11601,15 @@ The catalog grid renders product cards. Per the locked motion contract: **NO Web
     );
   }
   ```
+
   > Note: the wishlist button label is supplied by the parent grid (Task 6.3) via `aria-label` on the rendered card wrapper context; the card exposes the toggle and `aria-pressed` so the heart is a real accessible control even though it is visual-only.
 
 - [ ] **Run typecheck:**
+
   ```
   npm run typecheck
   ```
+
   Expected: exits 0 with no output.
 
 - [ ] **Commit:**
@@ -10906,12 +11625,14 @@ The catalog grid renders product cards. Per the locked motion contract: **NO Web
 The Server Component reads `products` and `collections` through the repository barrel (`@/lib/data`), the active drop through `dropService`, and the current user through `authService`, derives the view with `deriveCatalogView`, and renders a `<FilterRail>` + sorted grid of `ProductCard`s. Filters live in the URL (shareable, RSC-friendly) — the `FilterRail` is a small client component that pushes query updates via the localized router. Verified by Playwright (filter narrows the grid; sort reorders; both locales render; reduced-motion shows cards immediately).
 
 ### Files
+
 - **Create:** `vanta/app/[locale]/(shop)/shop/page.tsx`
 - **Create:** `vanta/components/product/CatalogGrid.tsx`
 - **Create:** `vanta/components/product/FilterRail.tsx`
 - **Test:** `vanta/tests/e2e/catalog.spec.ts`
 
 ### Interfaces
+
 - **Consumes:**
   - `import { products, collections } from '@/lib/data'` — `products.list(): Promise<Product[]>`, `collections.list(): Promise<Collection[]>`
   - `import { dropService } from '@/lib/services/drop-service'` — `getActiveDrop(): Promise<Drop | null>`, `getDropById(dropId): Promise<Drop | null>`
@@ -10922,6 +11643,7 @@ The Server Component reads `products` and `collections` through the repository b
   - `import { useRouter, usePathname } from '@/lib/i18n/navigation'`
   - `import { getTranslations, setRequestLocale } from 'next-intl/server'`, `import { useTranslations } from 'next-intl'`
 - **Produces:**
+
   ```ts
   // app/[locale]/(shop)/shop/page.tsx
   export default async function ShopPage(props: {
@@ -10949,6 +11671,7 @@ The Server Component reads `products` and `collections` through the repository b
 ### Steps
 
 - [ ] **Write the failing E2E spec** at `vanta/tests/e2e/catalog.spec.ts`. (Assumes the seed catalog from Phase 2; selectors are stable `data-testid`s set below.)
+
   ```ts
   import { test, expect } from '@playwright/test';
 
@@ -11000,10 +11723,13 @@ The Server Component reads `products` and `collections` through the repository b
   ```
 
 - [ ] **Run it — confirm it fails** (route does not exist → 404):
+
   ```
   npm run test:e2e -- catalog.spec.ts
   ```
+
   Expected output (abridged):
+
   ```
   Error: expect(locator).toBeVisible() failed
   Locator: getByRole('heading', { level: 1 })
@@ -11011,6 +11737,7 @@ The Server Component reads `products` and `collections` through the repository b
   ```
 
 - [ ] **Implement `vanta/components/product/FilterRail.tsx`** (client; mutates the URL via localized router, OR-within-axis toggles, debounced price inputs):
+
   ```tsx
   'use client';
 
@@ -11178,9 +11905,11 @@ The Server Component reads `products` and `collections` through the repository b
     );
   }
   ```
+
   > Note: price inputs accept **integer minor units** (satang) to keep the URL aligned with `deriveCatalogView`'s `minPrice`/`maxPrice` (no float money). The placeholder labels and `t('price')` make the unit explicit in the page chrome.
 
 - [ ] **Implement `vanta/components/product/CatalogGrid.tsx`** (client wrapper rendering the `data-testid`-tagged cards; passes the localized wishlist label down):
+
   ```tsx
   'use client';
 
@@ -11245,6 +11974,7 @@ The Server Component reads `products` and `collections` through the repository b
 - [ ] **Implement `vanta/app/[locale]/(shop)/shop/page.tsx`** (Server Component; reads through repositories/services, derives the view, builds facets, renders rail + grid + sort). The `SortSelect` is a tiny inline client island defined in the page file's sibling to keep the page server-only:
 
   First create the sort island `vanta/components/product/SortSelect.tsx`:
+
   ```tsx
   'use client';
 
@@ -11290,6 +12020,7 @@ The Server Component reads `products` and `collections` through the repository b
   ```
 
   Then the page:
+
   ```tsx
   import { getTranslations, setRequestLocale } from 'next-intl/server';
   import type { Locale } from '@/lib/domain';
@@ -11384,31 +12115,38 @@ The Server Component reads `products` and `collections` through the repository b
   ```
 
 - [ ] **Run typecheck:**
+
   ```
   npm run typecheck
   ```
+
   Expected: exits 0 with no output.
 
 - [ ] **Run the E2E spec — confirm it passes** (start dev/preview per `playwright.config.ts` webServer):
+
   ```
   npm run test:e2e -- catalog.spec.ts
   ```
+
   Expected output (abridged):
+
   ```
   Running 5 tests using ...
     5 passed
   ```
 
 - [ ] **Visual verification** against `npm run dev`. Start the dev server, then capture both locales and the filtered state with the Playwright MCP:
+
   ```
   npm run dev
   ```
+
   Then drive the browser MCP:
   - Navigate `http://localhost:3000/en/shop` → screenshot (`catalog-en.png`); confirm: dark `--ink` canvas, ALL-CAPS Clash Display `SHOP` heading, mono prices `฿x,xxx`, availability badges, asymmetric grid.
   - Navigate `http://localhost:3000/th/shop` → screenshot (`catalog-th.png`); confirm: Kanit heading "ช็อป" NOT all-caps, taller line-height, localized sort label "เรียงตาม", Western-digit prices.
   - Click `filter-size-S`, confirm URL gains `?size=S` and the grid narrows.
   - Emulate reduced motion (`prefers-reduced-motion: reduce`) → reload `/en/shop` → screenshot; confirm cards render at `opacity:1` immediately (no blank reveal).
-  **Exact check:** all three screenshots show a populated, correctly-typeset grid; the reduced-motion run shows visible cards (the IO reveal is bypassed).
+    **Exact check:** all three screenshots show a populated, correctly-typeset grid; the reduced-motion run shows visible cards (the IO reveal is bypassed).
 
 - [ ] **Commit:**
   ```
@@ -11423,11 +12161,13 @@ The Server Component reads `products` and `collections` through the repository b
 A lean (T2) index of all collections: an editorial tile grid, each tile a localized `Link` into `collections/[slug]`. Server Component reading `collections.list()` through the barrel. No WebGL here — CSS hover/reveal only.
 
 ### Files
+
 - **Create:** `vanta/app/[locale]/(shop)/collections/page.tsx`
 - **Modify:** `vanta/messages/en.json`, `vanta/messages/th.json` (add the `collections` namespace)
 - **Test:** `vanta/tests/e2e/collections.spec.ts`
 
 ### Interfaces
+
 - **Consumes:**
   - `import { collections } from '@/lib/data'` — `collections.list(): Promise<Collection[]>`
   - `import { Link } from '@/lib/i18n/navigation'`
@@ -11442,6 +12182,7 @@ A lean (T2) index of all collections: an editorial tile grid, each tile a locali
 ### Steps
 
 - [ ] **Add the `collections` namespace** to `vanta/messages/en.json`:
+
   ```json
   {
     "collections": {
@@ -11456,6 +12197,7 @@ A lean (T2) index of all collections: an editorial tile grid, each tile a locali
   ```
 
 - [ ] **Add the mirror keyset** to `vanta/messages/th.json`:
+
   ```json
   {
     "collections": {
@@ -11470,6 +12212,7 @@ A lean (T2) index of all collections: an editorial tile grid, each tile a locali
   ```
 
 - [ ] **Write the failing E2E spec** at `vanta/tests/e2e/collections.spec.ts`:
+
   ```ts
   import { test, expect } from '@playwright/test';
 
@@ -11491,12 +12234,15 @@ A lean (T2) index of all collections: an editorial tile grid, each tile a locali
   ```
 
 - [ ] **Run it — confirm it fails:**
+
   ```
   npm run test:e2e -- collections.spec.ts
   ```
+
   Expected: `2 failed` (route 404, heading not found).
 
 - [ ] **Implement `vanta/app/[locale]/(shop)/collections/page.tsx`:**
+
   ```tsx
   import { getTranslations, setRequestLocale } from 'next-intl/server';
   import type { Locale } from '@/lib/domain';
@@ -11545,9 +12291,7 @@ A lean (T2) index of all collections: an editorial tile grid, each tile a locali
                   <p className="mt-1 max-w-md text-sm text-smoke-300">
                     {collection.description[locale]}
                   </p>
-                  <span className="mt-3 inline-block text-xs text-blaze">
-                    {t('view')} →
-                  </span>
+                  <span className="mt-3 inline-block text-xs text-blaze">{t('view')} →</span>
                 </div>
               </Link>
             </li>
@@ -11559,10 +12303,12 @@ A lean (T2) index of all collections: an editorial tile grid, each tile a locali
   ```
 
 - [ ] **Run typecheck + the E2E spec — confirm both pass:**
+
   ```
   npm run typecheck
   npm run test:e2e -- collections.spec.ts
   ```
+
   Expected: typecheck exits 0; Playwright `2 passed`.
 
 - [ ] **Commit:**
@@ -11578,6 +12324,7 @@ A lean (T2) index of all collections: an editorial tile grid, each tile a locali
 The one stunning editorial template (T2) — the only catalog-area surface where **WebGL is allowed** (the lockup spec permits hero + lookbook). The page reads the collection + its products through the barrel, renders a full-bleed WebGL displacement hero (gated by `useMotionCapability`; reduced-motion / coarse-pointer / Save-Data → static `<img>` fallback), then an asymmetric editorial sequence of products reusing `ProductCard`. WebGL is encapsulated in a `LookbookHero` client island so the page stays a Server Component.
 
 ### Files
+
 - **Create:** `vanta/app/[locale]/(shop)/collections/[slug]/page.tsx`
 - **Create:** `vanta/components/collection/LookbookHero.tsx`
 - **Create:** `vanta/components/collection/LookbookSequence.tsx`
@@ -11585,6 +12332,7 @@ The one stunning editorial template (T2) — the only catalog-area surface where
 - **Test:** `vanta/tests/e2e/lookbook.spec.ts`
 
 ### Interfaces
+
 - **Consumes:**
   - `import { collections, products } from '@/lib/data'` — `collections.getBySlug(slug): Promise<Collection | null>`, `products.listByCollection(collectionId): Promise<Product[]>`
   - `import { dropService } from '@/lib/services/drop-service'`, `import { authService } from '@/lib/services/auth-service'`
@@ -11593,6 +12341,7 @@ The one stunning editorial template (T2) — the only catalog-area surface where
   - `import { useMotionCapability } from '@/lib/motion/capability'`
   - `import { notFound } from 'next/navigation'`
 - **Produces:**
+
   ```ts
   // page.tsx
   export default async function CollectionDetailPage(props: {
@@ -11602,8 +12351,8 @@ The one stunning editorial template (T2) — the only catalog-area surface where
   // LookbookHero.tsx
   export function LookbookHero(props: {
     imageUrl: string;
-    title: string;     // already-localized
-    subtitle: string;  // already-localized
+    title: string; // already-localized
+    subtitle: string; // already-localized
   }): JSX.Element;
 
   // LookbookSequence.tsx
@@ -11619,6 +12368,7 @@ The one stunning editorial template (T2) — the only catalog-area surface where
 ### Steps
 
 - [ ] **Add `collections.detail`** to `vanta/messages/en.json`:
+
   ```json
   {
     "collections": {
@@ -11629,9 +12379,11 @@ The one stunning editorial template (T2) — the only catalog-area surface where
     }
   }
   ```
+
   (Merge `detail` into the existing `collections` object created in Task 6.4 — do not duplicate the `collections` key.)
 
 - [ ] **Add the mirror** to `vanta/messages/th.json`:
+
   ```json
   {
     "collections": {
@@ -11644,6 +12396,7 @@ The one stunning editorial template (T2) — the only catalog-area surface where
   ```
 
 - [ ] **Write the failing E2E spec** at `vanta/tests/e2e/lookbook.spec.ts`:
+
   ```ts
   import { test, expect } from '@playwright/test';
 
@@ -11681,12 +12434,15 @@ The one stunning editorial template (T2) — the only catalog-area surface where
   ```
 
 - [ ] **Run it — confirm it fails:**
+
   ```
   npm run test:e2e -- lookbook.spec.ts
   ```
+
   Expected: `4 failed` (route 404).
 
 - [ ] **Implement `vanta/components/collection/LookbookHero.tsx`** (WebGL displacement on a single full-bleed plane; gated; static fallback for reduced motion / coarse pointer / Save-Data; cleans up the GL context on unmount). The shader does a subtle pointer-reactive displacement of the hero texture — encapsulated, the only WebGL in the catalog area:
+
   ```tsx
   'use client';
 
@@ -11766,7 +12522,14 @@ The one stunning editorial template (T2) — the only catalog-area surface where
       const texture = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.texImage2D(
-        gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        1,
+        1,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
         new Uint8Array([10, 10, 10, 255]),
       );
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -11854,11 +12617,7 @@ The one stunning editorial template (T2) — the only catalog-area surface where
           className="absolute inset-0 h-full w-full object-cover"
         />
         {animate ? (
-          <canvas
-            ref={canvasRef}
-            aria-hidden="true"
-            className="absolute inset-0 h-full w-full"
-          />
+          <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 h-full w-full" />
         ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/30 to-transparent" />
         <div className="absolute bottom-0 left-0 max-w-[var(--max-w-shell)] p-6 md:p-12">
@@ -11869,9 +12628,11 @@ The one stunning editorial template (T2) — the only catalog-area surface where
     );
   }
   ```
+
   > Note: when `animate` is false the `<canvas>` is never mounted, so the reduced-motion run has zero canvases (asserted in the spec); the static `<img>` is the experience. When `animate` is true the canvas overlays the static image and degrades gracefully if `getContext('webgl')` returns null.
 
 - [ ] **Implement `vanta/components/collection/LookbookSequence.tsx`** (asymmetric editorial layout reusing `ProductCard`):
+
   ```tsx
   'use client';
 
@@ -11923,6 +12684,7 @@ The one stunning editorial template (T2) — the only catalog-area surface where
   ```
 
 - [ ] **Implement `vanta/app/[locale]/(shop)/collections/[slug]/page.tsx`** (Server Component; builds a `CatalogCard` per product via `deriveAvailability` and lowest-price roll-up, mirroring the catalog rules but without filters):
+
   ```tsx
   import { notFound } from 'next/navigation';
   import { getTranslations, setRequestLocale } from 'next-intl/server';
@@ -11950,7 +12712,7 @@ The one stunning editorial template (T2) — the only catalog-area surface where
     now: Date,
     user: Parameters<typeof deriveAvailability>[3],
   ): CatalogCard {
-    const drop = product.dropId ? dropsById[product.dropId] ?? null : null;
+    const drop = product.dropId ? (dropsById[product.dropId] ?? null) : null;
     let fromPrice: Money = product.variants[0]?.price ?? { amount: 0, currency: 'THB' };
     let compareAtFromPrice: Money | null = null;
     let bestBuyability = Number.POSITIVE_INFINITY;
@@ -12042,10 +12804,12 @@ The one stunning editorial template (T2) — the only catalog-area surface where
   ```
 
 - [ ] **Run typecheck + the E2E spec — confirm both pass:**
+
   ```
   npm run typecheck
   npm run test:e2e -- lookbook.spec.ts
   ```
+
   Expected: typecheck exits 0; Playwright `4 passed`.
 
 - [ ] **Visual verification** against `npm run dev`. Drive the browser MCP:
@@ -12053,7 +12817,7 @@ The one stunning editorial template (T2) — the only catalog-area surface where
   - Move the pointer over the hero → confirm subtle ripple displacement reacts (capture a second screenshot mid-interaction).
   - Navigate `http://localhost:3000/th/collections/nightfall` → screenshot (`lookbook-th.png`); confirm Kanit title (no all-caps), taller line-height.
   - Emulate reduced motion → reload → screenshot; confirm the hero shows the static image with NO `<canvas>` (matches the spec assertion) and the title is fully visible.
-  **Exact check:** WebGL hero animates with pointer in the default run; under reduced motion the hero is a static image (zero canvases) and all headings render visibly.
+    **Exact check:** WebGL hero animates with pointer in the default run; under reduced motion the hero is a static image (zero canvases) and all headings render visibly.
 
 - [ ] **Commit:**
   ```
@@ -12068,10 +12832,12 @@ The one stunning editorial template (T2) — the only catalog-area surface where
 Search (T3) is correct + clean. The page reads matches via `products.search(query)` (already implemented in Phase 2's repository), but turning `Product[]` + a query into a renderable, summarized result set (with the same availability roll-up and a normalized/trimmed query echo) is pure logic, so it is TDD-first.
 
 ### Files
+
 - **Create:** `vanta/lib/search/results.ts`
 - **Test:** `vanta/tests/unit/search-results.test.ts`
 
 ### Interfaces
+
 - **Consumes:**
   - `import type { Product, Drop, User, Availability, Money } from '@/lib/domain'`
   - `import { deriveAvailability } from '@/lib/services/availability'`
@@ -12079,9 +12845,9 @@ Search (T3) is correct + clean. The page reads matches via `products.search(quer
 - **Produces:**
   ```ts
   export type SearchResults = {
-    query: string;          // trimmed/collapsed echo of the raw query
-    count: number;          // results.length
-    cards: CatalogCard[];   // same card shape the grid renders
+    query: string; // trimmed/collapsed echo of the raw query
+    count: number; // results.length
+    cards: CatalogCard[]; // same card shape the grid renders
   };
   export function normalizeSearchQuery(raw: string | null | undefined): string;
   export function buildSearchResults(
@@ -12096,6 +12862,7 @@ Search (T3) is correct + clean. The page reads matches via `products.search(quer
 ### Steps
 
 - [ ] **Write the failing test** at `vanta/tests/unit/search-results.test.ts`:
+
   ```ts
   import { describe, it, expect } from 'vitest';
   import { normalizeSearchQuery, buildSearchResults } from '@/lib/search/results';
@@ -12165,12 +12932,15 @@ Search (T3) is correct + clean. The page reads matches via `products.search(quer
   ```
 
 - [ ] **Run it — confirm it fails:**
+
   ```
   npm run test -- tests/unit/search-results.test.ts
   ```
+
   Expected: `FAIL ... Failed to load url /lib/search/results.ts`.
 
 - [ ] **Implement `vanta/lib/search/results.ts`:**
+
   ```ts
   import type { Product, Drop, User, Availability, Money } from '@/lib/domain';
   import { deriveAvailability } from '@/lib/services/availability';
@@ -12201,7 +12971,7 @@ Search (T3) is correct + clean. The page reads matches via `products.search(quer
     now: Date,
     user: User | null,
   ): CatalogCard {
-    const drop = product.dropId ? dropsById[product.dropId] ?? null : null;
+    const drop = product.dropId ? (dropsById[product.dropId] ?? null) : null;
     let fromPrice: Money = product.variants[0]?.price ?? { amount: 0, currency: 'THB' };
     let compareAtFromPrice: Money | null = null;
     let bestBuyability = Number.POSITIVE_INFINITY;
@@ -12246,10 +13016,13 @@ Search (T3) is correct + clean. The page reads matches via `products.search(quer
   ```
 
 - [ ] **Run it — confirm it passes:**
+
   ```
   npm run test -- tests/unit/search-results.test.ts
   ```
+
   Expected output (abridged):
+
   ```
   ✓ tests/unit/search-results.test.ts (5 tests)
    Test Files  1 passed (1)
@@ -12257,9 +13030,11 @@ Search (T3) is correct + clean. The page reads matches via `products.search(quer
   ```
 
 - [ ] **Run typecheck:**
+
   ```
   npm run typecheck
   ```
+
   Expected: exits 0.
 
 - [ ] **Commit:**
@@ -12275,12 +13050,14 @@ Search (T3) is correct + clean. The page reads matches via `products.search(quer
 A correct + clean (T3) search results page: reads `?q=` from the URL, calls `products.search`, builds the view with `buildSearchResults`, renders a small search form + the same `CatalogGrid`. Empty / no-results states handled. Verified by Playwright.
 
 ### Files
+
 - **Create:** `vanta/app/[locale]/(shop)/search/page.tsx`
 - **Create:** `vanta/components/product/SearchForm.tsx`
 - **Modify:** `vanta/messages/en.json`, `vanta/messages/th.json` (add the `search` namespace)
 - **Test:** `vanta/tests/e2e/search.spec.ts`
 
 ### Interfaces
+
 - **Consumes:**
   - `import { products } from '@/lib/data'` — `products.search(query): Promise<Product[]>`
   - `import { dropService } from '@/lib/services/drop-service'`, `import { authService } from '@/lib/services/auth-service'`
@@ -12288,6 +13065,7 @@ A correct + clean (T3) search results page: reads `?q=` from the URL, calls `pro
   - `import { CatalogGrid, type CatalogGridItem } from '@/components/product/CatalogGrid'`
   - `import { useRouter } from '@/lib/i18n/navigation'`
 - **Produces:**
+
   ```ts
   // search/page.tsx
   export default async function SearchPage(props: {
@@ -12302,6 +13080,7 @@ A correct + clean (T3) search results page: reads `?q=` from the URL, calls `pro
 ### Steps
 
 - [ ] **Add the `search` namespace** to `vanta/messages/en.json`:
+
   ```json
   {
     "search": {
@@ -12317,6 +13096,7 @@ A correct + clean (T3) search results page: reads `?q=` from the URL, calls `pro
   ```
 
 - [ ] **Add the mirror** to `vanta/messages/th.json`:
+
   ```json
   {
     "search": {
@@ -12332,6 +13112,7 @@ A correct + clean (T3) search results page: reads `?q=` from the URL, calls `pro
   ```
 
 - [ ] **Write the failing E2E spec** at `vanta/tests/e2e/search.spec.ts`:
+
   ```ts
   import { test, expect } from '@playwright/test';
 
@@ -12362,12 +13143,15 @@ A correct + clean (T3) search results page: reads `?q=` from the URL, calls `pro
   ```
 
 - [ ] **Run it — confirm it fails:**
+
   ```
   npm run test:e2e -- search.spec.ts
   ```
+
   Expected: `4 failed` (route 404).
 
 - [ ] **Implement `vanta/components/product/SearchForm.tsx`** (client; GET-style submit that pushes `?q=` via the localized router):
+
   ```tsx
   'use client';
 
@@ -12389,11 +13173,7 @@ A correct + clean (T3) search results page: reads `?q=` from the URL, calls `pro
     }
 
     return (
-      <form
-        role="search"
-        onSubmit={onSubmit}
-        className="flex w-full max-w-xl items-center gap-2"
-      >
+      <form role="search" onSubmit={onSubmit} className="flex w-full max-w-xl items-center gap-2">
         <input
           type="search"
           name="q"
@@ -12417,6 +13197,7 @@ A correct + clean (T3) search results page: reads `?q=` from the URL, calls `pro
   ```
 
 - [ ] **Implement `vanta/app/[locale]/(shop)/search/page.tsx`** (Server Component):
+
   ```tsx
   import { getTranslations, setRequestLocale } from 'next-intl/server';
   import type { Locale, Drop } from '@/lib/domain';
@@ -12484,9 +13265,7 @@ A correct + clean (T3) search results page: reads `?q=` from the URL, calls `pro
           </p>
         ) : (
           <>
-            <p className="mb-6 text-sm text-smoke-300">
-              {t('count', { count: results.count })}
-            </p>
+            <p className="mb-6 text-sm text-smoke-300">{t('count', { count: results.count })}</p>
             <CatalogGrid items={items} locale={locale} />
           </>
         );
@@ -12510,17 +13289,19 @@ A correct + clean (T3) search results page: reads `?q=` from the URL, calls `pro
   ```
 
 - [ ] **Run typecheck + the E2E spec — confirm both pass:**
+
   ```
   npm run typecheck
   npm run test:e2e -- search.spec.ts
   ```
+
   Expected: typecheck exits 0; Playwright `4 passed`.
 
 - [ ] **Visual verification** against `npm run dev`. Drive the browser MCP:
   - Navigate `http://localhost:3000/en/search` → screenshot; confirm the search form + EN prompt copy.
   - Type `tee`, submit → confirm URL `?q=tee`, results heading "Results for "tee"", and the same reveal grid.
   - Navigate `http://localhost:3000/th/search` → screenshot; confirm Kanit "ค้นหา" heading and Thai placeholder.
-  **Exact check:** prompt, results, and empty states each render with correct localized copy in both locales.
+    **Exact check:** prompt, results, and empty states each render with correct localized copy in both locales.
 
 - [ ] **Commit:**
   ```
@@ -12543,6 +13324,7 @@ A correct + clean (T3) search results page: reads `?q=` from the URL, calls `pro
 ---
 
 **Files delivered by Phase 6:**
+
 - `vanta/lib/catalog/query.ts`, `vanta/lib/catalog/facets.ts`, `vanta/lib/search/results.ts`
 - `vanta/components/product/ProductCard.tsx`, `vanta/components/product/CatalogGrid.tsx`, `vanta/components/product/FilterRail.tsx`, `vanta/components/product/SortSelect.tsx`, `vanta/components/product/SearchForm.tsx`
 - `vanta/components/collection/LookbookHero.tsx`, `vanta/components/collection/LookbookSequence.tsx`
@@ -12571,11 +13353,13 @@ The session cookie is `vanta_session`, signed with HMAC-SHA256 over the user id 
 Three seed users and a credential check, behind the `UserRepository` interface. This is the data the rest of the phase authenticates against.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/data/mock/seed/users.ts`
 - Modify: `d:/MINE/freelance/system/vanta/lib/data/mock/user-repository.mock.ts`
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/user-repository.test.ts`
 
 **Interfaces**
+
 - Consumes: `User`, `Role`, `Address` from `@/lib/domain`; `UserRepository` from `@/lib/data/repositories/user-repository`.
 - Produces: `seedUsers: User[]` and `seedPasswords: Record<string, string>` (userId → demo password) from `seed/users.ts`; a `MockUserRepository` implementing `getById`, `getByEmail`, `verifyCredentials` (verbatim signatures). No widening of `UserRepository`.
 
@@ -12758,11 +13542,13 @@ Three seed users and a credential check, behind the `UserRepository` interface. 
 The session cookie sign/verify primitives and the `AuthService` implementation. This is the only module that touches `cookies()` for the session.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/services/session.ts`
 - Create: `d:/MINE/freelance/system/vanta/lib/services/auth-service.ts`
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/session.test.ts`
 
 **Interfaces**
+
 - Consumes: `User` from `@/lib/domain`; `users` from `@/lib/data`; `cookies` from `next/headers`; `createHmac`/`timingSafeEqual` from `node:crypto`.
 - Produces from `session.ts` (pure, no `next/headers`): `SESSION_COOKIE = 'vanta_session'`, `signSession(userId: string): string`, `verifySession(token: string | undefined): string | null`. Produces from `auth-service.ts`: `authService: AuthService` (`login`/`register`/`logout`/`getCurrentUser`) verbatim.
 
@@ -12887,7 +13673,9 @@ The session cookie sign/verify primitives and the `AuthService` implementation. 
 
   /** Typed error so call sites/guards can branch without string-matching. */
   export class AuthError extends Error {
-    constructor(public readonly code: 'invalid_credentials' | 'email_taken' | 'unauthorized' | 'forbidden') {
+    constructor(
+      public readonly code: 'invalid_credentials' | 'email_taken' | 'unauthorized' | 'forbidden',
+    ) {
       super(code);
       this.name = 'AuthError';
     }
@@ -12964,10 +13752,12 @@ The session cookie sign/verify primitives and the `AuthService` implementation. 
 The authorization functions, re-verified at every call site. Behaviour is unit-tested by injecting the current user (so the guard logic is provable without a request scope), then wired to `authService.getCurrentUser()` for production.
 
 **Files**
+
 - Modify: `d:/MINE/freelance/system/vanta/lib/services/auth-service.ts`
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/auth-guards.test.ts`
 
 **Interfaces**
+
 - Consumes: `User`, `Role` from `@/lib/domain`; `AuthError` from `auth-service.ts`.
 - Produces: `requireUser(): Promise<User>`, `requireMember(): Promise<User>`, `requireAdmin(): Promise<User>` (verbatim). Internal testable core `enforceRole(user: User | null, allowed: readonly Role[]): User` that throws `AuthError('unauthorized')` for guests and `AuthError('forbidden')` for insufficient role.
 
@@ -12981,8 +13771,20 @@ The authorization functions, re-verified at every call site. Behaviour is unit-t
   import { enforceRole, AuthError } from '@/lib/services/auth-service';
 
   const guest: User | null = null;
-  const member: User = { id: 'usr_member', email: 'member@vanta.shop', name: 'Ploy', role: 'member', addresses: [] };
-  const admin: User = { id: 'usr_admin', email: 'admin@vanta.shop', name: 'Studio', role: 'admin', addresses: [] };
+  const member: User = {
+    id: 'usr_member',
+    email: 'member@vanta.shop',
+    name: 'Ploy',
+    role: 'member',
+    addresses: [],
+  };
+  const admin: User = {
+    id: 'usr_admin',
+    email: 'admin@vanta.shop',
+    name: 'Studio',
+    role: 'admin',
+    addresses: [],
+  };
 
   describe('enforceRole (guard core)', () => {
     it('requireUser shape: any authenticated user passes, guest is unauthorized', () => {
@@ -13087,12 +13889,14 @@ The authorization functions, re-verified at every call site. Behaviour is unit-t
 The `'use server'` actions that pages submit to. They translate `AuthError` codes into the `AuthActionState` discriminated union and redirect on success. Logic (error mapping) is unit-tested via a pure mapper; the redirect/cookie behaviour is exercised in 7.6.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/actions/auth-actions.ts`
 - Modify: `d:/MINE/freelance/system/vanta/messages/en.json`
 - Modify: `d:/MINE/freelance/system/vanta/messages/th.json`
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/auth-actions.test.ts`
 
 **Interfaces**
+
 - Consumes: `User` from `@/lib/domain`; `authService`, `AuthError` from `@/lib/services/auth-service`; `redirect` from `@/lib/i18n/navigation`.
 - Produces: `AuthActionState` (verbatim), `login(prevState, formData)`, `register(prevState, formData)`, `logout()` (verbatim). Internal pure helper `mapAuthError(err: unknown): Extract<AuthActionState, { ok: false }>`.
 
@@ -13114,7 +13918,10 @@ The `'use server'` actions that pages submit to. They translate `AuthError` code
     });
 
     it('maps email_taken to a failed register state', () => {
-      expect(mapAuthError(new AuthError('email_taken'))).toEqual({ ok: false, error: 'email_taken' });
+      expect(mapAuthError(new AuthError('email_taken'))).toEqual({
+        ok: false,
+        error: 'email_taken',
+      });
     });
 
     it('maps unknown/guard errors to invalid_credentials (never leaks internals)', () => {
@@ -13163,7 +13970,10 @@ The `'use server'` actions that pages submit to. They translate `AuthError` code
     return { ok: false, error: 'invalid_credentials' };
   }
 
-  export async function login(_prevState: AuthActionState, formData: FormData): Promise<AuthActionState> {
+  export async function login(
+    _prevState: AuthActionState,
+    formData: FormData,
+  ): Promise<AuthActionState> {
     const email = String(formData.get('email') ?? '');
     const password = String(formData.get('password') ?? '');
     try {
@@ -13174,7 +13984,10 @@ The `'use server'` actions that pages submit to. They translate `AuthError` code
     redirect('/account');
   }
 
-  export async function register(_prevState: AuthActionState, formData: FormData): Promise<AuthActionState> {
+  export async function register(
+    _prevState: AuthActionState,
+    formData: FormData,
+  ): Promise<AuthActionState> {
     const email = String(formData.get('email') ?? '');
     const password = String(formData.get('password') ?? '');
     const name = String(formData.get('name') ?? '');
@@ -13269,12 +14082,14 @@ The `'use server'` actions that pages submit to. They translate `AuthError` code
 Tier-2 auth pages. Server Components render the form; a small client component drives `useActionState` to surface error copy. Demo creds are **visible on screen**, copyable.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/components/auth/AuthForm.tsx`
 - Create: `d:/MINE/freelance/system/vanta/app/[locale]/(auth)/login/page.tsx`
 - Create: `d:/MINE/freelance/system/vanta/app/[locale]/(auth)/register/page.tsx`
 - Test: `d:/MINE/freelance/system/vanta/tests/e2e/auth.en.spec.ts`
 
 **Interfaces**
+
 - Consumes: `login`, `register`, `AuthActionState` from `@/lib/actions/auth-actions`; `useActionState` (React 19.2); `useTranslations` from `next-intl`; `Link` from `@/lib/i18n/navigation`.
 - Produces: `<AuthForm mode="login" | "register" />` client component; two route pages.
 
@@ -13388,9 +14203,13 @@ Tier-2 auth pages. Server Components render the form; a small client component d
           <p className="mt-1 font-body text-sm text-smoke-300">{t('demoBody')}</p>
           <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 font-mono text-sm">
             <dt className="text-smoke-500">{t('email')}</dt>
-            <dd className="text-paper" data-testid="demo-email">{t('demoEmail')}</dd>
+            <dd className="text-paper" data-testid="demo-email">
+              {t('demoEmail')}
+            </dd>
             <dt className="text-smoke-500">{t('password')}</dt>
-            <dd className="text-paper" data-testid="demo-password">{t('demoPassword')}</dd>
+            <dd className="text-paper" data-testid="demo-password">
+              {t('demoPassword')}
+            </dd>
           </dl>
         </section>
 
@@ -13506,12 +14325,14 @@ Tier-2 auth pages. Server Components render the form; a small client component d
 The `(account)` layout calls `requireMember()` and redirects guests to `/login`; the `(admin)` route calls `requireAdmin()`. Authorization is enforced here in the layout/page — not middleware.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/app/[locale]/(account)/layout.tsx`
 - Create: `d:/MINE/freelance/system/vanta/app/[locale]/(admin)/admin/page.tsx`
 - Modify: `d:/MINE/freelance/system/vanta/messages/en.json`
 - Modify: `d:/MINE/freelance/system/vanta/messages/th.json`
 
 **Interfaces**
+
 - Consumes: `requireMember`, `requireAdmin`, `AuthError` from `@/lib/services/auth-service`; `redirect` from `@/lib/i18n/navigation`.
 - Produces: account route-group layout (guests redirected); admin page (non-admins redirected). Adds the `Account` and `Admin` message namespaces.
 
@@ -13539,12 +14360,23 @@ The `(account)` layout calls `requireMember()` and redirects guests to `/login`;
     return (
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 px-6 py-12 md:grid-cols-[200px_1fr]">
         <aside className="flex flex-col gap-2 font-body text-sm">
-          <Link href="/account" className="text-paper hover:text-blaze">{t('navDashboard')}</Link>
-          <Link href="/account/orders" className="text-paper hover:text-blaze">{t('navOrders')}</Link>
-          <Link href="/account/addresses" className="text-paper hover:text-blaze">{t('navAddresses')}</Link>
-          <Link href="/account/settings" className="text-paper hover:text-blaze">{t('navSettings')}</Link>
+          <Link href="/account" className="text-paper hover:text-blaze">
+            {t('navDashboard')}
+          </Link>
+          <Link href="/account/orders" className="text-paper hover:text-blaze">
+            {t('navOrders')}
+          </Link>
+          <Link href="/account/addresses" className="text-paper hover:text-blaze">
+            {t('navAddresses')}
+          </Link>
+          <Link href="/account/settings" className="text-paper hover:text-blaze">
+            {t('navSettings')}
+          </Link>
           <form action={logout} className="mt-4">
-            <button type="submit" className="font-mono text-xs uppercase tracking-tight text-smoke-300 hover:text-blaze">
+            <button
+              type="submit"
+              className="font-mono text-xs uppercase tracking-tight text-smoke-300 hover:text-blaze"
+            >
               {t('logout')}
             </button>
           </form>
@@ -13683,12 +14515,14 @@ The `(account)` layout calls `requireMember()` and redirects guests to `/login`;
 The dashboard greets the member; the orders page lists their `Order`s, rendering each `OrderLineItem` **from its own snapshot fields** (`title`, `unitPrice`, `imageUrl`, `optionValues`) — never re-reading Product/Variant. Money via `formatMoney`, dates via `formatDate`. A seeded `listByUser('usr_member')` row makes the page render instantly for reviewers (the seeded `ord_seed_demo` confirmation order is attributed to the member).
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/app/[locale]/(account)/account/page.tsx`
 - Create: `d:/MINE/freelance/system/vanta/app/[locale]/(account)/account/orders/page.tsx`
 - Modify: `d:/MINE/freelance/system/vanta/lib/data/mock/seed/users.ts` (add a member-owned seed order if the order seed lives with users) — OR confirm the existing `ord_seed_demo` has `userId: 'usr_member'`.
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/order-repository.test.ts`
 
 **Interfaces**
+
 - Consumes: `requireMember` from `@/lib/services/auth-service`; `orders` from `@/lib/data`; `Order`, `OrderLineItem` from `@/lib/domain`; `formatMoney` from `@/lib/format/money`; `formatDate` from `@/lib/format/date`; `getTranslations`, `getLocale` from `next-intl/server`.
 - Produces: dashboard page and orders page (Server Components). Test asserts `OrderRepository.listByUser('usr_member')` returns the seeded order.
 
@@ -13788,9 +14622,7 @@ The dashboard greets the member; the orders page lists their `Order`s, rendering
     const t = await getTranslations('Account');
 
     const userOrders = await orders.listByUser(user.id);
-    const recent = userOrders
-      .slice()
-      .sort((a, b) => b.placedAt.localeCompare(a.placedAt))[0];
+    const recent = userOrders.slice().sort((a, b) => b.placedAt.localeCompare(a.placedAt))[0];
 
     return (
       <main className="flex flex-col gap-8">
@@ -13848,9 +14680,7 @@ The dashboard greets the member; the orders page lists their `Order`s, rendering
       <main className="flex flex-col gap-8">
         <h1 className="display font-display text-3xl text-paper">{t('ordersTitle')}</h1>
 
-        {userOrders.length === 0 && (
-          <p className="font-body text-smoke-300">{t('ordersEmpty')}</p>
-        )}
+        {userOrders.length === 0 && <p className="font-body text-smoke-300">{t('ordersEmpty')}</p>}
 
         {userOrders.map((order) => (
           <article key={order.id} className="border border-smoke-700 p-4">
@@ -13913,11 +14743,13 @@ The dashboard greets the member; the orders page lists their `Order`s, rendering
 The addresses page renders the member's single saved address country-first with **no US State/ZIP labels**; the settings page is a clean, correct read-only profile view (full account CRUD is an explicit non-goal). Both are Tier-3 correct+clean.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/app/[locale]/(account)/account/addresses/page.tsx`
 - Create: `d:/MINE/freelance/system/vanta/app/[locale]/(account)/account/settings/page.tsx`
 - Test: `d:/MINE/freelance/system/vanta/tests/e2e/account.th.spec.ts`
 
 **Interfaces**
+
 - Consumes: `requireMember` from `@/lib/services/auth-service`; `Address`, `User` from `@/lib/domain`; `getTranslations`, `getLocale` from `next-intl/server`.
 - Produces: addresses page (one example, country-first), settings page (read-only profile). E2E asserts the Thai address renders country-first and contains no `State`/`ZIP` labels.
 
@@ -13934,7 +14766,9 @@ The addresses page renders the member's single saved address country-first with 
     // Country-first, Thai-shaped order. No "State" / "ZIP" labels anywhere.
     return (
       <address className="not-italic border border-smoke-700 p-4 font-body text-paper">
-        <p className="font-mono text-xs uppercase tracking-tight text-smoke-300">{address.country}</p>
+        <p className="font-mono text-xs uppercase tracking-tight text-smoke-300">
+          {address.country}
+        </p>
         <p className="mt-2 font-mono text-sm text-smoke-300">{address.postalCode}</p>
         <p>{address.city}</p>
         <p>{address.line1}</p>
@@ -14073,6 +14907,7 @@ The addresses page renders the member's single saved address country-first with 
 **Phase 7 deliverable check:** a viewer can log in with the visible demo creds (`member@vanta.shop` / `vanta-demo`), land on a member dashboard, view an order history rendered entirely from `OrderLineItem` snapshots, see one country-first Thai-shaped saved address (no US State/ZIP), and read a clean settings page. Guests are blocked at the **service layer** (`requireMember` throwing `AuthError('unauthorized')`, redirected to `/login`), proven by unit tests on `enforceRole` and an E2E guard run; admins-only is reserved via `requireAdmin`. Authorization is enforced in the layout/pages/actions, never in middleware.
 
 Files created/modified in this phase (all absolute):
+
 - `d:/MINE/freelance/system/vanta/lib/data/mock/seed/users.ts`
 - `d:/MINE/freelance/system/vanta/lib/data/mock/user-repository.mock.ts`
 - `d:/MINE/freelance/system/vanta/lib/data/mock/order-repository.mock.ts`
@@ -14114,15 +14949,21 @@ This phase delivers the back third of the hero slice: a collapsed 1–2 step che
 Build the payment seam first: a pure-ish async adapter that adds artificial latency and declines exactly the `'tok_decline'` token. Everything downstream depends on its `ChargeResult` shape.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/services/payment-service.ts`
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/payment-service.test.ts`
 
 **Interfaces**
+
 - Produces (verbatim from contracts):
   ```ts
   export type ChargeInput = { amountMinor: number; currency: 'THB'; paymentToken: string };
-  export type ChargeResult = { ok: true; chargeId: string } | { ok: false; declineCode: 'card_declined' };
-  export interface PaymentService { charge(input: ChargeInput): Promise<ChargeResult>; }
+  export type ChargeResult =
+    | { ok: true; chargeId: string }
+    | { ok: false; declineCode: 'card_declined' };
+  export interface PaymentService {
+    charge(input: ChargeInput): Promise<ChargeResult>;
+  }
   export const mockPaymentService: PaymentService;
   ```
 - Consumes: nothing (leaf module). Mock token convention from the contract: `'tok_ok'` charges, `'tok_decline'` declines.
@@ -14130,6 +14971,7 @@ Build the payment seam first: a pure-ish async adapter that adds artificial late
 **Steps**
 
 - [ ] Write the failing test `d:/MINE/freelance/system/vanta/tests/unit/payment-service.test.ts`:
+
   ```ts
   import { describe, it, expect } from 'vitest';
   import { mockPaymentService, type ChargeResult } from '@/lib/services/payment-service';
@@ -14179,19 +15021,26 @@ Build the payment seam first: a pure-ish async adapter that adds artificial late
 
     it('adds artificial latency (>= 200ms)', async () => {
       const start = Date.now();
-      await mockPaymentService.charge({ amountMinor: 199000, currency: 'THB', paymentToken: 'tok_ok' });
+      await mockPaymentService.charge({
+        amountMinor: 199000,
+        currency: 'THB',
+        paymentToken: 'tok_ok',
+      });
       expect(Date.now() - start).toBeGreaterThanOrEqual(200);
     });
   });
   ```
 
 - [ ] Run it and SHOW it fail:
+
   ```
   npm run test -- tests/unit/payment-service.test.ts
   ```
+
   Expected output (failure): `Error: Failed to resolve import "@/lib/services/payment-service"` / `No test files found or module not found`, exit code `1`.
 
 - [ ] Implement the minimal adapter in `d:/MINE/freelance/system/vanta/lib/services/payment-service.ts`:
+
   ```ts
   export type ChargeInput = {
     amountMinor: number; // integer minor units
@@ -14235,9 +15084,11 @@ Build the payment seam first: a pure-ish async adapter that adds artificial late
   ```
 
 - [ ] Run it and SHOW it pass:
+
   ```
   npm run test -- tests/unit/payment-service.test.ts
   ```
+
   Expected output (success): `Test Files  1 passed (1)` · `Tests  5 passed (5)`, exit code `0`.
 
 - [ ] Commit:
@@ -14253,10 +15104,12 @@ Build the payment seam first: a pure-ish async adapter that adds artificial late
 The heart of the phase. `buildLineItemsFromCart` turns each `CartItem` into a self-contained `OrderLineItem` snapshot (title, sku, optionValues, unitPrice, imageUrl resolved at purchase time). `placeOrder` computes `OrderTotals`, charges via `mockPaymentService`, persists the `Order` (with `status` + `placedAt`), and clears the cart — surfacing the declined-card and empty-cart paths.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/services/checkout-service.ts`
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/checkout-service.test.ts`
 
 **Interfaces**
+
 - Consumes:
   - `import { products, orders, cart as cartStore } from '@/lib/data'` (`ProductRepository.getById`/`getVariantById`, `OrderRepository.create`, `CartStore.read`/`clear`)
   - `import { authService } from '@/lib/services/auth-service'` (`getCurrentUser(): Promise<User | null>`)
@@ -14280,6 +15133,7 @@ The heart of the phase. `buildLineItemsFromCart` turns each `CartItem` into a se
 **Steps**
 
 - [ ] Write the failing test `d:/MINE/freelance/system/vanta/tests/unit/checkout-service.test.ts`. It mocks the data + service dependencies so the logic is tested in isolation:
+
   ```ts
   import { describe, it, expect, beforeEach, vi } from 'vitest';
   import type { Cart, Product, Variant, User } from '@/lib/domain';
@@ -14333,7 +15187,15 @@ The heart of the phase. `buildLineItemsFromCart` turns each `CartItem` into a se
     optionAxes: { size: ['M'], color: ['black'] },
     variants: [VARIANT],
     imagesByColor: {
-      black: [{ id: 'img_1', url: '/img/void-black.jpg', alt: { en: 'a', th: 'อ' }, width: 800, height: 1000 }],
+      black: [
+        {
+          id: 'img_1',
+          url: '/img/void-black.jpg',
+          alt: { en: 'a', th: 'อ' },
+          width: 800,
+          height: 1000,
+        },
+      ],
     },
     collectionIds: [],
   };
@@ -14387,8 +15249,17 @@ The heart of the phase. `buildLineItemsFromCart` turns each `CartItem` into a se
 
   describe('placeOrder', () => {
     it('rejects an empty cart', async () => {
-      read.mockResolvedValue({ items: [], itemCount: 0, subtotal: { amount: 0, currency: 'THB' }, updatedAt: 'x' });
-      const result = await checkoutService.placeOrder({ email: 'a@b.co', shippingAddress: ADDRESS, paymentToken: 'tok_ok' });
+      read.mockResolvedValue({
+        items: [],
+        itemCount: 0,
+        subtotal: { amount: 0, currency: 'THB' },
+        updatedAt: 'x',
+      });
+      const result = await checkoutService.placeOrder({
+        email: 'a@b.co',
+        shippingAddress: ADDRESS,
+        paymentToken: 'tok_ok',
+      });
       expect(result).toEqual({ ok: false, error: 'empty_cart' });
       expect(charge).not.toHaveBeenCalled();
     });
@@ -14396,10 +15267,18 @@ The heart of the phase. `buildLineItemsFromCart` turns each `CartItem` into a se
     it('computes totals = subtotal + flat ฿50 shipping and charges the grand total', async () => {
       read.mockResolvedValue(CART_2X);
       charge.mockResolvedValue({ ok: true, chargeId: 'ch_123' });
-      const result = await checkoutService.placeOrder({ email: 'a@b.co', shippingAddress: ADDRESS, paymentToken: 'tok_ok' });
+      const result = await checkoutService.placeOrder({
+        email: 'a@b.co',
+        shippingAddress: ADDRESS,
+        paymentToken: 'tok_ok',
+      });
       expect(result.ok).toBe(true);
       // charged the grand total in minor units: 398000 + 5000
-      expect(charge).toHaveBeenCalledWith({ amountMinor: 403000, currency: 'THB', paymentToken: 'tok_ok' });
+      expect(charge).toHaveBeenCalledWith({
+        amountMinor: 403000,
+        currency: 'THB',
+        paymentToken: 'tok_ok',
+      });
       if (result.ok) {
         expect(result.order.totals).toEqual({
           subtotal: { amount: 398000, currency: 'THB' },
@@ -14418,9 +15297,19 @@ The heart of the phase. `buildLineItemsFromCart` turns each `CartItem` into a se
     it('attaches the authenticated user id when a member is logged in', async () => {
       read.mockResolvedValue(CART_2X);
       charge.mockResolvedValue({ ok: true, chargeId: 'ch_123' });
-      const member: User = { id: 'usr_member', email: 'member@vanta.shop', name: 'Member', role: 'member', addresses: [] };
+      const member: User = {
+        id: 'usr_member',
+        email: 'member@vanta.shop',
+        name: 'Member',
+        role: 'member',
+        addresses: [],
+      };
       getCurrentUser.mockResolvedValue(member);
-      const result = await checkoutService.placeOrder({ email: 'member@vanta.shop', shippingAddress: ADDRESS, paymentToken: 'tok_ok' });
+      const result = await checkoutService.placeOrder({
+        email: 'member@vanta.shop',
+        shippingAddress: ADDRESS,
+        paymentToken: 'tok_ok',
+      });
       if (result.ok) {
         expect(result.order.userId).toBe('usr_member');
       } else {
@@ -14431,7 +15320,11 @@ The heart of the phase. `buildLineItemsFromCart` turns each `CartItem` into a se
     it('returns payment_declined, does NOT persist or clear, on a declining token', async () => {
       read.mockResolvedValue(CART_2X);
       charge.mockResolvedValue({ ok: false, declineCode: 'card_declined' });
-      const result = await checkoutService.placeOrder({ email: 'a@b.co', shippingAddress: ADDRESS, paymentToken: 'tok_decline' });
+      const result = await checkoutService.placeOrder({
+        email: 'a@b.co',
+        shippingAddress: ADDRESS,
+        paymentToken: 'tok_decline',
+      });
       expect(result).toEqual({ ok: false, error: 'payment_declined' });
       expect(create).not.toHaveBeenCalled();
       expect(clear).not.toHaveBeenCalled();
@@ -14440,7 +15333,11 @@ The heart of the phase. `buildLineItemsFromCart` turns each `CartItem` into a se
     it('persists the order and clears the cart on success', async () => {
       read.mockResolvedValue(CART_2X);
       charge.mockResolvedValue({ ok: true, chargeId: 'ch_123' });
-      await checkoutService.placeOrder({ email: 'a@b.co', shippingAddress: ADDRESS, paymentToken: 'tok_ok' });
+      await checkoutService.placeOrder({
+        email: 'a@b.co',
+        shippingAddress: ADDRESS,
+        paymentToken: 'tok_ok',
+      });
       expect(create).toHaveBeenCalledTimes(1);
       expect(clear).toHaveBeenCalledTimes(1);
     });
@@ -14448,14 +15345,26 @@ The heart of the phase. `buildLineItemsFromCart` turns each `CartItem` into a se
   ```
 
 - [ ] Run it and SHOW it fail:
+
   ```
   npm run test -- tests/unit/checkout-service.test.ts
   ```
+
   Expected output (failure): `Error: Failed to resolve import "@/lib/services/checkout-service"`, exit code `1`.
 
 - [ ] Implement `d:/MINE/freelance/system/vanta/lib/services/checkout-service.ts`:
+
   ```ts
-  import type { Order, OrderLineItem, OrderTotals, Address, Cart, Money, Product, Variant } from '@/lib/domain';
+  import type {
+    Order,
+    OrderLineItem,
+    OrderTotals,
+    Address,
+    Cart,
+    Money,
+    Product,
+    Variant,
+  } from '@/lib/domain';
   import { products, orders, cart as cartStore } from '@/lib/data';
   import { authService } from '@/lib/services/auth-service';
   import { mockPaymentService } from '@/lib/services/payment-service';
@@ -14499,7 +15408,9 @@ The heart of the phase. `buildLineItemsFromCart` turns each `CartItem` into a se
     }
     const product = await findOwningProduct(variantId);
     if (!product) {
-      throw new Error(`Product owning variant ${variantId} not found; cannot snapshot order line item.`);
+      throw new Error(
+        `Product owning variant ${variantId} not found; cannot snapshot order line item.`,
+      );
     }
     return {
       variantId: variant.id,
@@ -14575,9 +15486,11 @@ The heart of the phase. `buildLineItemsFromCart` turns each `CartItem` into a se
   ```
 
 - [ ] Run it and SHOW it pass:
+
   ```
   npm run test -- tests/unit/checkout-service.test.ts
   ```
+
   Expected output (success): `Test Files  1 passed (1)` · `Tests  8 passed (8)`, exit code `0`.
 
 - [ ] Commit:
@@ -14593,10 +15506,12 @@ The heart of the phase. `buildLineItemsFromCart` turns each `CartItem` into a se
 Bridge the form to the service. The action validates `FormData` with Zod, calls `checkoutService.placeOrder`, and returns the `PlaceOrderActionState` discriminated union the form consumes via `useActionState`.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/actions/checkout-actions.ts`
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/checkout-actions.test.ts`
 
 **Interfaces**
+
 - Consumes:
   - `import { checkoutService } from '@/lib/services/checkout-service'`
   - `import { z } from 'zod'`
@@ -14606,7 +15521,10 @@ Bridge the form to the service. The action validates `FormData` with Zod, calls 
   export type PlaceOrderActionState =
     | { ok: true; orderId: string }
     | { ok: false; error: 'payment_declined' | 'empty_cart' | 'out_of_stock' };
-  export async function placeOrder(prevState: PlaceOrderActionState, formData: FormData): Promise<PlaceOrderActionState>;
+  export async function placeOrder(
+    prevState: PlaceOrderActionState,
+    formData: FormData,
+  ): Promise<PlaceOrderActionState>;
   ```
 - The Zod schema (the validation contract this action owns). On a validation miss it maps to `{ ok: false, error: 'empty_cart' }` only when the cart truly cannot be processed; field-shape failures throw before reaching the service (the form guarantees field presence client-side, and the test asserts the mapping):
   ```ts
@@ -14626,6 +15544,7 @@ Bridge the form to the service. The action validates `FormData` with Zod, calls 
 **Steps**
 
 - [ ] Write the failing test `d:/MINE/freelance/system/vanta/tests/unit/checkout-actions.test.ts`:
+
   ```ts
   import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -14693,17 +15612,21 @@ Bridge the form to the service. The action validates `FormData` with Zod, calls 
   ```
 
 - [ ] Run it and SHOW it fail:
+
   ```
   npm run test -- tests/unit/checkout-actions.test.ts
   ```
+
   Expected output (failure): `Error: Failed to resolve import "@/lib/actions/checkout-actions"`, exit code `1`.
 
 - [ ] Install Zod if not already present (idempotent; skip if the lockfile already lists it):
+
   ```
   npm install zod
   ```
 
 - [ ] Implement `d:/MINE/freelance/system/vanta/lib/actions/checkout-actions.ts`:
+
   ```ts
   'use server';
 
@@ -14780,9 +15703,11 @@ Bridge the form to the service. The action validates `FormData` with Zod, calls 
   ```
 
 - [ ] Run it and SHOW it pass:
+
   ```
   npm run test -- tests/unit/checkout-actions.test.ts
   ```
+
   Expected output (success): `Test Files  1 passed (1)` · `Tests  3 passed (3)`, exit code `0`.
 
 - [ ] Commit:
@@ -14798,6 +15723,7 @@ Bridge the form to the service. The action validates `FormData` with Zod, calls 
 The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipping** and **Payment** — with a sticky `OrderSummary` rail (THB via `formatMoney`). `PaymentMockForm` exposes the two test cards (success / declining) as radio choices that set the hidden `paymentToken`. The page redirects to `/checkout/[orderId]` on success and renders an inline error banner on decline.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/components/checkout/OrderSummary.tsx`
 - Create: `d:/MINE/freelance/system/vanta/components/checkout/PaymentMockForm.tsx`
 - Create: `d:/MINE/freelance/system/vanta/components/checkout/CheckoutForm.tsx`
@@ -14806,12 +15732,14 @@ The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipp
 - Modify: `d:/MINE/freelance/system/vanta/messages/th.json` (mirror keyset)
 
 **Interfaces**
+
 - Consumes: `useActionState` (React 19.2), `placeOrder` + `PlaceOrderActionState` from `@/lib/actions/checkout-actions`; `useRouter`/`redirect` from `@/lib/i18n/navigation`; `formatMoney` from `@/lib/format/money`; `useCartStore` from `@/lib/store/cart-store`; `useTranslations` from `next-intl`; `repositories`/`cart` reads only via RSC page; `Money` from `@/lib/domain`.
 - Produces: rendered checkout route; `OrderSummary` props `{ items: { title: string; sku: string; quantity: number; unitPrice: Money }[]; subtotal: Money; shipping: Money; total: Money; locale: Locale }`.
 
 **Steps**
 
 - [ ] Add the `checkout` namespace to `d:/MINE/freelance/system/vanta/messages/en.json` (merge into the existing root object):
+
   ```json
   "checkout": {
     "title": "Checkout",
@@ -14843,6 +15771,7 @@ The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipp
   ```
 
 - [ ] Add the mirrored `checkout` namespace to `d:/MINE/freelance/system/vanta/messages/th.json`:
+
   ```json
   "checkout": {
     "title": "ชำระเงิน",
@@ -14874,6 +15803,7 @@ The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipp
   ```
 
 - [ ] Create `d:/MINE/freelance/system/vanta/components/checkout/OrderSummary.tsx`:
+
   ```tsx
   import type { Money, Locale } from '@/lib/domain';
   import { formatMoney } from '@/lib/format/money';
@@ -14894,7 +15824,13 @@ The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipp
     locale: Locale;
   };
 
-  export async function OrderSummary({ items, subtotal, shipping, total, locale }: OrderSummaryProps) {
+  export async function OrderSummary({
+    items,
+    subtotal,
+    shipping,
+    total,
+    locale,
+  }: OrderSummaryProps) {
     const t = await getTranslations('checkout');
     return (
       <aside
@@ -14910,7 +15846,10 @@ The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipp
                 <span className="ml-2 font-mono text-xs text-smoke-300">×{line.quantity}</span>
               </span>
               <span className="font-mono text-sm tabular-nums">
-                {formatMoney({ amount: line.unitPrice.amount * line.quantity, currency: 'THB' }, locale)}
+                {formatMoney(
+                  { amount: line.unitPrice.amount * line.quantity, currency: 'THB' },
+                  locale,
+                )}
               </span>
             </li>
           ))}
@@ -14918,15 +15857,21 @@ The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipp
         <dl className="mt-6 space-y-2 border-t border-smoke-700 pt-6 text-sm">
           <div className="flex justify-between">
             <dt className="text-smoke-300">{t('subtotal')}</dt>
-            <dd data-testid="summary-subtotal" className="font-mono tabular-nums">{formatMoney(subtotal, locale)}</dd>
+            <dd data-testid="summary-subtotal" className="font-mono tabular-nums">
+              {formatMoney(subtotal, locale)}
+            </dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-smoke-300">{t('shipping')}</dt>
-            <dd data-testid="summary-shipping" className="font-mono tabular-nums">{formatMoney(shipping, locale)}</dd>
+            <dd data-testid="summary-shipping" className="font-mono tabular-nums">
+              {formatMoney(shipping, locale)}
+            </dd>
           </div>
           <div className="flex justify-between border-t border-smoke-700 pt-2 text-base">
             <dt className="display">{t('total')}</dt>
-            <dd data-testid="summary-total" className="font-mono tabular-nums text-lime">{formatMoney(total, locale)}</dd>
+            <dd data-testid="summary-total" className="font-mono tabular-nums text-lime">
+              {formatMoney(total, locale)}
+            </dd>
           </div>
         </dl>
       </aside>
@@ -14935,6 +15880,7 @@ The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipp
   ```
 
 - [ ] Create `d:/MINE/freelance/system/vanta/components/checkout/PaymentMockForm.tsx`:
+
   ```tsx
   'use client';
 
@@ -14983,6 +15929,7 @@ The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipp
   ```
 
 - [ ] Create `d:/MINE/freelance/system/vanta/components/checkout/CheckoutForm.tsx`:
+
   ```tsx
   'use client';
 
@@ -15051,7 +15998,12 @@ The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipp
     useEffect(() => {
       if (state.ok) {
         // Cart cleared server-side; mirror the emptied cart, then go to confirmation.
-        replaceFromServer({ items: [], itemCount: 0, subtotal: { amount: 0, currency: 'THB' }, updatedAt: new Date().toISOString() });
+        replaceFromServer({
+          items: [],
+          itemCount: 0,
+          subtotal: { amount: 0, currency: 'THB' },
+          updatedAt: new Date().toISOString(),
+        });
         router.push(`/checkout/${state.orderId}`);
       }
     }, [state, router, replaceFromServer]);
@@ -15076,7 +16028,9 @@ The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipp
         )}
 
         <section aria-labelledby="contact-heading" className="space-y-4">
-          <h2 id="contact-heading" className="display text-xl text-ink">{t('contactSection')}</h2>
+          <h2 id="contact-heading" className="display text-xl text-ink">
+            {t('contactSection')}
+          </h2>
           <Field name="email" label={t('email')} type="email" autoComplete="email" />
           <Field name="fullName" label={t('fullName')} autoComplete="name" />
           <Field name="line1" label={t('line1')} autoComplete="address-line1" />
@@ -15090,7 +16044,9 @@ The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipp
         </section>
 
         <section aria-labelledby="payment-heading" className="space-y-4">
-          <h2 id="payment-heading" className="display text-xl text-ink">{t('paymentSection')}</h2>
+          <h2 id="payment-heading" className="display text-xl text-ink">
+            {t('paymentSection')}
+          </h2>
           <PaymentMockForm />
         </section>
 
@@ -15101,6 +16057,7 @@ The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipp
   ```
 
 - [ ] Create the checkout page `d:/MINE/freelance/system/vanta/app/[locale]/(checkout)/checkout/page.tsx`. It reads the authoritative cart through the repository seam (RSC), resolves each line's snapshot data for the summary, and computes the same flat-shipping totals the service uses:
+
   ```tsx
   import { getTranslations } from 'next-intl/server';
   import type { Locale, Money } from '@/lib/domain';
@@ -15112,11 +16069,7 @@ The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipp
 
   const SHIPPING_FLAT: Money = { amount: 5000, currency: 'THB' };
 
-  export default async function CheckoutPage({
-    params,
-  }: {
-    params: Promise<{ locale: Locale }>;
-  }) {
+  export default async function CheckoutPage({ params }: { params: Promise<{ locale: Locale }> }) {
     const { locale } = await params;
     const t = await getTranslations('checkout');
     const cart = await cartStore.read();
@@ -15175,18 +16128,22 @@ The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipp
   ```
 
 - [ ] Verify the checkout screen renders in both locales against the dev server. Start it in the background:
+
   ```
   npm run dev
   ```
+
   Then drive Playwright (MCP `browser_navigate` + `browser_snapshot` + `browser_take_screenshot`). Exact checks:
   - Navigate to `http://localhost:3000/en/checkout` (with a non-empty cart from Phase 7 add-to-cart, or seed one via the cart action) and assert the snapshot contains `data-testid="order-summary"`, a `summary-total` whose text starts with `฿`, the two radios `pay-token-ok` and `pay-token-decline`, and the `checkout-pay` button labeled `PAY`.
   - Navigate to `http://localhost:3000/th/checkout` and assert the same testids resolve, the button reads `ชำระเงิน`, and the total still renders with the baht sign `฿` and Western digits (no `๒๕๖๗`).
   - Screenshot both as `checkout-en.png` / `checkout-th.png` for the case study.
 
 - [ ] Run typecheck to confirm the new components compile under strict mode:
+
   ```
   npm run typecheck
   ```
+
   Expected output: no errors, exit code `0`.
 
 - [ ] Commit:
@@ -15202,18 +16159,21 @@ The 1–2 step screen. Single scroll, two stacked sections — **Contact + shipp
 The Tier-1 payoff. A polished, shareable confirmation that reads the persisted `Order` through the repository seam, renders the snapshotted line items, the gregory-calendar `placedAt`, and the THB totals — plus a dynamic `opengraph-image` so the URL unfurls beautifully. The seeded `ord_seed_demo` lets a reviewer hit `/checkout/ord_seed_demo` and see a full confirmation instantly.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/app/[locale]/(checkout)/checkout/[orderId]/page.tsx`
 - Create: `d:/MINE/freelance/system/vanta/app/[locale]/(checkout)/checkout/[orderId]/opengraph-image.tsx`
 - Modify: `d:/MINE/freelance/system/vanta/messages/en.json` (add `confirmation` namespace)
 - Modify: `d:/MINE/freelance/system/vanta/messages/th.json` (mirror keyset)
 
 **Interfaces**
+
 - Consumes: `orders` from `@/lib/data` (`OrderRepository.getById`); `formatMoney` from `@/lib/format/money`; `formatDate` from `@/lib/format/date` (`calendar: 'gregory'`); `getTranslations` from `next-intl/server`; `notFound` from `next/navigation`; `ImageResponse` from `next/og`; `Order`, `Locale` from `@/lib/domain`.
 - Produces: confirmation route + dynamic OG image; `generateMetadata` setting `openGraph` + `twitter` card.
 
 **Steps**
 
 - [ ] Add the `confirmation` namespace to `d:/MINE/freelance/system/vanta/messages/en.json`:
+
   ```json
   "confirmation": {
     "heading": "Order confirmed",
@@ -15231,6 +16191,7 @@ The Tier-1 payoff. A polished, shareable confirmation that reads the persisted `
   ```
 
 - [ ] Add the mirrored `confirmation` namespace to `d:/MINE/freelance/system/vanta/messages/th.json`:
+
   ```json
   "confirmation": {
     "heading": "ยืนยันคำสั่งซื้อแล้ว",
@@ -15248,6 +16209,7 @@ The Tier-1 payoff. A polished, shareable confirmation that reads the persisted `
   ```
 
 - [ ] Create the confirmation page `d:/MINE/freelance/system/vanta/app/[locale]/(checkout)/checkout/[orderId]/page.tsx`:
+
   ```tsx
   import type { Metadata } from 'next';
   import { notFound } from 'next/navigation';
@@ -15281,11 +16243,7 @@ The Tier-1 payoff. A polished, shareable confirmation that reads the persisted `
     };
   }
 
-  export default async function ConfirmationPage({
-    params,
-  }: {
-    params: Promise<Params>;
-  }) {
+  export default async function ConfirmationPage({ params }: { params: Promise<Params> }) {
     const { orderId, locale } = await params;
     const order = await orders.getById(orderId);
     if (!order) notFound();
@@ -15302,9 +16260,13 @@ The Tier-1 payoff. A polished, shareable confirmation that reads the persisted `
 
           <dl className="mt-8 grid grid-cols-2 gap-y-3 border-y border-smoke-700 py-6 text-sm">
             <dt className="text-smoke-300">{t('orderNumber')}</dt>
-            <dd data-testid="confirm-order-id" className="text-right font-mono">{order.id}</dd>
+            <dd data-testid="confirm-order-id" className="text-right font-mono">
+              {order.id}
+            </dd>
             <dt className="text-smoke-300">{t('placedOn')}</dt>
-            <dd data-testid="confirm-placed-at" className="text-right font-mono">{formatDate(order.placedAt, locale)}</dd>
+            <dd data-testid="confirm-placed-at" className="text-right font-mono">
+              {formatDate(order.placedAt, locale)}
+            </dd>
           </dl>
 
           <ul className="mt-6 space-y-4">
@@ -15312,7 +16274,13 @@ The Tier-1 payoff. A polished, shareable confirmation that reads the persisted `
               <li key={li.variantId} className="flex items-center gap-4">
                 {li.imageUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={li.imageUrl} alt={li.title[locale]} width={56} height={70} className="rounded object-cover" />
+                  <img
+                    src={li.imageUrl}
+                    alt={li.title[locale]}
+                    width={56}
+                    height={70}
+                    className="rounded object-cover"
+                  />
                 )}
                 <span className="flex-1 text-sm">
                   {li.title[locale]}
@@ -15321,7 +16289,10 @@ The Tier-1 payoff. A polished, shareable confirmation that reads the persisted `
                   </span>
                 </span>
                 <span className="font-mono text-sm tabular-nums">
-                  {formatMoney({ amount: li.unitPrice.amount * li.quantity, currency: 'THB' }, locale)}
+                  {formatMoney(
+                    { amount: li.unitPrice.amount * li.quantity, currency: 'THB' },
+                    locale,
+                  )}
                 </span>
               </li>
             ))}
@@ -15330,24 +16301,34 @@ The Tier-1 payoff. A polished, shareable confirmation that reads the persisted `
           <dl className="mt-6 space-y-2 border-t border-smoke-700 pt-6 text-sm">
             <div className="flex justify-between">
               <dt className="text-smoke-300">{t('subtotal')}</dt>
-              <dd className="font-mono tabular-nums">{formatMoney(order.totals.subtotal, locale)}</dd>
+              <dd className="font-mono tabular-nums">
+                {formatMoney(order.totals.subtotal, locale)}
+              </dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-smoke-300">{t('shipping')}</dt>
-              <dd className="font-mono tabular-nums">{formatMoney(order.totals.shipping, locale)}</dd>
+              <dd className="font-mono tabular-nums">
+                {formatMoney(order.totals.shipping, locale)}
+              </dd>
             </div>
             <div className="flex justify-between border-t border-smoke-700 pt-2 text-base">
               <dt className="display">{t('total')}</dt>
-              <dd data-testid="confirm-total" className="font-mono tabular-nums text-lime">{formatMoney(order.totals.total, locale)}</dd>
+              <dd data-testid="confirm-total" className="font-mono tabular-nums text-lime">
+                {formatMoney(order.totals.total, locale)}
+              </dd>
             </div>
           </dl>
 
           <div className="mt-8 text-sm">
             <p className="text-smoke-300">{t('shipTo')}</p>
             <address className="mt-1 not-italic">
-              {addr.fullName}<br />
-              {addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}<br />
-              {addr.city} {addr.postalCode}<br />
+              {addr.fullName}
+              <br />
+              {addr.line1}
+              {addr.line2 ? `, ${addr.line2}` : ''}
+              <br />
+              {addr.city} {addr.postalCode}
+              <br />
               {addr.country}
             </address>
           </div>
@@ -15365,6 +16346,7 @@ The Tier-1 payoff. A polished, shareable confirmation that reads the persisted `
   ```
 
 - [ ] Create the dynamic OG image `d:/MINE/freelance/system/vanta/app/[locale]/(checkout)/checkout/[orderId]/opengraph-image.tsx`:
+
   ```tsx
   import { ImageResponse } from 'next/og';
   import type { Locale } from '@/lib/domain';
@@ -15402,7 +16384,9 @@ The Tier-1 payoff. A polished, shareable confirmation that reads the persisted `
             fontFamily: 'sans-serif',
           }}
         >
-          <div style={{ color: '#D4FF2E', fontSize: 28, letterSpacing: 8, textTransform: 'uppercase' }}>
+          <div
+            style={{ color: '#D4FF2E', fontSize: 28, letterSpacing: 8, textTransform: 'uppercase' }}
+          >
             VANTA®
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -15426,9 +16410,11 @@ The Tier-1 payoff. A polished, shareable confirmation that reads the persisted `
   - Fetch the OG image route `http://localhost:3000/en/checkout/ord_seed_demo/opengraph-image` and assert the response `content-type` is `image/png` (via `browser_network_request` after navigating, or a `fetch` in `browser_evaluate`). Save it as `og-confirmation.png` for the case study.
 
 - [ ] Run typecheck:
+
   ```
   npm run typecheck
   ```
+
   Expected output: no errors, exit code `0`.
 
 - [ ] Commit:
@@ -15444,16 +16430,19 @@ The Tier-1 payoff. A polished, shareable confirmation that reads the persisted `
 Lock the full back-third of the hero slice end-to-end. The spec extends the existing per-locale hero specs (`hero-slice.en.spec.ts` / `hero-slice.th.spec.ts`) with a checkout-to-confirmation flow that exercises both the declining and succeeding test cards.
 
 **Files**
+
 - Modify: `d:/MINE/freelance/system/vanta/tests/e2e/hero-slice.en.spec.ts`
 - Modify: `d:/MINE/freelance/system/vanta/tests/e2e/hero-slice.th.spec.ts`
 
 **Interfaces**
+
 - Consumes: the deployed-on-localhost app under `playwright.config.ts` (`baseURL` = `http://localhost:3000`), the routes from Tasks 8.4–8.5, the cart Server Actions from Phase 7 (`addToCart`) reached via the PDP UI, and the seeded `ord_seed_demo`.
 - Produces: passing E2E checks for the checkout slice in both locales.
 
 **Steps**
 
 - [ ] Append the checkout flow to `d:/MINE/freelance/system/vanta/tests/e2e/hero-slice.en.spec.ts` (a self-contained describe block — it adds an item from the PDP, opens checkout, exercises decline then success, lands on confirmation):
+
   ```ts
   import { test, expect } from '@playwright/test';
 
@@ -15501,6 +16490,7 @@ Lock the full back-third of the hero slice end-to-end. The spec extends the exis
   ```
 
 - [ ] Append the mirrored Thai flow to `d:/MINE/freelance/system/vanta/tests/e2e/hero-slice.th.spec.ts`:
+
   ```ts
   import { test, expect } from '@playwright/test';
 
@@ -15546,9 +16536,11 @@ Lock the full back-third of the hero slice end-to-end. The spec extends the exis
   ```
 
 - [ ] Run the checkout E2E (both locale projects). With the dev/preview server managed by `playwright.config.ts`’s `webServer`:
+
   ```
   npm run test:e2e -- hero-slice.en.spec.ts hero-slice.th.spec.ts
   ```
+
   Expected output: the two new describe blocks pass in both locale projects — e.g. `EN checkout → confirmation › declining card shows error, succeeding card reaches confirmation` and the TH equivalents all green; final line `passed`, exit code `0`.
 
 - [ ] Commit:
@@ -15562,6 +16554,7 @@ Lock the full back-third of the hero slice end-to-end. The spec extends the exis
 **Phase 8 deliverable:** a working, bilingual checkout that snapshots immutable order line items, computes THB totals with flat shipping, charges through the `PaymentService` mock (latency + declining `tok_decline`), persists the order via the repository seam, and lands on a premium, OG-unfurling confirmation that renders gregory dates and the seeded `ord_seed_demo` instantly — all covered by Vitest (snapshotting, totals, declined-card, validation) and Playwright (cart → checkout → confirmation in EN and TH).
 
 Relevant files this phase creates/modifies (absolute paths):
+
 - `d:/MINE/freelance/system/vanta/lib/services/payment-service.ts`
 - `d:/MINE/freelance/system/vanta/lib/services/checkout-service.ts`
 - `d:/MINE/freelance/system/vanta/lib/actions/checkout-actions.ts`
@@ -15586,9 +16579,9 @@ I have everything needed. Here is Phase 9, written as polished plan markdown rea
 
 ## Phase 9 — Motion system & design polish
 
-This phase makes motion a *system*, not a sprinkle: a single capability gate (`useMotionCapability`) that every animated surface consults, reduced-motion as a real second experience (content visible-by-default, then animates in — never stuck at `opacity:0`), a persisted in-UI motion toggle, the grapheme-safe split-text helper, GSAP reveal helpers that honor the gate, the magnetic-button CTA variant, View Transition polish, and the final design-token AA pass (blaze-on-light usage + a lime-on-paper token guard). The phase closes with a Playwright reduced-motion project that asserts no content is ever stranded at `opacity:0`.
+This phase makes motion a _system_, not a sprinkle: a single capability gate (`useMotionCapability`) that every animated surface consults, reduced-motion as a real second experience (content visible-by-default, then animates in — never stuck at `opacity:0`), a persisted in-UI motion toggle, the grapheme-safe split-text helper, GSAP reveal helpers that honor the gate, the magnetic-button CTA variant, View Transition polish, and the final design-token AA pass (blaze-on-light usage + a lime-on-paper token guard). The phase closes with a Playwright reduced-motion project that asserts no content is ever stranded at `opacity:0`.
 
-> **Prerequisites:** the domain barrel `@/lib/domain`, `lib/format/*`, the `:lang()` headline rules and `@theme` token block in `app/globals.css`, the Header/Footer/LocaleSwitcher, and the hero slice surfaces (Home, PDP `ProductCard`, cart drawer, confirmation) exist from earlier phases. This phase wires motion *into* those surfaces; it does not invent new routes.
+> **Prerequisites:** the domain barrel `@/lib/domain`, `lib/format/*`, the `:lang()` headline rules and `@theme` token block in `app/globals.css`, the Header/Footer/LocaleSwitcher, and the hero slice surfaces (Home, PDP `ProductCard`, cart drawer, confirmation) exist from earlier phases. This phase wires motion _into_ those surfaces; it does not invent new routes.
 
 > **Sub-skill reminder:** invoke `superpowers:executing-plans`; for every LOGIC task below (capability matchMedia logic, grapheme segmenter, lime-token guard) follow `superpowers:test-driven-development`. UI tasks are verified with Playwright assertions + visual verification against `npm run dev`.
 
@@ -15599,16 +16592,19 @@ This phase makes motion a *system*, not a sprinkle: a single capability gate (`u
 Pure logic. Every per-grapheme animation (hero headline reveal, marquee) consumes this. `.split('')` is forbidden — it shatters Thai combining marks (`เ`, `่`, vowel/tone clusters) and a Thai reviewer catches it instantly.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/motion/segment.ts`
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/segment.test.ts`
 
 **Interfaces**
+
 - Produces: `export function splitGraphemes(text: string, locale: Locale): string[]`
 - Consumes: `import type { Locale } from '@/lib/domain'`
 
 **Steps**
 
 - [ ] Write the failing test at `tests/unit/segment.test.ts`:
+
   ```ts
   import { describe, it, expect } from 'vitest';
   import { splitGraphemes } from '@/lib/motion/segment';
@@ -15639,16 +16635,20 @@ Pure logic. Every per-grapheme animation (hero headline reveal, marquee) consume
   ```
 
 - [ ] Run it and SHOW it fail:
+
   ```
   npm run test -- tests/unit/segment.test.ts
   ```
+
   Expected output (module does not exist yet):
+
   ```
   FAIL  tests/unit/segment.test.ts
   Error: Failed to resolve import "@/lib/motion/segment"
   ```
 
 - [ ] Implement the minimal code at `lib/motion/segment.ts`:
+
   ```ts
   import type { Locale } from '@/lib/domain';
 
@@ -15669,10 +16669,13 @@ Pure logic. Every per-grapheme animation (hero headline reveal, marquee) consume
   ```
 
 - [ ] Run it and SHOW it pass:
+
   ```
   npm run test -- tests/unit/segment.test.ts
   ```
+
   Expected output:
+
   ```
   ✓ tests/unit/segment.test.ts (4 tests)
   Test Files  1 passed (1)
@@ -15689,13 +16692,15 @@ Pure logic. Every per-grapheme animation (hero headline reveal, marquee) consume
 
 ### Task 9.2 — Motion preference store (persisted in-UI toggle source of truth)
 
-A tiny Zustand store holds the user's *explicit* motion override and persists it to `localStorage`. The capability hook (9.3) reads this as the highest-priority signal, so the toggle is durable across reloads. Kept separate from `useCartStore` (different concern, different persistence). Logic-light but persistence is testable.
+A tiny Zustand store holds the user's _explicit_ motion override and persists it to `localStorage`. The capability hook (9.3) reads this as the highest-priority signal, so the toggle is durable across reloads. Kept separate from `useCartStore` (different concern, different persistence). Logic-light but persistence is testable.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/motion/preference.ts`
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/motion-preference.test.ts`
 
 **Interfaces**
+
 - Produces:
   ```ts
   export type MotionPreference = 'system' | 'full' | 'reduced';
@@ -15712,12 +16717,10 @@ A tiny Zustand store holds the user's *explicit* motion override and persists it
 **Steps**
 
 - [ ] Write the failing test at `tests/unit/motion-preference.test.ts`:
+
   ```ts
   import { describe, it, expect, beforeEach } from 'vitest';
-  import {
-    useMotionPreference,
-    MOTION_PREFERENCE_STORAGE_KEY,
-  } from '@/lib/motion/preference';
+  import { useMotionPreference, MOTION_PREFERENCE_STORAGE_KEY } from '@/lib/motion/preference';
 
   describe('useMotionPreference', () => {
     beforeEach(() => {
@@ -15732,9 +16735,7 @@ A tiny Zustand store holds the user's *explicit* motion override and persists it
     it('setPreference updates state and persists to localStorage', () => {
       useMotionPreference.getState().setPreference('reduced');
       expect(useMotionPreference.getState().preference).toBe('reduced');
-      const persisted = JSON.parse(
-        localStorage.getItem(MOTION_PREFERENCE_STORAGE_KEY) ?? '{}',
-      );
+      const persisted = JSON.parse(localStorage.getItem(MOTION_PREFERENCE_STORAGE_KEY) ?? '{}');
       expect(persisted.state.preference).toBe('reduced');
     });
 
@@ -15749,21 +16750,26 @@ A tiny Zustand store holds the user's *explicit* motion override and persists it
   ```
 
 - [ ] Add a `jsdom` environment annotation so `localStorage` exists for this spec (Vitest reads the top-of-file comment per the `environmentMatchGlobs`/docblock convention). Prepend to the test file:
+
   ```ts
   // @vitest-environment jsdom
   ```
 
 - [ ] Run it and SHOW it fail:
+
   ```
   npm run test -- tests/unit/motion-preference.test.ts
   ```
+
   Expected output:
+
   ```
   FAIL  tests/unit/motion-preference.test.ts
   Error: Failed to resolve import "@/lib/motion/preference"
   ```
 
 - [ ] Implement at `lib/motion/preference.ts`:
+
   ```ts
   import { create } from 'zustand';
   import { persist, createJSONStorage } from 'zustand/middleware';
@@ -15793,10 +16799,13 @@ A tiny Zustand store holds the user's *explicit* motion override and persists it
   ```
 
 - [ ] Run it and SHOW it pass:
+
   ```
   npm run test -- tests/unit/motion-preference.test.ts
   ```
+
   Expected output:
+
   ```
   ✓ tests/unit/motion-preference.test.ts (3 tests)
   Test Files  1 passed (1)
@@ -15816,16 +16825,18 @@ A tiny Zustand store holds the user's *explicit* motion override and persists it
 The single gate every heavy effect consults. It combines, in priority order: the explicit `useMotionPreference` override → the three media queries. Heavy wow is enabled ONLY when `(prefers-reduced-motion: no-preference)` AND `(pointer: fine)` AND NOT `Save-Data` — **no `deviceMemory`/`hardwareConcurrency` arithmetic** (coarse, absent in Safari, would wrongly downgrade premium iOS users). The pure decision function is extracted so it is unit-testable without a DOM.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/motion/capability.ts`
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/motion-capability.test.ts`
 
 **Interfaces**
+
 - Produces:
   ```ts
   export type MotionSignals = {
-    prefersNoPreference: boolean;  // (prefers-reduced-motion: no-preference)
-    pointerFine: boolean;          // (pointer: fine)
-    saveData: boolean;             // navigator.connection?.saveData === true
+    prefersNoPreference: boolean; // (prefers-reduced-motion: no-preference)
+    pointerFine: boolean; // (pointer: fine)
+    saveData: boolean; // navigator.connection?.saveData === true
   };
   export function resolveMotionEnabled(
     preference: MotionPreference,
@@ -15838,6 +16849,7 @@ The single gate every heavy effect consults. It combines, in priority order: the
 **Steps**
 
 - [ ] Write the failing test at `tests/unit/motion-capability.test.ts` (covers the PURE decision function — no DOM needed):
+
   ```ts
   import { describe, it, expect } from 'vitest';
   import { resolveMotionEnabled, type MotionSignals } from '@/lib/motion/capability';
@@ -15892,16 +16904,20 @@ The single gate every heavy effect consults. It combines, in priority order: the
   ```
 
 - [ ] Run it and SHOW it fail:
+
   ```
   npm run test -- tests/unit/motion-capability.test.ts
   ```
+
   Expected output:
+
   ```
   FAIL  tests/unit/motion-capability.test.ts
   Error: Failed to resolve import "@/lib/motion/capability"
   ```
 
 - [ ] Implement at `lib/motion/capability.ts` (the pure function + the React hook that wires it to live matchMedia + the preference store):
+
   ```ts
   'use client';
 
@@ -15982,10 +16998,13 @@ The single gate every heavy effect consults. It combines, in priority order: the
   ```
 
 - [ ] Run it and SHOW it pass:
+
   ```
   npm run test -- tests/unit/motion-capability.test.ts
   ```
+
   Expected output:
+
   ```
   ✓ tests/unit/motion-capability.test.ts (7 tests)
   Test Files  1 passed (1)
@@ -15993,10 +17012,13 @@ The single gate every heavy effect consults. It combines, in priority order: the
   ```
 
 - [ ] Typecheck (ensures no `any` in `lib/**`, `unknown`-narrowed connection):
+
   ```
   npm run typecheck
   ```
+
   Expected output:
+
   ```
   > tsc --noEmit
   (no errors)
@@ -16012,22 +17034,24 @@ The single gate every heavy effect consults. It combines, in priority order: the
 
 ### Task 9.4 — GSAP reveal helpers honoring the capability hook (visible-by-default)
 
-A small, reusable client hook + helper that drives "content visible-by-default, then animates IN" — the inverse of the blank-page anti-pattern. When motion is disabled (capability `false`), it is a hard no-op: elements keep their natural CSS (no inline `opacity:0` is ever written). When enabled, it sets the *from* state and immediately animates to natural state, wrapped in `gsap.context` for clean teardown. Split-text reveals route every grapheme through `splitGraphemes`.
+A small, reusable client hook + helper that drives "content visible-by-default, then animates IN" — the inverse of the blank-page anti-pattern. When motion is disabled (capability `false`), it is a hard no-op: elements keep their natural CSS (no inline `opacity:0` is ever written). When enabled, it sets the _from_ state and immediately animates to natural state, wrapped in `gsap.context` for clean teardown. Split-text reveals route every grapheme through `splitGraphemes`.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/motion/reveal.ts`
 - Test (component-level via Playwright in 9.9; unit-test the guard branch here): `d:/MINE/freelance/system/vanta/tests/unit/motion-reveal.test.ts`
 
 **Interfaces**
+
 - Produces:
   ```ts
   export type RevealOptions = {
-    enabled: boolean;            // pass useMotionCapability() result
-    y?: number;                  // translate-from distance (default 24)
-    duration?: number;           // seconds (default 0.6)
-    stagger?: number;            // seconds between children (default 0.04)
+    enabled: boolean; // pass useMotionCapability() result
+    y?: number; // translate-from distance (default 24)
+    duration?: number; // seconds (default 0.6)
+    stagger?: number; // seconds between children (default 0.04)
   };
-  export function runReveal(targets: Element[], options: RevealOptions): () => void;  // returns cleanup
+  export function runReveal(targets: Element[], options: RevealOptions): () => void; // returns cleanup
   export function useReveal(options: RevealOptions): (node: HTMLElement | null) => void; // ref callback
   ```
 - Consumes: `gsap`, `import { splitGraphemes } from './segment'` (split-text variant lives with the consuming component; this helper animates already-present nodes)
@@ -16035,6 +17059,7 @@ A small, reusable client hook + helper that drives "content visible-by-default, 
 **Steps**
 
 - [ ] Write the failing test at `tests/unit/motion-reveal.test.ts` (asserts the load-bearing invariant: disabled = no opacity tampering):
+
   ```ts
   // @vitest-environment jsdom
   import { describe, it, expect, vi } from 'vitest';
@@ -16087,16 +17112,20 @@ A small, reusable client hook + helper that drives "content visible-by-default, 
   ```
 
 - [ ] Run it and SHOW it fail:
+
   ```
   npm run test -- tests/unit/motion-reveal.test.ts
   ```
+
   Expected output:
+
   ```
   FAIL  tests/unit/motion-reveal.test.ts
   Error: Failed to resolve import "@/lib/motion/reveal"
   ```
 
 - [ ] Implement at `lib/motion/reveal.ts`:
+
   ```ts
   'use client';
 
@@ -16161,10 +17190,13 @@ A small, reusable client hook + helper that drives "content visible-by-default, 
   ```
 
 - [ ] Run it and SHOW it pass:
+
   ```
   npm run test -- tests/unit/motion-reveal.test.ts
   ```
+
   Expected output:
+
   ```
   ✓ tests/unit/motion-reveal.test.ts (2 tests)
   Test Files  1 passed (1)
@@ -16184,18 +17216,21 @@ A small, reusable client hook + helper that drives "content visible-by-default, 
 A real, accessible tri-state control (System / Full / Reduced) in the Header, bound to `useMotionPreference`. It is the user-facing surface of Task 9.2 and proves "reduced motion is a real second experience you can drive from the UI."
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/components/layout/MotionToggle.tsx`
 - Modify: `d:/MINE/freelance/system/vanta/components/layout/Header.tsx` (mount the toggle)
 - Modify: `d:/MINE/freelance/system/vanta/messages/en.json` (add `motion` namespace)
 - Modify: `d:/MINE/freelance/system/vanta/messages/th.json` (mirror keyset)
 
 **Interfaces**
+
 - Consumes: `import { useMotionPreference, type MotionPreference } from '@/lib/motion/preference'`; `import { useTranslations } from 'next-intl'`
 - Produces: `export function MotionToggle(): JSX.Element`
 
 **Steps**
 
 - [ ] Add the `motion` namespace to `messages/en.json` (merge into the existing object — do not clobber other namespaces):
+
   ```json
   "motion": {
     "label": "Motion",
@@ -16206,6 +17241,7 @@ A real, accessible tri-state control (System / Full / Reduced) in the Header, bo
   ```
 
 - [ ] Add the mirrored `motion` namespace to `messages/th.json`:
+
   ```json
   "motion": {
     "label": "การเคลื่อนไหว",
@@ -16216,6 +17252,7 @@ A real, accessible tri-state control (System / Full / Reduced) in the Header, bo
   ```
 
 - [ ] Create `components/layout/MotionToggle.tsx`:
+
   ```tsx
   'use client';
 
@@ -16230,10 +17267,7 @@ A real, accessible tri-state control (System / Full / Reduced) in the Header, bo
     const setPreference = useMotionPreference((s) => s.setPreference);
 
     return (
-      <fieldset
-        className="flex items-center gap-1 font-mono text-xs"
-        aria-label={t('label')}
-      >
+      <fieldset className="flex items-center gap-1 font-mono text-xs" aria-label={t('label')}>
         <legend className="sr-only">{t('label')}</legend>
         {OPTIONS.map((option) => {
           const selected = preference === option;
@@ -16259,19 +17293,23 @@ A real, accessible tri-state control (System / Full / Reduced) in the Header, bo
     );
   }
   ```
+
   > Note: `bg-lime`/`text-lime` here are lime-on-dark (the toggle sits in the dark Header) — compliant with the lime-on-dark-ONLY rule and well under 5% coverage.
 
 - [ ] Mount it in `components/layout/Header.tsx` beside the `LocaleSwitcher`. Add the import and render it in the header's controls cluster:
+
   ```tsx
   import { MotionToggle } from './MotionToggle';
   // ...inside the controls cluster, next to <LocaleSwitcher />:
-  <MotionToggle />
+  <MotionToggle />;
   ```
 
 - [ ] Visual + behavioral verification against the dev server. Start it:
+
   ```
   npm run dev
   ```
+
   Then drive with Playwright MCP (`mcp__plugin_playwright_playwright__browser_navigate` to `http://localhost:3000/en`, `browser_snapshot`, `browser_click` the "Reduced" button). The exact check: after clicking **Reduced**, the button has `aria-pressed="true"`; reload the page (`browser_navigate` to the same URL) and confirm **Reduced** is still `aria-pressed="true"` (persistence). Capture `browser_take_screenshot` of the Header in `/en` and `/th` to confirm the Thai labels render in Kanit/IBM Plex Sans Thai without clipping.
 
 - [ ] Commit:
@@ -16287,16 +17325,19 @@ A real, accessible tri-state control (System / Full / Reduced) in the Header, bo
 The magnetic CTA — the only "fancy pointer" effect in VANTA (custom cursor was cut). It lives as a `magnetic` variant on the shared `Button`. The pull is rAF-throttled, gated on `useMotionCapability()` (so it is inert on touch / reduced-motion / Save-Data), and applied to at most 1–2 hero CTAs. Disabled = a perfectly ordinary button.
 
 **Files**
+
 - Modify: `d:/MINE/freelance/system/vanta/components/ui/Button.tsx` (add `magnetic` prop + behavior)
 - Modify: `d:/MINE/freelance/system/vanta/app/[locale]/(shop)/page.tsx` (apply `magnetic` to the single hero "Shop the drop" CTA)
 
 **Interfaces**
+
 - Consumes: `import { useMotionCapability } from '@/lib/motion/capability'`
 - Produces: `Button` accepts `magnetic?: boolean` (default `false`); existing props unchanged.
 
 **Steps**
 
 - [ ] Add the magnetic behavior to `components/ui/Button.tsx`. Add a `magnetic` prop and an internal effect; the component must already be (or become) a client component for this variant:
+
   ```tsx
   'use client';
 
@@ -16307,8 +17348,8 @@ The magnetic CTA — the only "fancy pointer" effect in VANTA (custom cursor was
     magnetic?: boolean;
   };
 
-  const STRENGTH = 0.3;     // fraction of pointer offset applied
-  const MAX_SHIFT = 16;     // px clamp so the CTA never detaches from its label
+  const STRENGTH = 0.3; // fraction of pointer offset applied
+  const MAX_SHIFT = 16; // px clamp so the CTA never detaches from its label
 
   export function Button({ magnetic = false, className, children, ...props }: ButtonProps) {
     const ref = useRef<HTMLButtonElement | null>(null);
@@ -16371,12 +17412,15 @@ The magnetic CTA — the only "fancy pointer" effect in VANTA (custom cursor was
     );
   }
   ```
+
   > Note: `transition-transform` provides a smooth spring-back on `pointerleave`; the rAF only batches the active follow. When `active` is false the effect never registers listeners — a plain button.
 
 - [ ] Apply `magnetic` to the single hero CTA in `app/[locale]/(shop)/page.tsx`. Locate the hero "Shop the drop" CTA and set the prop:
+
   ```tsx
   <Button magnetic>{t('hero.cta')}</Button>
   ```
+
   Keep magnetic on **one** hero CTA (the spec caps it at 1–2 hero CTAs only — do not spread it to catalog/PDP buttons).
 
 - [ ] Visual verification against `npm run dev` with the Chrome DevTools MCP or Playwright MCP. Exact check (motion ON path): `mcp__plugin_playwright_playwright__browser_navigate` to `http://localhost:3000/en`, then `browser_hover` near the hero CTA and `browser_evaluate` reading `getComputedStyle(button).transform` — assert it is a non-identity matrix while hovering and returns to `none`/identity after `browser_hover` away. Disabled path: set the toggle to **Reduced** and confirm `transform` stays identity on hover. Capture screenshots in `/en` and `/th`.
@@ -16391,20 +17435,23 @@ The magnetic CTA — the only "fancy pointer" effect in VANTA (custom cursor was
 
 ### Task 9.7 — View Transitions polish (locale-stable name + reduced-motion hard cut)
 
-Polish the existing card→PDP View Transition so it is keyed on `product-${product.id}` (locale-stable — never on slug or `LocalizedText`), and so reduced motion is a hard cut (no-op), not a fade. The React 19.2 `<ViewTransition>` primitive obeys CSS; we gate the *naming* on capability so a disabled user gets an instant swap.
+Polish the existing card→PDP View Transition so it is keyed on `product-${product.id}` (locale-stable — never on slug or `LocalizedText`), and so reduced motion is a hard cut (no-op), not a fade. The React 19.2 `<ViewTransition>` primitive obeys CSS; we gate the _naming_ on capability so a disabled user gets an instant swap.
 
 **Files**
+
 - Modify: `d:/MINE/freelance/system/vanta/components/product/ProductCard.tsx` (capability-gated `view-transition-name`)
 - Modify: `d:/MINE/freelance/system/vanta/app/[locale]/(shop)/product/[slug]/page.tsx` (matching name on the PDP hero image)
 - Modify: `d:/MINE/freelance/system/vanta/app/globals.css` (reduced-motion hard-cut rule)
 
 **Interfaces**
+
 - Consumes: `import { useMotionCapability } from '@/lib/motion/capability'`; `product.id` (stable id, never slug/localized)
 - Produces: a paired `view-transition-name: product-<id>` on card image ↔ PDP image, suppressed when motion is disabled.
 
 **Steps**
 
 - [ ] In `components/product/ProductCard.tsx`, apply the capability-gated, id-keyed transition name to the card's primary image wrapper:
+
   ```tsx
   'use client';
 
@@ -16415,11 +17462,13 @@ Polish the existing card→PDP View Transition so it is keyed on `product-${prod
   // ...on the image element:
   <span style={{ viewTransitionName: transitionName }} className="block">
     {/* existing <Image .../> */}
-  </span>
+  </span>;
   ```
+
   > The name derives from `product.id` (locale-stable) so the transition survives an EN↔TH switch — never key on `product.slug` or any `LocalizedText`.
 
-- [ ] In `app/[locale]/(shop)/product/[slug]/page.tsx`, set the *same* id-keyed name on the PDP hero image. Since the PDP page is a Server Component, apply the name unconditionally via inline style on the image wrapper (the CSS hard-cut rule in the next step neutralizes it for reduced-motion users):
+- [ ] In `app/[locale]/(shop)/product/[slug]/page.tsx`, set the _same_ id-keyed name on the PDP hero image. Since the PDP page is a Server Component, apply the name unconditionally via inline style on the image wrapper (the CSS hard-cut rule in the next step neutralizes it for reduced-motion users):
+
   ```tsx
   <span style={{ viewTransitionName: `product-${product.id}` }} className="block">
     {/* existing PDP hero <Image .../> */}
@@ -16427,6 +17476,7 @@ Polish the existing card→PDP View Transition so it is keyed on `product-${prod
   ```
 
 - [ ] Add the reduced-motion hard-cut rule to `app/globals.css` (after the `:lang()` headline rules block). This guarantees a no-op cut even though the name is present:
+
   ```css
   /* View Transitions: hard cut (no cross-fade) for reduced-motion users. */
   @media (prefers-reduced-motion: reduce) {
@@ -16450,14 +17500,16 @@ Polish the existing card→PDP View Transition so it is keyed on `product-${prod
 
 ### Task 9.8 — Finalize design tokens: AA fixes + lime-on-paper token guard
 
-Lock the design-token contract: enforce that urgency text on the `paper` surface uses `--blaze-on-light` (paper-red `#FF3B1F` is only 3.23:1; the darker `#D62E16` is AA-safe), and add a *token guard* — a unit-tested allowlist that fails the build if `lime` is ever paired with `paper`/light surfaces (lime is `<5%`, lime-on-dark ONLY; lime-on-paper is 1.05:1). The guard is the "token-enforced" part of the spec made real and testable.
+Lock the design-token contract: enforce that urgency text on the `paper` surface uses `--blaze-on-light` (paper-red `#FF3B1F` is only 3.23:1; the darker `#D62E16` is AA-safe), and add a _token guard_ — a unit-tested allowlist that fails the build if `lime` is ever paired with `paper`/light surfaces (lime is `<5%`, lime-on-dark ONLY; lime-on-paper is 1.05:1). The guard is the "token-enforced" part of the spec made real and testable.
 
 **Files**
+
 - Create: `d:/MINE/freelance/system/vanta/lib/motion/token-guard.ts` (pure contrast/pairing guard — colocated with design-system enforcement)
 - Test: `d:/MINE/freelance/system/vanta/tests/unit/token-guard.test.ts`
 - Modify: `d:/MINE/freelance/system/vanta/components/drop/AvailabilityBadge.tsx` (use `blaze-on-light` on paper surfaces)
 
 **Interfaces**
+
 - Produces:
   ```ts
   export type Surface = 'dark' | 'paper';
@@ -16469,12 +17521,10 @@ Lock the design-token contract: enforce that urgency text on the `paper` surface
 **Steps**
 
 - [ ] Write the failing test at `tests/unit/token-guard.test.ts`:
+
   ```ts
   import { describe, it, expect } from 'vitest';
-  import {
-    isColorAllowedOnSurface,
-    assertColorOnSurface,
-  } from '@/lib/motion/token-guard';
+  import { isColorAllowedOnSurface, assertColorOnSurface } from '@/lib/motion/token-guard';
 
   describe('token guard', () => {
     it('forbids lime on paper (1.05:1 contrast)', () => {
@@ -16502,16 +17552,20 @@ Lock the design-token contract: enforce that urgency text on the `paper` surface
   ```
 
 - [ ] Run it and SHOW it fail:
+
   ```
   npm run test -- tests/unit/token-guard.test.ts
   ```
+
   Expected output:
+
   ```
   FAIL  tests/unit/token-guard.test.ts
   Error: Failed to resolve import "@/lib/motion/token-guard"
   ```
 
 - [ ] Implement at `lib/motion/token-guard.ts`:
+
   ```ts
   export type Surface = 'dark' | 'paper';
   export type TokenColor = 'ink' | 'paper' | 'blaze' | 'blaze-on-light' | 'lime';
@@ -16544,10 +17598,13 @@ Lock the design-token contract: enforce that urgency text on the `paper` surface
   ```
 
 - [ ] Run it and SHOW it pass:
+
   ```
   npm run test -- tests/unit/token-guard.test.ts
   ```
+
   Expected output:
+
   ```
   ✓ tests/unit/token-guard.test.ts (5 tests)
   Test Files  1 passed (1)
@@ -16555,17 +17612,22 @@ Lock the design-token contract: enforce that urgency text on the `paper` surface
   ```
 
 - [ ] Apply the AA fix in `components/drop/AvailabilityBadge.tsx`: any urgency text rendered on the `paper` surface (e.g. the low-stock / sale label on a light card) must use the `text-blaze-on-light` token, while the same badge on a dark surface uses `text-blaze`. Update the className mapping so low-stock on paper reads:
+
   ```tsx
   // urgency label on light/paper card:
   <span className="font-mono text-blaze-on-light">{t('lowStock', { n })}</span>
   ```
+
   Confirm no instance of `text-lime`/`bg-lime` exists in any component that renders on a paper surface (grep the components tree; lime must only appear in dark-surface contexts such as the Header toggle and dark hero accents).
 
 - [ ] Run the full unit suite + typecheck to confirm no regressions:
+
   ```
   npm run test && npm run typecheck
   ```
+
   Expected output:
+
   ```
   Test Files  N passed (N)
        Tests  M passed (M)
@@ -16586,16 +17648,19 @@ Lock the design-token contract: enforce that urgency text on the `paper` surface
 The capstone safety net: a Playwright project running with `prefers-reduced-motion: reduce` over the hero slice, asserting that **no** content element is left at `opacity:0` after load (the visible-by-default invariant), that the magnetic CTA does not translate on hover, and that the card→PDP navigation is an instant cut (no view-transition fade animation running).
 
 **Files**
+
 - Modify: `d:/MINE/freelance/system/vanta/playwright.config.ts` (add the `reduced-motion` project)
 - Create: `d:/MINE/freelance/system/vanta/tests/e2e/reduced-motion.spec.ts`
 
 **Interfaces**
+
 - Consumes: the running dev/preview server (Playwright `webServer`), `prefers-reduced-motion: reduce` emulation.
 - Produces: a green `reduced-motion` Playwright project.
 
 **Steps**
 
 - [ ] Add the `reduced-motion` project to `playwright.config.ts` (merge into the existing `projects` array; keep the existing `chromium-en`/`chromium-th` projects):
+
   ```ts
   // inside defineConfig({ projects: [ ... ] }):
   {
@@ -16611,17 +17676,22 @@ The capstone safety net: a Playwright project running with `prefers-reduced-moti
   ```
 
 - [ ] Create `tests/e2e/reduced-motion.spec.ts`:
+
   ```ts
   import { test, expect } from '@playwright/test';
 
   test.describe('reduced motion = a real second experience', () => {
-    test('no content element is stranded at opacity:0 on Home (visible-by-default)', async ({ page }) => {
+    test('no content element is stranded at opacity:0 on Home (visible-by-default)', async ({
+      page,
+    }) => {
       await page.goto('/en');
       await page.waitForLoadState('networkidle');
 
       const strandedCount = await page.evaluate(() => {
         const candidates = Array.from(
-          document.querySelectorAll('main h1, main h2, main p, main img, main a, main [data-reveal]'),
+          document.querySelectorAll(
+            'main h1, main h2, main p, main img, main a, main [data-reveal]',
+          ),
         );
         return candidates.filter((el) => {
           const style = window.getComputedStyle(el as Element);
@@ -16643,7 +17713,9 @@ The capstone safety net: a Playwright project running with `prefers-reduced-moti
       expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(transform);
     });
 
-    test('card to PDP is an instant cut (no running view-transition animation)', async ({ page }) => {
+    test('card to PDP is an instant cut (no running view-transition animation)', async ({
+      page,
+    }) => {
       await page.goto('/en');
       await page.waitForLoadState('networkidle');
       const firstCard = page.locator('a[href*="/product/"]').first();
@@ -16674,10 +17746,13 @@ The capstone safety net: a Playwright project running with `prefers-reduced-moti
   ```
 
 - [ ] Run the reduced-motion project and SHOW it pass (start the server first if `webServer` is not auto-configured):
+
   ```
   npm run test:e2e -- --project=reduced-motion
   ```
+
   Expected output:
+
   ```
   Running 4 tests using 1 worker
     ✓ reduced-motion.spec.ts:… no content element is stranded at opacity:0 on Home
@@ -16688,10 +17763,13 @@ The capstone safety net: a Playwright project running with `prefers-reduced-moti
   ```
 
 - [ ] Run the full e2e suite to confirm the hero-slice EN/TH projects still pass alongside the new project:
+
   ```
   npm run test:e2e
   ```
+
   Expected output (all projects green):
+
   ```
     … passed
   ```
@@ -16704,9 +17782,10 @@ The capstone safety net: a Playwright project running with `prefers-reduced-moti
 
 ---
 
-**Phase 9 deliverable:** a coherent motion *system* — one capability gate consumed by GSAP reveals, the magnetic CTA, and View Transitions; reduced motion as a genuine, content-visible-by-default second experience with a persisted in-UI toggle; grapheme-safe split-text; finalized AA-safe tokens with a tested lime-on-paper guard; and a green Playwright reduced-motion project proving nothing is ever stranded at `opacity:0` in either locale.
+**Phase 9 deliverable:** a coherent motion _system_ — one capability gate consumed by GSAP reveals, the magnetic CTA, and View Transitions; reduced motion as a genuine, content-visible-by-default second experience with a persisted in-UI toggle; grapheme-safe split-text; finalized AA-safe tokens with a tested lime-on-paper guard; and a green Playwright reduced-motion project proving nothing is ever stranded at `opacity:0` in either locale.
 
 Relevant files (all absolute):
+
 - `d:/MINE/freelance/system/vanta/lib/motion/segment.ts`
 - `d:/MINE/freelance/system/vanta/lib/motion/preference.ts`
 - `d:/MINE/freelance/system/vanta/lib/motion/capability.ts`
@@ -16737,15 +17816,18 @@ I have everything I need. The locked contracts and spec are clear. Writing Phase
 Stand up the Playwright runner with three projects (`en`, `th`, `reduced-motion`) pointed at the dev server, plus the shared deterministic seed assumptions (the seeded confirmation order `ord_seed_demo`, the member creds `member@vanta.shop` / `vanta-demo`). Deliverable: `npm run test:e2e -- --list` shows the three projects and zero spec files error on collection.
 
 ### Files
+
 - **Create** `d:/MINE/freelance/system/vanta/playwright.config.ts`
 - **Create** `d:/MINE/freelance/system/vanta/tests/e2e/fixtures.ts`
 - **Modify** `d:/MINE/freelance/system/vanta/package.json` (add `test:e2e` + `test:e2e:report` scripts)
 
 ### Interfaces
+
 - **Consumes:** the locale prefix strategy `'always'` (`/en/...`, `/th/...`) from `lib/i18n/routing.ts`; the seeded order id `ord_seed_demo`; member creds `member@vanta.shop` / `vanta-demo` from the seed (`lib/data/mock/seed/users.ts`).
 - **Produces:** `export const SEED` (typed test constants) from `tests/e2e/fixtures.ts`; three Playwright projects `en`, `th`, `reduced-motion`.
 
 ### Steps
+
 - [ ] Confirm Playwright is installed and the browser binary is present:
   ```bash
   cd d:/MINE/freelance/system/vanta && npx playwright install chromium
@@ -16757,6 +17839,7 @@ Stand up the Playwright runner with three projects (`en`, `th`, `reduced-motion`
   "test:e2e:report": "playwright show-report"
   ```
 - [ ] Write `tests/e2e/fixtures.ts` with the shared, locale-stable constants the specs assert against:
+
   ```ts
   import type { Locale } from '@/lib/domain';
 
@@ -16777,7 +17860,9 @@ Stand up the Playwright runner with three projects (`en`, `th`, `reduced-motion`
     return `/${locale}${clean === '/' ? '' : clean}`;
   }
   ```
+
 - [ ] Write `playwright.config.ts` with the three projects. The `reduced-motion` project forces `prefers-reduced-motion: reduce` and runs only the dedicated spec; `en`/`th` run the hero-slice specs:
+
   ```ts
   import { defineConfig, devices } from '@playwright/test';
 
@@ -16825,6 +17910,7 @@ Stand up the Playwright runner with three projects (`en`, `th`, `reduced-motion`
     },
   });
   ```
+
 - [ ] Verify project collection (specs do not exist yet, so a list against an empty match is expected; the projects must enumerate):
   ```bash
   cd d:/MINE/freelance/system/vanta && npx playwright test --list
@@ -16844,15 +17930,19 @@ The English happy path through the full hero slice. Deliverable: `npm run test:e
 > **Selector discipline:** all selectors are derived from stable ids (`product-${id}`, `variant-${id}`) or role/`data-testid` — never from `LocalizedText`. The spec asserts the same DOM ids in both locales.
 
 ### Files
+
 - **Create** `d:/MINE/freelance/system/vanta/tests/e2e/hero-slice.en.spec.ts`
 - **Modify** (selector hooks only, if absent) `d:/MINE/freelance/system/vanta/app/[locale]/(shop)/page.tsx`, `app/[locale]/(shop)/product/[slug]/page.tsx`, `components/pdp/AddToCartButton.tsx`, `components/cart/CartDrawer.tsx`, `app/[locale]/(checkout)/checkout/page.tsx`, `app/[locale]/(checkout)/checkout/[orderId]/page.tsx`
 
 ### Interfaces
+
 - **Consumes:** `SEED`, `localePath` from `tests/e2e/fixtures.ts`; stable `data-testid` hooks: `product-card` (with `data-product-id`), `add-to-cart`, `cart-drawer` (a11y `dialog`), `cart-line-item`, `checkout-submit`, `order-confirmation` (with `data-order-id`); the mock payment token `tok_ok` from `lib/services/payment-service.ts`.
 - **Produces:** the EN hero-slice E2E spec.
 
 ### Steps
+
 - [ ] Write the failing spec:
+
   ```ts
   import { test, expect } from '@playwright/test';
   import { SEED, localePath } from './fixtures';
@@ -16910,6 +18000,7 @@ The English happy path through the full hero slice. Deliverable: `npm run test:e
     });
   });
   ```
+
 - [ ] Run it and SHOW it fail (the UI selectors are not yet wired or a hook is missing):
   ```bash
   cd d:/MINE/freelance/system/vanta && npx playwright test --project=en
@@ -16941,14 +18032,18 @@ The English happy path through the full hero slice. Deliverable: `npm run test:e
 The Thai path asserts the **same stable ids** survive the locale switch (selectors keyed on `product-${id}` / `data-testid`, never localized text), proving the i18n layer does not break the architecture seam. Deliverable: `npm run test:e2e -- --project=th` is GREEN; a deliberate text-based assertion would have failed, so we assert Western digits + the baht sign + gregory date instead.
 
 ### Files
+
 - **Create** `d:/MINE/freelance/system/vanta/tests/e2e/hero-slice.th.spec.ts`
 
 ### Interfaces
+
 - **Consumes:** `SEED`, `localePath`; the same `data-testid` hooks added in Task 10.2; the formatting rules — THB shown as `฿1,990` (no decimals), dates in `calendar: 'gregory'` with Western digits in both locales.
 - **Produces:** the TH hero-slice E2E spec.
 
 ### Steps
+
 - [ ] Write the spec (note: it reuses the identical selectors — only the locale prefix and the locale-formatting assertions change):
+
   ```ts
   import { test, expect } from '@playwright/test';
   import { SEED, localePath } from './fixtures';
@@ -16956,7 +18051,9 @@ The Thai path asserts the **same stable ids** survive the locale switch (selecto
   const LOCALE = 'th' as const;
 
   test.describe('hero slice — th', () => {
-    test('browse → PDP → add to cart → checkout → confirmation (locale-stable ids)', async ({ page }) => {
+    test('browse → PDP → add to cart → checkout → confirmation (locale-stable ids)', async ({
+      page,
+    }) => {
       await page.goto(localePath(LOCALE, '/'));
       const firstCard = page.getByTestId('product-card').first();
       await expect(firstCard).toBeVisible();
@@ -16990,7 +18087,9 @@ The Thai path asserts the **same stable ids** survive the locale switch (selecto
       await expect(page.getByTestId('order-confirmation')).toBeVisible();
     });
 
-    test('THB has no decimals and dates use gregory calendar with Western digits', async ({ page }) => {
+    test('THB has no decimals and dates use gregory calendar with Western digits', async ({
+      page,
+    }) => {
       await page.goto(localePath(LOCALE, `/checkout/${SEED.seededOrderId}`));
       const confirmation = page.getByTestId('order-confirmation');
       await expect(confirmation).toBeVisible();
@@ -17015,6 +18114,7 @@ The Thai path asserts the **same stable ids** survive the locale switch (selecto
     });
   });
   ```
+
 - [ ] Confirm the additional hooks exist (add if missing, additive only): `components/checkout/OrderSummary.tsx` total → `data-testid="order-total"`; confirmation `FormattedDate` wrapper → `data-testid="order-placed-at"`; `components/drop/DropMarquee.tsx` root → `data-testid="drop-marquee"`.
 - [ ] Run it and SHOW it fail first (before the hooks above are present), then pass:
   ```bash
@@ -17033,14 +18133,18 @@ The Thai path asserts the **same stable ids** survive the locale switch (selecto
 Prove the reduced-motion contract: with `prefers-reduced-motion: reduce`, the hero slice still completes AND content is visible-by-default (never stuck at `opacity: 0`), the countdown shows a static fallback, and the View Transition is a hard cut. Deliverable: `npm run test:e2e -- --project=reduced-motion` is GREEN.
 
 ### Files
+
 - **Create** `d:/MINE/freelance/system/vanta/tests/e2e/reduced-motion.spec.ts`
 
 ### Interfaces
+
 - **Consumes:** `localePath`; the reduced-motion project's forced `reducedMotion: 'reduce'`; the `useMotionCapability` gate (heavy motion only on `(prefers-reduced-motion: no-preference)` AND `(pointer: fine)` AND not `Save-Data`); the `MotionToggle` component; `data-testid` hooks `countdown` / `countdown-static`.
 - **Produces:** the reduced-motion E2E spec.
 
 ### Steps
+
 - [ ] Write the spec:
+
   ```ts
   import { test, expect } from '@playwright/test';
   import { localePath } from './fixtures';
@@ -17053,9 +18157,7 @@ Prove the reduced-motion contract: with `prefers-reduced-motion: reduce`, the he
       // Split-text headline and cards must be visible without animation kicking in.
       const headline = page.getByTestId('hero-headline');
       await expect(headline).toBeVisible();
-      const opacity = await headline.evaluate(
-        (el) => getComputedStyle(el).opacity,
-      );
+      const opacity = await headline.evaluate((el) => getComputedStyle(el).opacity);
       expect(Number(opacity)).toBeGreaterThan(0.99);
     });
 
@@ -17066,7 +18168,9 @@ Prove the reduced-motion contract: with `prefers-reduced-motion: reduce`, the he
       await expect(page.getByTestId('countdown')).toHaveCount(0);
     });
 
-    test('view transition into PDP is a hard cut and the slice still completes', async ({ page }) => {
+    test('view transition into PDP is a hard cut and the slice still completes', async ({
+      page,
+    }) => {
       await page.goto(localePath(LOCALE, '/'));
       const firstCard = page.getByTestId('product-card').first();
       await firstCard.getByRole('link').first().click();
@@ -17085,6 +18189,7 @@ Prove the reduced-motion contract: with `prefers-reduced-motion: reduce`, the he
     });
   });
   ```
+
 - [ ] Confirm the reduced-motion hooks exist (additive): `components/drop/CountdownIsland.tsx` renders `data-testid="countdown"` when ticking and `data-testid="countdown-static"` when reduced; `components/layout/MotionToggle.tsx` root → `data-testid="motion-toggle"`; the hero headline element → `data-testid="hero-headline"`.
 - [ ] Run it and SHOW it fail, then pass after the hooks/fallbacks are present:
   ```bash
@@ -17108,15 +18213,19 @@ Prove the reduced-motion contract: with `prefers-reduced-motion: reduce`, the he
 Expose the repository seam as a route handler a reviewer can `curl` to see the data layer is real — strictly a documented artifact, never fetched by the UI (RSC reads through repositories directly). Deliverable: `curl -s http://localhost:3000/api/products | head` returns the seeded product JSON, and a Vitest unit test asserts the route reads through `@/lib/data` (the swap point), not `@/lib/data/mock`.
 
 ### Files
+
 - **Create** `d:/MINE/freelance/system/vanta/app/api/products/route.ts`
 - **Create** `d:/MINE/freelance/system/vanta/tests/unit/api-products.test.ts`
 
 ### Interfaces
+
 - **Consumes:** `products` (the `ProductRepository`) from `@/lib/data`; `Product` from `@/lib/domain`.
 - **Produces:** `GET` route handler returning `Product[]` as JSON.
 
 ### Steps
+
 - [ ] Write the failing unit test (it imports the route handler and asserts it returns the seeded products through the seam):
+
   ```ts
   import { describe, it, expect } from 'vitest';
   import { GET } from '@/app/api/products/route';
@@ -17143,12 +18252,14 @@ Expose the repository seam as a route handler a reviewer can `curl` to see the d
     });
   });
   ```
+
 - [ ] Run it and SHOW it fail (route does not exist yet):
   ```bash
   cd d:/MINE/freelance/system/vanta && npx vitest run tests/unit/api-products.test.ts
   ```
   Expected (RED): `Failed to resolve import "@/app/api/products/route"` / `Cannot find module`, suite fails, exit 1.
 - [ ] Write the route handler (reads through the swap point; documented as curl-only):
+
   ```ts
   import { NextResponse } from 'next/server';
   import { products } from '@/lib/data';
@@ -17169,6 +18280,7 @@ Expose the repository seam as a route handler a reviewer can `curl` to see the d
     });
   }
   ```
+
 - [ ] Run it and SHOW it pass:
   ```bash
   cd d:/MINE/freelance/system/vanta && npx vitest run tests/unit/api-products.test.ts
@@ -17192,15 +18304,18 @@ Expose the repository seam as a route handler a reviewer can `curl` to see the d
 Run one local Lighthouse audit against the production build of the hero slice and capture the report image for the case study. Deliverable: `docs/case-study/lighthouse-home.html` exists and `docs/case-study/lighthouse-home.png` is captured (the four-gauge summary), referenced from the README.
 
 ### Files
+
 - **Create** `d:/MINE/freelance/system/vanta/docs/case-study/` (directory)
 - **Create** `d:/MINE/freelance/system/vanta/docs/case-study/lighthouse-home.html` (generated report)
 - **Create** `d:/MINE/freelance/system/vanta/docs/case-study/lighthouse-home.png` (screenshot of the gauges)
 
 ### Interfaces
+
 - **Consumes:** the production build (`npm run build && npm run start`) of the EN home route `/en`.
 - **Produces:** the Lighthouse HTML report + a gauge screenshot for the case study.
 
 ### Steps
+
 - [ ] Build and start the production server in the background:
   ```bash
   cd d:/MINE/freelance/system/vanta && npm run build && (npm run start &) && npx wait-on http://localhost:3000/en
@@ -17226,15 +18341,19 @@ Run one local Lighthouse audit against the production build of the hero slice an
 Author the case-study README: the architecture diagram (Mermaid) that names `lib/data/index.ts` as the single swap point, the 2–3 line "how a real backend plugs in," the cross-links between AETHER / VANTA / Astro, and the curl + Lighthouse + demo-creds evidence. Deliverable: `README.md` renders the Mermaid diagram and contains every required cross-link and the swap-point callout.
 
 ### Files
+
 - **Create** `d:/MINE/freelance/system/vanta/README.md`
 - **Create** `d:/MINE/freelance/system/vanta/docs/case-study/architecture.mmd` (standalone Mermaid source)
 
 ### Interfaces
+
 - **Consumes:** the layering (`lib/domain` → `lib/data/repositories` → `lib/data/mock` → `lib/data/index.ts` → `lib/services` → `lib/actions` → App Router); the swap-point file `lib/data/index.ts`; the curl endpoint `/api/products`; demo creds `member@vanta.shop` / `vanta-demo`; the seeded order `ord_seed_demo`.
 - **Produces:** the case-study README + the standalone diagram source.
 
 ### Steps
+
 - [ ] Write the standalone Mermaid source `docs/case-study/architecture.mmd` (also embedded in the README) — it MUST label `lib/data/index.ts` as THE SWAP POINT:
+
   ```mermaid
   flowchart TD
     subgraph UI["App Router (Next.js 15 / React 19.2)"]
@@ -17277,8 +18396,10 @@ Author the case-study README: the architecture diagram (Mermaid) that names `lib
 
     classDef future stroke-dasharray: 5 5,fill:#141414,color:#B8B8B8;
   ```
+
 - [ ] Write `README.md` embedding the same diagram and all required prose:
-  ```markdown
+
+  ````markdown
   # VANTA®
 
   > **Bangkok-born. Globally worn.** A bilingual (EN/TH) streetwear storefront —
@@ -17291,6 +18412,7 @@ Author the case-study README: the architecture diagram (Mermaid) that names `lib
   confirmation instantly.
 
   ## The hero: LIVE DROP
+
   One pure function, `deriveAvailability(variant, drop, now, user)`, returns
   `coming_soon | early_access | live | low_stock | sold_out` and is read identically
   by home, catalog, PDP, and the marquee. A real countdown flips the drop to LIVE,
@@ -17328,6 +18450,7 @@ Author the case-study README: the architecture diagram (Mermaid) that names `lib
     APIROUTE --> SWAP
     REPO --> DOMAIN
   ```
+  ````
 
   **The swap point is [`lib/data/index.ts`](lib/data/index.ts).** Today it reads:
 
@@ -17336,6 +18459,7 @@ Author the case-study README: the architecture diagram (Mermaid) that names `lib
   ```
 
   ### How a real backend plugs in (change one import)
+
   Swap `mockRepositories` for a `prismaRepositories` bundle backed by **Prisma +
   Postgres** (or `apiRepositories` calling a **NestJS** service). Auth swaps the
   `authService` adapter for **OAuth** (Auth.js); the `PaymentService` seam targets
@@ -17344,9 +18468,11 @@ Author the case-study README: the architecture diagram (Mermaid) that names `lib
   changes.
 
   ### See the seam yourself
+
   ```bash
   curl -s http://localhost:3000/api/products | jq '.[0].slug'
   ```
+
   (Documented for reviewers — the UI never client-fetches `/api`; RSC reads the
   repositories directly. This route only re-exposes the same seam over HTTP.)
 
@@ -17364,6 +18490,7 @@ Author the case-study README: the architecture diagram (Mermaid) that names `lib
   - **Astro site** — the **backend** discipline behind both.
 
   ## Run locally
+
   ```bash
   npm install
   npm run dev        # http://localhost:3000/en
@@ -17372,9 +18499,14 @@ Author the case-study README: the architecture diagram (Mermaid) that names `lib
   ```
 
   ## Stack
+
   Next.js 15 (App Router) · React 19.2 · TypeScript (strict) · Tailwind CSS v4 ·
   GSAP · Zustand (disciplined mirror) · next-intl · Vitest + Playwright · Vercel.
+
   ```
+
+  ```
+
 - [ ] Verify the Mermaid blocks parse (catch syntax errors before relying on GitHub rendering):
   ```bash
   cd d:/MINE/freelance/system/vanta && npx -y @mermaid-js/mermaid-cli -i docs/case-study/architecture.mmd -o docs/case-study/architecture.svg
@@ -17397,6 +18529,7 @@ Author the case-study README: the architecture diagram (Mermaid) that names `lib
 Wire the Vercel deploy config, the OG image and metadata for the hero slice, the hero demo-video note, and run the full pre-deploy verification (typecheck + unit + e2e). Deliverable: a green `npm run typecheck && npm test && npm run test:e2e`, an OG image asserted to render in `<head>`, and `vercel.json` + a deploy checklist committed.
 
 ### Files
+
 - **Create** `d:/MINE/freelance/system/vanta/vercel.json`
 - **Create** `d:/MINE/freelance/system/vanta/app/[locale]/(shop)/opengraph-image.tsx`
 - **Modify** `d:/MINE/freelance/system/vanta/app/[locale]/layout.tsx` (export `metadata`/`generateMetadata` with OG + `alternates.languages` hreflang)
@@ -17404,10 +18537,12 @@ Wire the Vercel deploy config, the OG image and metadata for the hero slice, the
 - **Create** `d:/MINE/freelance/system/vanta/tests/e2e/og-image.spec.ts`
 
 ### Interfaces
+
 - **Consumes:** the design tokens `--ink #0A0A0A`, `--paper #F5F4EF`, `--blaze #FF3B1F` (OG art direction = VANTA out of the void); the locales `en`/`th` with prefix `'always'` for hreflang; the demo creds + seeded order for the deploy checklist.
 - **Produces:** `vercel.json`, the dynamic OG image route, hreflang metadata, the deploy checklist, and an OG-presence E2E spec.
 
 ### Steps
+
 - [ ] Write `vercel.json` (build via npm; Playwright is not run on Vercel — it is local-only quality evidence):
   ```json
   {
@@ -17425,6 +18560,7 @@ Wire the Vercel deploy config, the OG image and metadata for the hero slice, the
   }
   ```
 - [ ] Write the dynamic OG image (the void aesthetic, ALL-CAPS Latin lockup; Tier-1 hero is the OG/demo subject):
+
   ```tsx
   import { ImageResponse } from 'next/og';
 
@@ -17469,7 +18605,9 @@ Wire the Vercel deploy config, the OG image and metadata for the hero slice, the
     );
   }
   ```
+
 - [ ] Add OG + hreflang metadata to `app/[locale]/layout.tsx` via `generateMetadata` (the file already exists; add this export — adjust the `params` destructuring to match the existing async signature):
+
   ```tsx
   import type { Metadata } from 'next';
   import type { Locale } from '@/lib/domain';
@@ -17494,7 +18632,9 @@ Wire the Vercel deploy config, the OG image and metadata for the hero slice, the
     };
   }
   ```
+
 - [ ] Write the OG-presence E2E spec (asserts the image meta tag is emitted — visual evidence the OG renders):
+
   ```ts
   import { test, expect } from '@playwright/test';
   import { localePath } from './fixtures';
@@ -17509,12 +18649,14 @@ Wire the Vercel deploy config, the OG image and metadata for the hero slice, the
     });
   });
   ```
+
 - [ ] Add this spec to the `en` project match (it already matches `hero-slice.en.spec.ts`; either widen the `testMatch` to also include `og-image.spec.ts` or rename the spec to `hero-slice.og.en.spec.ts` so the existing `/hero-slice\.en/` regex catches it). Use the rename approach to keep the config untouched:
   ```bash
   cd d:/MINE/freelance/system/vanta && git mv tests/e2e/og-image.spec.ts tests/e2e/hero-slice.og.en.spec.ts
   ```
   > Note: the Task 10.1 `en` `testMatch` is `/hero-slice\.en\.spec\.ts/`. To include this file without editing config, instead name it `hero-slice.en.og.spec.ts` so it does NOT collide — then update the `en` `testMatch` to `/hero-slice\.en(\.og)?\.spec\.ts/`. Apply that one-line config edit now.
 - [ ] Write the deploy checklist `docs/case-study/DEPLOY.md`:
+
   ```markdown
   # VANTA® — Vercel deploy checklist
 
@@ -17534,6 +18676,7 @@ Wire the Vercel deploy config, the OG image and metadata for the hero slice, the
      `opengraph-image` (void-black VANTA® lockup) renders at 1200×630.
 
   ## Hero demo video (the OG/demo asset)
+
   Record the **Tier-1 hero slice** at 1440px desktop, reduced-motion OFF, in EN:
   Home (LIVE DROP countdown + magnetic CTA) → click a card (View Transition into
   PDP) → swatch swap → add to cart (drawer slides in, stock ticks down) →
@@ -17541,6 +18684,7 @@ Wire the Vercel deploy config, the OG image and metadata for the hero slice, the
   poster frame; link it from the README and use it as the social preview where
   video unfurls are supported. Store under `docs/case-study/hero-demo.mp4`.
   ```
+
 - [ ] Run the full pre-deploy verification gate:
   ```bash
   cd d:/MINE/freelance/system/vanta && npm run typecheck && npm test && npm run test:e2e
